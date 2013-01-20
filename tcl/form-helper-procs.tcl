@@ -357,3 +357,450 @@ ad_proc -public qss_progression_x1x2xc {
     }
     return $x_list
 }
+
+ad_proc -public qf_is_natural_number {
+    value
+} {
+    answers question: is value a natural counting number (non-negative integer)?
+    returns 0 or 1
+} {
+    set is_natural [regexp {^(0*)(([1-9][0-9]*|0))$} $value match zeros value]
+    return $is_natural
+}
+
+ad_proc -public qf_remove_from_list {
+    value value_list
+} {
+    removes multiple of a specific value from a list
+    returns list without the passed value
+} {
+
+    set value_indexes [lsearch -all -exact $value_list $value]
+    while { [llength $value_indexes] > 0 } {
+        set next_index [lindex $value_indexes 0]
+        set value_list [lreplace $value_list $next_index $next_index]
+        set value_indexes [lsearch -all -exact $value_list $value]
+    }
+    return $value_list
+}
+
+ad_proc -public qf_get_contents_from_tag {
+    start_tag
+    end_tag
+    page
+    {start_index 0}
+} {
+    Returns content of an html/xml or other bracketing tag that is uniquely identified within a page fragment or string.
+    helps pan out the golden nuggets of data from the waste text when given some garbage with input for example
+} {
+    set tag_contents ""
+    set start_col [string first $start_tag $page $start_index]
+    set end_col [string first $end_tag $page $start_col]
+    if { $end_col > $start_col && $start_col > -1 } {
+        set tag_contents [string trim [string range $page [expr { $start_col + [string length $start_tag] } ] [expr { $end_col -1 } ]]]
+    } else {
+        set starts_with "${start_tag}.*"
+        set ends_with "${end_tag}.*"
+        if { [regexp -- ${starts_with} $page tag_contents ]} {
+            if { [regexp -- ${ends_with} $tag_contents tail_piece] } {
+                set tag_contents [string range $tag_contents 0 [expr { [string length $tag_contents] - [string length $tail_piece] - 1 } ] ]
+            } else {
+                ns_log Notice "Warning no contents for tag $start_tag"
+                set tag_contents ""
+            }
+        }
+    }
+    return $tag_contents
+}
+
+ad_proc -public qf_get_contents_from_tags_list {
+    start_tag
+    end_tag
+    page
+} {
+    Returns content (as a list) of all occurances of an html/xml or other bracketing tag that is somewhat uniquely identified within a page fragment or string.
+    helps pan out the golden nuggets of data from the waste text when given some garbage with input for example
+} {
+    set start_index 0
+    set tag_contents_list [list]
+    set start_tag_len [string length $start_tag]
+    set start_col [string first $start_tag $page 0]
+    set end_col [string first $end_tag $page $start_col]
+    set tag_contents [string range $page [expr { $start_col + $start_tag_len } ] [expr { $end_col - 1 } ]]
+    while { $start_col != -1 && $end_col != -1 } {
+        lappend tag_contents_list [string trim $tag_contents]
+
+        set start_index [expr { $end_col + 1 }]
+        set start_col [string first $start_tag $page $start_index]
+        set end_col [string first $end_tag $page $start_col]
+        set tag_contents [string range $page [expr { $start_col + $start_tag_len } ] [expr { $end_col - 1 } ]]
+    }
+    return $tag_contents_list
+}
+
+ad_proc -public qf_remove_tag_contents {
+    start_tag
+    end_tag
+    page
+} {
+    Returns everything but the content between start_tag and end_tag (as a list) 
+    of all occurances on either side of an html/xml or other bracketing tag 
+    that is somewhat uniquely identified within a page fragment or string.
+    This is handy to remove script tags and < ! - - web comments - - > etc
+    helps pan out the golden nuggets of data from the waste text when given some garbage with input for example
+} {
+    # start and end refer to the tags and their contents that are to be removed
+    set start_index 0
+    set tag_contents_list [list]
+    set start_tag_len [string length $start_tag]
+    set end_tag_len [string length $end_tag]
+    set start_col [string first $start_tag $page 0]
+    set end_col [string first $end_tag $page $start_col]
+    # set tag_contents [string range $page 0 [expr { $start_col - 1 } ] ]
+    while { $start_col != -1 && $end_col != -1 } {
+        set tag_contents [string range $page $start_index [expr { $start_col - 1 } ] ]
+        lappend tag_contents_list [string trim $tag_contents]
+
+        # start index is where we begin the next clip        
+        set start_index [expr { $end_col + $end_tag_len } ]
+        set start_col [string first $start_tag $page $start_index]
+        set end_col [string first $end_tag $page $start_col]
+        # and the new clip ends at the start of the next tag
+    }
+    # append any trailing portion
+    lappend tag_contents_list [string range $page $start_index end]
+    set remaining_contents [join $tag_contents_list ""]
+    return $remaining_contents
+}
+
+
+ad_proc -public qf_convert_html_list_to_tcl_list {
+    html_list
+} {
+    converts a string containing an html list to a tcl list
+    Assumes there are no embedded sublists, and strips remaining html
+} {
+    set draft_list $html_list
+
+    #we standardize the start and end of the list, so we know where to clip
+
+    if { [regsub -nocase -- {<[ou][l][^\>]*>} $draft_list "<ol>" draft_list ] ne 1 } {
+        # no ol/ul tag, lets create the list container anyway
+        set draft_list "<ol> ${draft_list}"
+
+    } else {
+        # ol/ul tag exists, trim garbage before list
+        set draft_list [string range $draft_list [string first "<ol>" $draft_list ] end ]
+    }
+
+    if { [regsub -nocase -- {</li>[ ]*</[ou]l[^\>]*>} $draft_list "</li></ol>" draft_list ] ne 1 } {
+        # end list tag may not exist or is not in standard form
+        if { [regsub -nocase -- {</[ou]l[^\>]*>} $draft_list "</li></ol>" draft_list ] ne 1 } {
+            # assume for now that there was no end li tag before the list (bad html)
+        } else {
+            # no ol/ul list tag, assume no end </li> either?
+            append draft_list "</li></ol>"
+        }
+    }
+
+    # end ol tag exists, trim garbage after list
+    # choosing the last end list tag in case there is a list in one of the lists
+    set draft_list [string range $draft_list 0 [expr { [string last "</ol>" $draft_list ] + 4} ] ]
+
+    # simplify li tags, with a common delimiter
+    regsub -nocase -all -- {<li[^\>]*>} $draft_list {|} draft_list
+    # remove other html tags
+
+    set draft_list [qf_webify $draft_list]
+
+    # remove excess spaces
+    regsub -all -- {[ ]+} $draft_list " " draft_list
+    set draft_list [string trim $draft_list]
+
+    # remove excess commas and format poorly placed ones
+    regsub -all -- {[ ],} $draft_list "," draft_list
+
+    regsub -all -- {[,]+} $draft_list "," draft_list
+
+    # put colons in good form
+    regsub -all -- {[ ]:} $draft_list ":" draft_list
+
+    regsub -all -- {:,} $draft_list ":" draft_list
+    # remove : in cases where first column is blank, ie li should not start with a colon
+
+    regsub -all -- {\|:} $draft_list {|} draft_list
+
+    set tcl_list [split $draft_list {|}]
+    # first lindex will be blank, so remove it
+    set tcl_list [lrange $tcl_list 1 end]
+#ns_log Notice "qf_convert_html_list_to_tcl_list: tcl_list $tcl_list"
+    return $tcl_list
+}
+
+ad_proc -public qf_convert_html_table_to_list {
+    html_string
+    {list_style ul}
+} {
+    converts a string containing an html table to an html list
+    assumes first column is a heading (with no rows as headings), and remaining columns are values
+    defaults to li list style, should return list in good html form even if table is not quite that way
+} {
+
+    if { [regsub -nocase -- {<table[^\>]*>} $html_string "<${list_style}>" draft_list ] ne 1 } {
+        # no table tag, lets create the list container anyway
+        set draft_list "<${list_style}> ${html_string}"
+    } else {
+        # table tag exists, trim garbage before list
+        set draft_list [string range $draft_list [string first "<${list_style}>" $draft_list ] end ]
+    }
+
+    if { [regsub -nocase -- {</tr>[ ]*</table[^\>]*>} $draft_list "</li></${list_style}>" draft_list ] ne 1 } {
+        # end table tag may not exist or is not in standard form
+        if { [regsub -nocase -- {</table[^\>]*>} $draft_list "</li></${list_style}>" draft_list ] ne 1 } {
+            # assume for now that there was no end tr tag before the table (bad html)
+        } else {
+            # no table tag, assume no end </tr> either?
+            append draft_list "</li></${list_style}>"
+        }
+    }
+
+    # end table tag exists, trim garbage after list
+    # choosing the last end list tag in case there is a list in one of the table cells
+    set draft_list [string range $draft_list 0 [expr { [string last "</${list_style}>" $draft_list ] + 4} ] ]
+
+    # simplify tr and td tags, but do not replace yet, because we want to use them for markers when replacing td tags
+    regsub -nocase -all -- {<tr[^\>]+>} $draft_list "<tr>" draft_list
+    regsub -nocase -all -- {</tr[^\>]+>} $draft_list "</tr>" draft_list
+    regsub -nocase -all -- {<td[^\>]+>} $draft_list "<td>" draft_list
+    regsub -nocase -all -- {</td[^\>]+>} $draft_list "</td>" draft_list
+
+    # clean out other content junk tags
+    regsub -nocase -all -- {<[^luot\/\>][^\>]*>} $draft_list "" draft_list
+    regsub -nocase -all -- {</[^luot\>][^\>]*>} $draft_list "" draft_list
+
+    set counterA 0
+    while { [string match -nocase "*<tr>*" $draft_list ] } {
+
+       if { [incr counterA ] > 300 } {
+           ns_log Error "convert_html_table_to_list, ref: counterA detected possible infinite loop."
+           doc_adp_abort
+        }
+        # get row range
+        set start_tr [string first "<tr>" $draft_list ]
+        set end_tr [string first "</tr>" $draft_list ]
+
+        # make sure that the tr end tag matches the current tr tag
+        if { $end_tr == -1 } {
+            set next_start_tr [string first "<tr>" $draft_list [expr { $start_tr + 4 } ] ]
+        } else {
+            set next_start_tr [string first "<tr>" $draft_list $end_tr ]
+        }
+
+        regsub -- {<tr>} $draft_list "<li>" draft_list
+
+        if { $end_tr < $next_start_tr && $end_tr > -1 } {
+            regsub -- {</tr>} $draft_list "     " draft_list
+            # common sense says we replace </tr> with </li>, but then there may be cases missing a </tr>
+            # and if so, we would have to insert a </li> which would mess up the position values for use
+            # later on. Instead, at the end, we convert <li> to </li><li> and take care of the special 1st and last cases
+        } 
+
+        # we are assuming any td/tr tags occur within the table, since table has been trimmed above
+        set start_td [string first "<td>" $draft_list ]
+        set end_td [string first "</td>" $draft_list ]
+        set next_start_td [string first "<td>" $draft_list [expr { $start_td + 3 } ] ]
+
+        if { $next_start_td == -1 || ( $next_start_td > $next_start_tr && $next_start_tr > -1 )} {
+            # no more td tags for this row.. only one column in this table
+
+        } else {
+            # setup first special case of first column
+            # replacing with strings of same length to keep references current throughout loops
+            set draft_list [string replace $draft_list $start_td [expr { $start_td + 3 } ] "    " ]
+
+            if { $end_td < $next_start_tr && $end_td > -1 } {
+                # there is an end td tag for this td cell, replace with :
+                set draft_list [string replace $draft_list $end_td [expr { $end_td + 4 } ] ":    " ]
+
+            } else {
+                # insert special case, just prior to new td tag
+                set draft_list "[string range ${draft_list} 0 [expr { ${next_start_td} - 1 } ] ]: [string range ${draft_list} ${next_start_td} end ]"
+                if { $next_start_tr > 0 } {
+                    incr next_start_tr 2
+                }
+            }
+        }
+
+        # process remaining td cells in row, separating cells by comma
+        set column_separator "    "
+        if { $next_start_tr == -1 } {
+            set end_of_row [string length $draft_list ]
+        } else {
+            set end_of_row [expr { $next_start_tr + 3 } ]
+        }
+
+        set columns_to_convert [string last "<td>" [string range $draft_list 0 $end_of_row ] ]
+        set counterB 0
+        while { $columns_to_convert > -1 } {
+
+            if { [incr counterB ] > 200 } {
+                ns_log Error "convert_html_table_to_list, ref: counterB detected possible infinite loop."
+                doc_adp_abort
+            }
+
+            set start_td [string first "<td>" $draft_list ]
+            set end_td [string first "</td>" $draft_list ]
+            set next_start_td [string first "<td>" $draft_list [expr { $start_td + 3 } ] ]
+
+            if { $next_start_td == -1 } {
+                # no more td tags for all rows.. still need to process this one.
+                set columns_to_convert -1
+                set draft_list [string replace $draft_list $start_td [expr { $start_td + 3 } ] $column_separator ]
+
+            } elseif { ( $next_start_td > $next_start_tr && $next_start_tr > -1 ) } {
+                # no more td tags for this row..
+                set columns_to_convert -1
+
+            } else {
+                # add a comma before the value, if this is not the first value
+                set draft_list [string replace $draft_list $start_td [expr { $start_td + 3 } ] $column_separator ]
+
+            }
+
+            if { $end_td > -1 && ( $end_td < $next_start_td || $next_start_td == -1 ) } {
+                # there is an end td tag for this td cell, remove it
+                regsub -- {</td>} $draft_list "" draft_list
+            }
+
+            set column_separator ",    "
+            # next column
+        }
+
+
+        # next row
+    }
+
+    # clean up list, add </li>
+    regsub -all -- "<li>" $draft_list "</li><li>" draft_list
+    # change back first case
+    regsub -- "</li><li>" $draft_list "<li>" draft_list
+    # a /li tag is already included with the  list container end tag
+
+    # remove excess spaces
+    regsub -all -- {[ ]+} $draft_list " " draft_list
+
+    # remove excess commas and format poorly placed ones
+    regsub -all -- {[ ],} $draft_list "," draft_list
+    regsub -all -- {[,]+} $draft_list "," draft_list
+
+    # put colons in good form
+    regsub -all -- {[ ]:} $draft_list ":" draft_list
+    regsub -all -- {:,} $draft_list ":" draft_list
+    # remove : in cases where first column is blank, ie li should not start with a colon
+    regsub -all -- {<li>:} $draft_list "<li>" draft_list
+
+   return $draft_list
+}
+ad_proc -public qf_remove_html {
+    description
+    {delimiter ":"}
+} {
+
+    remvoves html and converts common delimiters to something that works in html tag attributes, default delimiter is ':'
+
+} {
+    # remove tags
+    regsub -all -- "<\[^\>\]*>" $description " " description
+
+    # convert fancy delimiter to one that complies with meta tag values
+    regsub -all -- "&\#187;" $description $delimiter description
+
+    # convert bracketed items as separate (delimited) items
+    regsub -all -- {\]} $description "" description
+    regsub -all -- {\[} $description $delimiter description
+
+    # convert any dangling lt/gt signs to delimiters
+    regsub -all -- ">" $description $delimiter description
+    regsub -all -- "<" $description $delimiter description
+
+    # remove characters that
+    # can munge some meta tag values or how they are interpreted
+    regsub -all -- {\'} $description {} description
+    regsub -all -- {\"} $description {} description
+
+    # remove html entities, such as &trade; &copy; etc.
+    regsub -all -nocase -- {&[a-z]+;} $description {} description
+
+    # filter extra spaces
+    regsub -all -- {\s+} $description { } description
+    set description "[string trim $description]"
+
+return $description
+}
+
+ad_proc -public qf_remove_attributes_from_html {
+    description
+} {
+
+    remvoves attributes from html
+
+} {
+    # filter extra spaces
+    regsub -all -- {\s+} $description { } description
+    set description "[string trim $description]"
+
+    # remove attributes from tags
+    regsub -all -nocase -- {(<[/]?[a-z]*)[^\>]*(\>)} $description {\1\2} description
+    
+return $description
+}
+
+ad_proc -public qf_abbreviate {
+    phrase
+    {max_length {}}
+} {
+    abbreviates a pretty title or phrase to first word, or to max_length characters if max_length is a number > 0
+} {
+    set suffix ".."
+    set suffix_len [string length $suffix]
+
+    if { [ad_var_type_check_number_p $max_length] && $max_length > 0 } {
+        set phrase_len_limit [expr { $max_length - $suffix_len } ]
+        regsub -all -- { / } $phrase {/} phrase
+        if { [string length $phrase] > $max_length } {
+            set cat_end [expr { [string last " " [string range $phrase 0 $max_length] ] - 1 } ]
+            if { $cat_end < 0 } {
+                set cat_end $phrase_len_limit
+            }
+            set phrase [string range $phrase 0 $cat_end ]
+        append phrase $suffix
+            regsub {[^a-zA-Z0-9]+\.\.} $phrase $suffix phrase
+        }
+        regsub -all -- { } $phrase {\&nbsp;} phrase
+        set abbrev_phrase $phrase
+
+    } else {
+        regsub -all { .*$} $phrase $suffix abbrev1
+        regsub -all {\-.*$} $abbrev1 $suffix abbrev
+        regsub -all {\,.*$} $abbrev $suffix abbrev1
+        set abbrev_phrase $abbrev1
+    }
+    return $abbrev_phrase
+}
+ad_proc -public qf_webify {
+ description
+} {
+   standardizes and sanitizes some junky data for use in web content
+} {
+    # need to remove code between script tags and hidden comments
+    set description [qf_remove_tag_contents {<script} {</script>} $description ]
+                     set description [qf_remove_tag_contents {<!--} {-->} $description ]
+
+    regsub -all "<\[^\>\]*>" $description "" description1
+    regsub -all "<" $description1 ":" description
+    regsub -all ">" $description ":" description1
+    regsub -all -nocase {\"} $description1 {} description
+    regsub -all -nocase {\'} $description {} description1
+    regsub -all -nocase {&[a-z]+;} $description1 {} description
+    return $description
+}
