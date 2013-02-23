@@ -428,7 +428,8 @@ ad_proc -public qf_get_contents_from_tags_list {
     set end_col [string first $end_tag $page $start_col]
     set tag_contents [string range $page [expr { $start_col + $start_tag_len } ] [expr { $end_col - 1 } ]]
     while { $start_col != -1 && $end_col != -1 } {
-        lappend tag_contents_list [string trim $tag_contents]
+#        lappend tag_contents_list [string trim $tag_contents]
+        lappend tag_contents_list $tag_contents
 
         set start_index [expr { $end_col + 1 }]
         set start_col [string first $start_tag $page $start_index]
@@ -454,13 +455,14 @@ ad_proc -public qf_remove_tag_contents {
     set tag_contents_list [list]
     set start_tag_len [string length $start_tag]
     set end_tag_len [string length $end_tag]
-    set start_col [string first $start_tag $page 0]
+    set start_col [string first $start_tag $page $start_index]
     set end_col [string first $end_tag $page $start_col]
     # set tag_contents [string range $page 0 [expr { $start_col - 1 } ] ]
     while { $start_col != -1 && $end_col != -1 } {
         set tag_contents [string range $page $start_index [expr { $start_col - 1 } ] ]
-        lappend tag_contents_list [string trim $tag_contents]
-
+#        lappend tag_contents_list [string trim $tag_contents]
+        lappend tag_contents_list $tag_contents
+ns_log Notice "qf_remove_tag_contents(465): tag_contents '$tag_contents'"
         # start index is where we begin the next clip        
         set start_index [expr { $end_col + $end_tag_len } ]
         set start_col [string first $start_tag $page $start_index]
@@ -469,8 +471,8 @@ ad_proc -public qf_remove_tag_contents {
     }
     # append any trailing portion
     lappend tag_contents_list [string range $page $start_index end]
-    set remaining_contents [join $tag_contents_list ""]
-    return $remaining_contents
+#    set remaining_contents \[join $tag_contents_list " "\]
+    return $tag_contents_list
 }
 
 
