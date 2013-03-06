@@ -27,6 +27,7 @@ ad_library {
 ad_proc -public qf_get_inputs_as_array {
     {form_array_name "__form_input_arr"}
     {duplicate_key_check "0"}
+    {multiple_key_as_list "0"}
 } {
     Get inputs from form submission, quotes all input values. Use ad_unquotehtml to unquote a value.
     Returns 1 if form inputs exist, otherwise returns 0.
@@ -75,7 +76,18 @@ ad_proc -public qf_get_inputs_as_array {
                     ad_script_abort
                     # set __form_input_exists to -1 instead of ad_script_abort?
                 } else {
-                    ns_log Warning "qf_get_form_input: notice, form has two keys with same info.."
+                    ns_log Warning "qf_get_form_input: notice, form has a duplicate key with multiple values containing same info.."
+                }
+            } elseif { $multiple_key_as_list } {
+                ns_log Notice "qf_get_inputs_as_array: A key has been posted with multible values. Values assigned to the key as a list."
+                if { [llength $__form_input_arr($__form_key)] > 1 } {
+                    # value is a list, lappend
+                    lappend __form_input_arr($__form_key) $__form_input
+                } else {
+                    # convert the key value to a list
+                    set __value_one $__form_input_arr($__form_key)
+                    unset __form_input_arr($__form_key)
+                    set __form_input_arr($__form_key) [list $__value_one $__form_input]
                 }
             } else {
                 set __form_input_arr($__form_key) $__form_input
