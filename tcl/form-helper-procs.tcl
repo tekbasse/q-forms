@@ -1,8 +1,9 @@
 ad_library {
-
-    routines for helping render form data or presentation for form data
+    
+    procedures for helping render form data or presentation for form data
     @creation-date 15 May 2012
     @cs-id $Id:
+
 }
 
 ad_proc -public qss_txt_to_tcl_list_of_lists {
@@ -451,6 +452,7 @@ ad_proc -public qf_remove_tag_contents {
     helps pan out the golden nuggets of data from the waste text when given some garbage with input for example
 } {
     # start and end refer to the tags and their contents that are to be removed
+ns_log Notice "qf_remove_tag_contents: start_tag $start_tag end_tag $end_tag page $page"
     set start_index 0
     set tag_contents_list [list]
     set start_tag_len [string length $start_tag]
