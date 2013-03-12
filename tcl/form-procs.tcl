@@ -24,6 +24,8 @@ ad_library {
 #}
 #also see patch: http://openacs.org/forums/message-view?message_id=182057
 
+# for early example and discussion, see http://openacs.org/forums/message-view?message_id=3602056
+
 ad_proc -public qf_get_inputs_as_array {
     {form_array_name "__form_input_arr"}
     {duplicate_key_check "0"}
