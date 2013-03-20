@@ -47,7 +47,7 @@ Low learning-curve. Uses tcl context. Procedures match tags. List friendly.
 
 Built in API defaults. Takes less keystrokes to build a form than typing manually.
 
-Can built multiple forms concurently using Tcl file terminology.
+Can build multiple forms concurently using Tcl file terminology.
 
 No limitations to building dynamic forms with specialized inputs.
 

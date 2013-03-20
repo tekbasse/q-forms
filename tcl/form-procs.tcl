@@ -388,7 +388,9 @@ ad_proc -public qf_textarea {
     {arg30 ""}
 } {
     Creates a form textarea tag, supplying attributes where nonempty values are supplied.
-    Attribute "label" wraps a label tag around textarea.
+    Attribute "label" places a label tag just before textarea tag, instead of wrapping around textarea
+    in order to facilitate practical alignment variations between label and textarea. 
+    To remove label tag, pass label attribute with empty string value.
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -476,8 +478,8 @@ ad_proc -public qf_textarea {
     }
 
     # by default, wrap the input with a label tag for better UI
-    if { [info exists attributes_arr(id) ] && [info exists attributes_arr(label)] } {
-        set tag_html "<label for=\"${attributes_arr(id)}\">${attributes_arr(label)}<textarea[qf_insert_attributes $tag_attributes_list]>${attributes_arr(value)}</textarea></label>"
+    if { [info exists attributes_arr(id) ] && [info exists attributes_arr(label)] && $attributes_arr(label) ne "" } {
+        set tag_html "<label for=\"${attributes_arr(id)}\">${attributes_arr(label)}</label><textarea[qf_insert_attributes $tag_attributes_list]>${attributes_arr(value)}</textarea>"
     } else {
         set tag_html "<textarea[qf_insert_attributes $tag_attributes_list]>${attributes_arr(value)}</textarea>"
     }

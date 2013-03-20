@@ -4,7 +4,16 @@ ad_library {
     @creation-date 15 May 2012
     @cs-id $Id:
 
+    to vertically align textarea label, add to css: 
+
+    textarea { vertical-align: top; }
+    # replace top with middle or other options to adjust alignment.
+    # textarea's border is used for alignment, so alignment is affected by font-size and line-height ratio 
+    # in addition to borders and margins.
+
 }
+
+
 
 ad_proc -public qss_txt_to_tcl_list_of_lists {
     textarea
