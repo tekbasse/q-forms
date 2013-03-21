@@ -1,0 +1,37 @@
+-- q-forms-create.sql
+--
+-- @author Benjamin Brink
+-- @for OpenACS
+-- @cvs-id
+--
+
+-- The purpose of this table is to answer the question:
+--   How do we know the posted data is directly from a form presented to a user, 
+--   and not the result of some kind of serrepitious form post?
+-- By logging somewhat unique aspects of a form rendering transaction,
+-- and checking them against form post values.
+-- Form rendering uniqueness includes: location (form action), time rendered, session_id, and port.
+-- Port refers to http vs. https.
+-- Using a random key to reference the data points where we can filter the form entry by the key
+-- and subsequently check its data point values, ignoring any case where the key doesn't fit.
+-- For random_key, we are using a local version of sec_random_token
+--  from packages/acs-tcl/tcl/security-procs.tcl
+-- For general security session notes, see /doc/security-design.html
+CREATE TABLE qf_form_key_map (
+       key_id,
+       session_id varchar(100),
+       -- this should be ns_conn url
+       action_url varchar(300),
+       -- ns_time in seconds for speed, for timeout checks
+       render_timestamp numeric,
+       secure_conn_p integer,
+       -- client_ip may seem to duplicate session_id, but 
+       -- session_id resides as a cookie so is hackable,
+       -- whereas client_ip is not
+       client_ip varchar(30),
+       sec_hash varchar(40)
+);
+-- The standard is to not save the data point values, just a hash of them.
+-- That makes it more difficult to reverse hack the form state even with access to the db.
+-- ie an action_url couldn't be used to reduce the possilbe matches in the table.
+
