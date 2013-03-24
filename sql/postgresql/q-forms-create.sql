@@ -21,23 +21,29 @@
 -- For general security session notes, see /doc/security-design.html
 CREATE TABLE qf_key_map (
        instance_id integer,
-       key_id numeric,
+       -- ns_time in seconds for speed, for timeout checks
+       rendered_timestamp numeric,
+       sec_hash varchar(256),
+       -- this is just the id passed to the form tag
+       key_id varchar(300),
        session_id varchar(100),
        -- this should be ns_conn url
        action_url varchar(300),
-       -- ns_time in seconds for speed, for timeout checks
-       render_timestamp numeric,
        secure_conn_p integer,
        -- client_ip may seem to duplicate session_id, but 
        -- session_id resides as a cookie so is hackable,
        -- whereas client_ip is not
        client_ip varchar(30),
-       sec_hash varchar(40),
        -- if avail_p is 0, then the form has already been posted
        -- and the key is no longer available.
-       avail_p integer default '1'
+       submit_timestamp numeric default null
 );
---  Set up a scheduled proc to regularly clean up where avail_p = 0
+
+create index qf_key_map_sec_hash_idx on qw_key_map (sec_hash);
+create index qf_key_map_rendered_timestamp_idx on qw_key_map (rendered_timestamp);
+create index qf_key_map_instance_idx on qw_key_map (instance_id);
+
+--  Set up a scheduled proc to regularly clean up where submit_timestamp is null and rendered_timestamp < timeout
 
 -- The standard is to not save the data point values, just a hash of them.
 -- That makes it more difficult to reverse hack the form state even with access to the db.

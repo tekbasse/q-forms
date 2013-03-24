@@ -27,17 +27,26 @@ ad_library {
 # for early example and discussion, see http://openacs.org/forums/message-view?message_id=3602056
 
 ad_proc -private qf_form_key_create {
-
+    {key_id ""}
+    {action_url ""}
+    {instance_id ""}
 } {
-    creates the form key for a more secure form transaction.
+    creates the form key for a more secure form transaction. 
 } {
-    # inspired from sec_random_token
-
+    # This proc is inspired from sec_random_token
+    if { $instance_id eq "" } {
+        # set instance_id package_id
+        set instance_id [ad_conn package_id]
+    }
     if { [add_conn -connected_p] } {
         set client_ip [ns_conn peeraddr]
+        set time_sec [ns_time]
         set request [ad_conn request]
         set secure_p [security::secure_conn_p]
         set start_clicks [ad_conn start_clicks]
+        set session_id [ad_conn session_id]
+        set action_url [ns_conn url]
+        set render_timestamp $time_sec
     } else {
         set server_ip [ns_config ns/server/[ns_info server]/module/nssock Address]
         if { $server_ip eq "" } {
@@ -47,10 +56,14 @@ ad_proc -private qf_form_key_create {
         set time_sec [ns_time]
         # time_sec s/b circa clock seconds
         set request [string range $time_sec [expr { floor( ( [ns_rand] * [string length $time_sec] ) ) }] end]
-        set secure_p [expr { floor( [ns_rand] + 0.5 ) }
-        set start_clicks [expr { [int( [clock clicks] * ns_rand() ) } ]
+        set secure_p [expr { floor( [ns_rand] + 0.5 ) } ]
+        set start_clicks [expr { [int( [clock clicks] * [ns_rand] ) ] } ]
+        set session_id [expr { floor( $time_sec / 4 ) } ]
+        set action_url "/"
+        set render_timestamp $time_sec
     }
-    
+
+                  
 }
 
 ad_proc -public qf_get_inputs_as_array {
