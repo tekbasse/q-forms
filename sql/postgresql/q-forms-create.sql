@@ -39,9 +39,9 @@ CREATE TABLE qf_key_map (
        submit_timestamp numeric default null
 );
 
-create index qf_key_map_sec_hash_idx on qw_key_map (sec_hash);
-create index qf_key_map_rendered_timestamp_idx on qw_key_map (rendered_timestamp);
-create index qf_key_map_instance_idx on qw_key_map (instance_id);
+create index qf_key_map_sec_hash_idx on qf_key_map (sec_hash);
+create index qf_key_map_rendered_timestamp_idx on qf_key_map (rendered_timestamp);
+create index qf_key_map_instance_id_idx on qf_key_map (instance_id);
 
 --  Set up a scheduled proc to regularly clean up where submit_timestamp is null and rendered_timestamp < timeout
 
