@@ -31,15 +31,15 @@ ad_proc -private qf_form_key_create {
     {action_url "/"}
     {instance_id ""}
 } {
-    creates the form key for a more secure form transaction. Returns the security hash.
+    creates the form key for a more secure form transaction. Returns the security hash. See also qf_submit_key_accepted_p
 } {
     # This proc is inspired from sec_random_token
     if { $instance_id eq "" } {
         # set instance_id package_id
         set instance_id [ad_conn package_id]
     }
-    set time_sec [ns_time]    
-    if { [add_conn -connected_p] } {
+    set time_sec [ns_time]
+    if { [ad_conn -connected_p] } {
         set client_ip [ns_conn peeraddr]
         #        set request \[ad_conn request\]
         set secure_p [security::secure_conn_p]
@@ -68,6 +68,66 @@ ad_proc -private qf_form_key_create {
         values (:instance_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_p) }
     return $sec_hash
 }
+
+ad_proc -private qf_submit_key_accepted_p {
+    {sec_hash ""}
+    {instance_id ""}
+} {
+    Checks the form key against existing ones. Returns 1 if matches and unexpired, otherwise returns 0.
+} {
+    # This proc is inspired from sec_random_token
+    if { $instance_id eq "" } {
+        # set instance_id package_id
+        set instance_id [ad_conn package_id]
+    }
+    set connected_p [ad_conn -connected_p]
+    if { $connected_p } {
+        set client_ip [ns_conn peeraddr]
+        set secure_p [security::secure_conn_p]
+        set session_id [ad_conn session_id]
+        set action_url [ns_conn url]
+
+    } else {
+        set server_ip [ns_config ns/server/[ns_info server]/module/nssock Address]
+        if { $server_ip eq "" } {
+            set server_ip "127.0.0.1"
+        }
+        set client_ip $server_ip
+        set secure_p ""
+        set session_id ""
+    }
+
+    set accepted_p [db_0or1row qf_form_key_check_hash { 
+        select key_id as key_id_i, session_id as session_id_i, action_url as action_url_i, secure_conn_p as secure_conn_p_i, client_ip as client_ip_i from qf_key_map
+        where instance_id = :instance_id and sec_hash = :sec_hash and submit_timestamp = null } ]
+    if { $accepted_p } {
+        # log any differences, but don't reject the form based on these points for now
+        if { $key_id ne $key_id_i } {
+            ns_log Warning "qf_submit_key_accept: key_id ne key_id_i '$key_id' '$key_id_i'"
+        }
+        if { $action_url ne $action_url_i } {
+            ns_log Warning "qf_submit_key_accept: action_url ne action_url_i '$action_url' '$action_url_i'"
+        }
+        if { $connected_p } {
+            if { $session_id ne $session_id_i } {
+                ns_log Warning "qf_submit_key_accept: session_id ne session_id_i '$session_id' '$session_id_i'"
+            }
+            if { $secure_conn_p ne $secure_conn_p_i } {
+                ns_log Warning "qf_submit_key_accept: secure_conn_p ne secure_conn_p_i '$secure_conn_p' '$secure_conn_p_i'"
+            }
+            if { $client_ip ne $client_ip_i } {
+                ns_log Warning "qf_submit_key_accept: client_ip ne client_ip_i '$client_ip' '$client_ip_i'"
+            }
+        }
+        # Mark the key expired
+        set submit_timestamp [ns_time]
+        db_dml qf_form_key_expire { update qf_key_map
+            set submit_timestamp = :submit_timestamp where instance_id =:instance_id and sec_hash = :sec_hash and submit_timestamp = null
+    }
+    return $accepted_p
+}
+
+
 
 ad_proc -public qf_get_inputs_as_array {
     {form_array_name "__form_input_arr"}
