@@ -122,7 +122,7 @@ ad_proc -private qf_submit_key_accepted_p {
         # Mark the key expired
         set submit_timestamp [ns_time]
         db_dml qf_form_key_expire { update qf_key_map
-            set submit_timestamp = :submit_timestamp where instance_id =:instance_id and sec_hash = :sec_hash and submit_timestamp = null
+            set submit_timestamp = :submit_timestamp where instance_id =:instance_id and sec_hash = :sec_hash and submit_timestamp = null }
     }
     return $accepted_p
 }
