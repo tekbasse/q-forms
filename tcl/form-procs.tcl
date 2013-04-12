@@ -61,11 +61,11 @@ ad_proc -private qf_form_key_create {
 #        set action_url "/"
 #        set render_timestamp $time_sec
     }
-    append sec_hash_string $start_clicks $session_id $secure_p $client_ip $action_url $render_timestamp
-    set sec_hash [ns_nsha1 $sec_hash_string]
+    append sec_hash_string $start_clicks $session_id $secure_p $client_ip $action_url $time_sec
+    set sec_hash [ns_sha1 $sec_hash_string]
     db_dml qf_form_key_create {insert into qf_key_map
                   (instance_id,rendered_timestamp,sec_hash,key_id,session_id,action_url,secure_conn_p,client_ip)
-        values (:instance_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_p) }
+        values (:instance_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_ip) }
     return $sec_hash
 }
 
@@ -95,16 +95,14 @@ ad_proc -private qf_submit_key_accepted_p {
         set client_ip $server_ip
         set secure_p ""
         set session_id ""
+        set action_url [ns_conn url]
     }
-
+    # the key_id is used to help generate unpredictable hashes, but isn't used at this level of input validation
     set accepted_p [db_0or1row qf_form_key_check_hash { 
-        select key_id as key_id_i, session_id as session_id_i, action_url as action_url_i, secure_conn_p as secure_conn_p_i, client_ip as client_ip_i from qf_key_map
-        where instance_id = :instance_id and sec_hash = :sec_hash and submit_timestamp = null } ]
-    if { $accepted_p } {
+        select session_id as session_id_i, action_url as action_url_i, secure_conn_p as secure_conn_p_i, client_ip as client_ip_i from qf_key_map
+        where instance_id =:instance_id and sec_hash =:sec_hash and submit_timestamp is null } ]
+    if { 0 } {
         # log any differences, but don't reject the form based on these points for now
-        if { $key_id ne $key_id_i } {
-            ns_log Warning "qf_submit_key_accept: key_id ne key_id_i '$key_id' '$key_id_i'"
-        }
         if { $action_url ne $action_url_i } {
             ns_log Warning "qf_submit_key_accept: action_url ne action_url_i '$action_url' '$action_url_i'"
         }
@@ -119,10 +117,11 @@ ad_proc -private qf_submit_key_accepted_p {
                 ns_log Warning "qf_submit_key_accept: client_ip ne client_ip_i '$client_ip' '$client_ip_i'"
             }
         }
+    } else {
         # Mark the key expired
         set submit_timestamp [ns_time]
         db_dml qf_form_key_expire { update qf_key_map
-            set submit_timestamp = :submit_timestamp where instance_id =:instance_id and sec_hash = :sec_hash and submit_timestamp = null }
+            set submit_timestamp = :submit_timestamp where instance_id =:instance_id and sec_hash =:sec_hash and submit_timestamp is null }
     }
     return $accepted_p
 }
@@ -131,15 +130,38 @@ ad_proc -private qf_submit_key_accepted_p {
 
 ad_proc -public qf_get_inputs_as_array {
     {form_array_name "__form_input_arr"}
-    {duplicate_key_check "0"}
-    {multiple_key_as_list "0"}
+    {arg1 ""}
+    {arg2 ""}
+    {arg3 ""}
+    {arg4 ""}
+    {arg5 ""}
+    {arg6 ""}
 } {
     Get inputs from form submission, quotes all input values. Use ad_unquotehtml to unquote a value.
     Returns 1 if form inputs exist, otherwise returns 0.
     If duplicate_key_check is 1, checks if an existing key/value pair already exists, otherwise just overwrites existing value.  
     Overwriting is programmatically useful to overwrite preset defaults, for example.
 } {
+    # get args
     upvar 1 $form_array_name __form_input_arr
+    set array __form_buffer_arr
+    set arg_arr(duplicate_key_check) 0
+    set arg_arr(multiple_key_as_list) 0
+    set arg_arr(hash_check) 0
+    set arg_full_list [list duplicate_key_check multiple_key_as_list hash_check]
+    set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 ]
+    set args_list [list]
+    foreach {name value} $arg_list {
+        set arg_index [lsearch -exact $arg_full_list $name]
+        if { $arg_index > -1 } {
+            set arg_arr($name) $value
+        } elseif { $value eq "" } {
+            # ignore
+        } else {
+            ns_log Error "qf_get_inputs_as_array: $name is not a valid name invoked with name value pairs. Separate each with a space."
+        }
+    }
+
     # get form variables passed with connection
     set __form_input_exists 0
     set __form [ns_getform]
@@ -174,8 +196,8 @@ ad_proc -public qf_get_inputs_as_array {
 
             set __form_input_exists 1
             # check for duplicate key?
-            if { $duplicate_key_check && [info exists __form_input_arr($__form_key) ] } {
-                if { $__form_input ne $__form_input_arr($__form_key) } {
+            if { $arg_arr(duplicate_key_check) && [info exists __form_buffer_arr($__form_key) ] } {
+                if { $__form_input ne $__form_buffer_arr($__form_key) } {
                     # which one is correct? log error
                     ns_log Error "qf_get_form_input: form input error. duplcate key provided for ${__form_key}"
                     ad_script_abort
@@ -183,26 +205,45 @@ ad_proc -public qf_get_inputs_as_array {
                 } else {
                     ns_log Warning "qf_get_form_input: notice, form has a duplicate key with multiple values containing same info.."
                 }
-            } elseif { $multiple_key_as_list } {
+            } elseif { $arg_arr(multiple_key_as_list) } {
                 ns_log Notice "qf_get_inputs_as_array: A key has been posted with multible values. Values assigned to the key as a list."
-                if { [llength $__form_input_arr($__form_key)] > 1 } {
+                if { [llength $__form_buffer_arr($__form_key)] > 1 } {
                     # value is a list, lappend
-                    lappend __form_input_arr($__form_key) $__form_input
+                    lappend __form_buffer_arr($__form_key) $__form_input
                 } else {
                     # convert the key value to a list
-                    set __value_one $__form_input_arr($__form_key)
-                    unset __form_input_arr($__form_key)
-                    set __form_input_arr($__form_key) [list $__value_one $__form_input]
+                    set __value_one $__form_buffer_arr($__form_key)
+                    unset __form_buffer_arr($__form_key)
+                    set __form_buffer_arr($__form_key) [list $__value_one $__form_input]
                 }
             } else {
-                set __form_input_arr($__form_key) $__form_input
+                set __form_buffer_arr($__form_key) $__form_input
 #                ns_log Debug "qf_get_inputs_as_array: set ${form_array_name}($__form_key) '${__form_input}'."
             }
 
             # next key-value pair
         }
     }
-    return $__form_input_exists
+    if { $arg_arr(hash_check) } {
+        if { [info exists __form_buffer_arr(qf_security_hash) ] } {
+            set accepted_p [qf_submit_key_accepted_p $__form_buffer_arr(qf_security_hash) ]
+            if { $accepted_p } {
+                unset __form_buffer_arr(qf_security_hash)
+                array set __form_input_arr [array get __form_buffer_arr]
+                return $__form_input_exists
+            } else {
+                ns_log Notice "qf_get_inputs_as_array: hash_check with form input of '$__form_buffer_arr(qf_security_hash)' did not match."
+                return 0
+            }
+        } else {
+            set accepted_p 0
+            ns_log Notice "qf_get_inputs_as_array: hash_check requires qf_security_hash, but was not included with form input."
+            return 0
+        }
+    } else {
+        array set __form_input_arr [array get __form_buffer_arr]
+        return $__form_input_exists
+    }
 }
 
 ad_proc -public qf_remember_attributes {
@@ -239,8 +280,11 @@ ad_proc -public qf_form {
     {arg18 ""}
     {arg19 ""}
     {arg20 ""}
+    {arg21 ""}
+    {arg22 ""}
 } {
-    Initiates a form with form tag and supplied attributes. Returns an id. A clumsy url based id is provided if not passed (not recommended).
+    Initiates a form with form tag and supplied attributes. Returns an id. A clumsy url based id is provided if not passed (not recommended). 
+    If hash_check passed, creates a hash to be checked on submit for server-client transaction continuity.
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -263,8 +307,8 @@ ad_proc -public qf_form {
 
     set attributes_tag_list [list action class id method name style target title]
     set attributes_full_list $attributes_tag_list
-    lappend attributes_tag_list form_id
-    set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9 $arg10 $arg11 $arg12 $arg13 $arg14 $arg15 $arg16 $arg17 $arg18 $arg19 $arg20]
+    lappend attributes_full_list form_id hash_check key_id
+    set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9 $arg10 $arg11 $arg12 $arg13 $arg14 $arg15 $arg16 $arg17 $arg18 $arg19 $arg20 $arg21 $arg22]
     set attributes_list [list]
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
@@ -337,6 +381,17 @@ ad_proc -public qf_form {
     if { [lsearch $__form_ids_open_list $attributes_arr(form_id)] == -1 } {
         lappend __form_ids_open_list $attributes_arr(form_id)
     }
+
+    #  append an input tag for qf_security_hash?
+    if { [info exists attributes_arr(hash_check)] && $attributes_arr(hash_check) eq 1 } {
+        if { ![info exists attributes_arr(key_id) ] } {
+            set attributes_arr(key_id) ""
+        }
+        set tag_html "<input[qf_insert_attributes [list type hidden name qf_security_hash value [qf_form_key_create $attributes_arr(key_id) $attributes_arr(action)]]]>"
+        append __form_arr($attributes_arr(form_id)) "$tag_html\n"
+        ns_log Notice "qf_form: adding $tag_html"
+    }
+    
     set __qf_arr(form_id) $attributes_arr(form_id)
     return $attributes_arr(form_id)
 }
