@@ -103,9 +103,9 @@ ad_proc -private qf_submit_key_accepted_p {
         where instance_id =:instance_id and sec_hash =:sec_hash and submit_timestamp is null } ]
     if { !$accepted_p } {
         # there is nothing to compare. log current values:
-        ns_log Warning "qf_submit_key_accepted_p: is false. action_url '$action_url'"
+        ns_log Warning "qf_submit_key_accepted_p: is false. action_url '$action_url' sec_hash '$sec_hash'"
         if { $connected_p } {
-            ns_log Warning "qf_submit_key_accepted_p: session_id '$session_id' secure_conn_p '$secure_conn_p' client_ip '$client_ip'"
+            ns_log Warning "qf_submit_key_accepted_p: session_id '$session_id' secure_p '$secure_p' client_ip '$client_ip'"
         }
     } else {
         # Mark the key expired
