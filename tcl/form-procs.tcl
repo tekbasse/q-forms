@@ -912,7 +912,7 @@ ad_proc -public qf_close {
     set a_fieldset_exists [info exists __form_ids_fieldset_open_list]
     foreach form_id $attributes_arr(form_id) {
         # check if form_id is valid
-        set form_id_position [lsearch -exact $__form_ids_list $attributes_arr(form_id)]
+        set form_id_position [lsearch -exact $__form_ids_open_list $attributes_arr(form_id)]
         if { $form_id_position == -1 } {
             ns_log Warning "qf_close: unknown form_id $attributes_arr(form_id)"
         } else {
