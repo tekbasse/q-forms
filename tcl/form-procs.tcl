@@ -971,14 +971,14 @@ ad_proc -public qf_read {
     }
     # defaults to all form ids
     set form_id_exists [info exists attributes_arr(id)]
-    if { $form_id_exists == 0 || ( $form_id_exists == 1 && $attributes_arr(form_id) eq "" ) } { 
+    if { $form_id_exists == 0 || ( $form_id_exists == 1 && $attributes_arr(id) eq "" ) } { 
         # note, attributes_arr(id) might become a list or a scalar..
         if { [llength $__form_ids_list ] == 1 } {
             set specified_1 1
-            set attributes_arr(form_id) [lindex $__form_ids_list 0]
+            set attributes_arr(id) [lindex $__form_ids_list 0]
         } else {
             set specified_1 0
-            set attributes_arr(form_id) $__form_ids_list
+            set attributes_arr(id) $__form_ids_list
         }
     } else {
         set specified_1 1
@@ -986,14 +986,14 @@ ad_proc -public qf_read {
 
     if { $specified_1 } {
         # a form specified in argument
-        if { ![info exists __form_arr($attributes_arr(form_id)) ] } {
-            ns_log Warning "qf_read: unknown form_id $attributes_arr(form_id)"
+        if { ![info exists __form_arr($attributes_arr(id)) ] } {
+            ns_log Warning "qf_read: unknown form_id $attributes_arr(id)"
         } else {
-             set form_s $__form_arr($attributes_arr(form_id))
+             set form_s $__form_arr($attributes_arr(id))
         }
     } else {
         set forms_list [list]
-        foreach form_id $attributes_arr(form_id) {
+        foreach form_id $attributes_arr(id) {
             # check if form_id is valid
             set form_id_position [lsearch $__form_ids_list $form_id]
             if { $form_id_position == -1 } {
