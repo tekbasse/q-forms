@@ -45,7 +45,7 @@ features
 
 Low learning-curve. Uses tcl context. Procedures match tags. List friendly.
 
-Built in API defaults. Takes less keystrokes to build a form than typing manually.
+Built-in API defaults. Takes less keystrokes to build a form than typing manually.
 
 Can build multiple forms concurently using Tcl file terminology.
 
@@ -54,6 +54,9 @@ No limitations to building dynamic forms with specialized inputs.
 Form values are retrieved as an array named by the programmer.
 
 Form values are automatically quoted, a requirement of secure input handling.
+
+Optional automatic hash generation helps secure form transactions 
+and ignores multiple posts caused from mouse double-clicks and browsing page history.
 
 Multiple values of same key can be combined as a list (instead of producing
 a form post error).
