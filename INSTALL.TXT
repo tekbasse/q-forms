@@ -1,0 +1,5 @@
+Q-FORMS Installation Instructions
+
+To install in an OpenACS system, follow the standard practices for
+downloading, uncompressing, and installing a local copy of this package.
+
