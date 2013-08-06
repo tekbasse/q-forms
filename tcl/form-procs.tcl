@@ -696,7 +696,7 @@ ad_proc -public qf_select {
 
     set attributes_tag_list [list accesskey align class cols id name readonly rows style tabindex title wrap]
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list value form_id value_html
+    lappend attributes_full_list value form_id value_html multiple
     set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9 $arg10 $arg11 $arg12 $arg13 $arg14 $arg15 $arg16 $arg17 $arg18 $arg19 $arg20 $arg21 $arg22 $arg23 $arg24 $arg25 $arg26 $arg27 $arg28]
     set attributes_list [list]
     foreach {attribute value} $arg_list {
@@ -748,7 +748,7 @@ ad_proc -public qf_select {
     }
 
     set tag_html ""
-    ## auto closing the select tag has been debrecated because qf_choice and qf_choices exists.
+    ## auto closing the select tag has been debrecated because qf_choice and qf_choicesexists.
     # TO add this feature requires checking other input tags etc too.
     # This code will be ignored for now, but left in place for future expansion.
     set previous_select 0
@@ -793,7 +793,7 @@ ad_proc -private qf_options {
 } {
     Returns the sequence of options tags usually associated with SELECT tag. 
     Does not append to an open form. These results are usually passed to qf_select that appends an open form.
-    Option tags are added in sequentail order. A blank list in a list_of_lists is ignored. 
+    Option tags are added in sequential order. A blank list in a list_of_lists is ignored. 
     To add a blank option, include the value attribute with a blank/empty value; 
     The option tag will wrap an attribute called "name".  
     To indicate "SELECTED" attribute, include the attribute "selected" with the paired value of 1.
@@ -1537,12 +1537,12 @@ ad_proc -public qf_choices {
                 set input_arr(name) $attributes_arr(name)
             }
             set input_attributes_list [array get input_arr]
-            lappend input_attributes_list form_id $attributes_arr(form_id) type radio
+            lappend input_attributes_list form_id $attributes_arr(form_id) type checkbox
             qf_append form_id $attributes_arr(form_id) html "<li>"
             qf_input $input_attributes_list
             qf_append form_id $attributes_arr(form_id) html "</li>"
         }
-        append args_html "</${tag_wrapping}>"
+        qf_append form_id $attributes_arr(form_id) html "</${tag_wrapping}>\n"
     } else {
         set args_html [qf_select $select_list]
     }
