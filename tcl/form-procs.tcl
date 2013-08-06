@@ -748,12 +748,15 @@ ad_proc -public qf_select {
     }
 
     set tag_html ""
+    ## auto closing the select tag has been debrecated because qf_choice and qf_choices exists.
+    # TO add this feature requires checking other input tags etc too.
+    # This code will be ignored for now, but left in place for future expansion.
     set previous_select 0
     # first close any existing selects tag with form_id
     set __select_open_list_exists [info exists __form_ids_select_open_list]
     if { $__select_open_list_exists } {
         if { [lsearch $__form_ids_select_open_list $attributes_arr(form_id)] > -1 } {
-            append tag_html "</select>\n"
+#            append tag_html "</select>\n"
             set previous_select 1
         }
     }
@@ -776,6 +779,7 @@ ad_proc -public qf_select {
     }
     if { [info exists attributes_arr(value)] } {
         append value_list_html [qf_options $attributes_arr(value)]
+        
     }
 
     append tag_html "<select[qf_insert_attributes $tag_attributes_list]>$value_list_html</select>"
