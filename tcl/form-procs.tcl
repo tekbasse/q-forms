@@ -866,9 +866,9 @@ ad_proc -private qf_option {
     if { [info exists attributes_arr(checked)] && ![info exists attributes_arr(selected)] } {
         set attributes_arr(selected) "1"
     }
-    if { [info exists attributes_arr(selected)] && $attributes_arr(selected) == 1 } {
+    if { ([info exists attributes_arr(selected)] && $attributes_arr(selected) eq "1") && $attributes_arr(selected) eq "1" } {
         set option_html "<option[qf_insert_attributes $tag_attributes_list] selected>$name_html</option>\n"
-    } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) == 1 } {
+    } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) eq "1" } {
         set option_html "<option[qf_insert_attributes $tag_attributes_list] disabled>$name_html</option>\n"
     } else {
         set option_html "<option[qf_insert_attributes $tag_attributes_list]>$name_html</option>\n"
@@ -1126,7 +1126,7 @@ ad_proc -public qf_input {
         set attributes_arr(value) ""
     }
     # convert a "selected" parameter to checked
-    if { [info exists attributes_arr(selected)] && ![info exists attributes_arr(checked)] } {
+    if { ([info exists attributes_arr(selected)] && $attributes_arr(selected) eq "1") && ![info exists attributes_arr(checked)] } {
         set attributes_arr(checked) $attributes_arr(selected)
         lappend attributes_list "checked"
     }
