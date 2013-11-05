@@ -806,10 +806,17 @@ ad_proc -public qf_webify {
    standardizes and sanitizes some junky data for use in web content
 } {
     # need to remove code between script tags and hidden comments
-    set description [qf_remove_tag_contents {<script} {</script>} $description ]
-                     set description [qf_remove_tag_contents {<!--} {-->} $description ]
-
-    regsub -all "<\[^\>\]*>" $description "" description1
+    set description_list [qf_remove_tag_contents {<script} {</script>} $description ]
+    set description_new ""
+    foreach desc_part $description_list {
+        append description_new $desc_part
+    }
+    set description_list [qf_remove_tag_contents {<!--} {-->} $description_new ]
+    set description_new ""
+    foreach desc_part $description_list {
+        append description_new $desc_part
+    }
+    regsub -all "<\[^\>\]*>" $description_new "" description1
     regsub -all "<" $description1 ":" description
     regsub -all ">" $description ":" description1
     regsub -all -nocase {\"} $description1 {} description
