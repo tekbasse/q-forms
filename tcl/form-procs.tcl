@@ -1135,7 +1135,7 @@ ad_proc -public qf_input {
     if { [info exists attributes_arr(label)] && [info exists attributes_arr(type) ] && $attributes_arr(type) ne "hidden" } {
         if { ![info exists attributes_arr(id) ] } {
             set attributes_arr(id) $attributes_arr(name)
-            append attributes_arr(id) "-[string range [clock clicks -milliseconds] end-3 end]-[string range [expr { rand() }] 2 end]"
+            append attributes_arr(id) "-[string range [clock clicks -milliseconds] end-3 end]-[string range [random ] 2 end]"
             lappend attributes_list "id"
         }
     }
