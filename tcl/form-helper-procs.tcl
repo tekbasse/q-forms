@@ -38,7 +38,7 @@ ad_proc -public qss_txt_to_tcl_list_of_lists {
         set columns_list $column_set
 
         set columns [llength $columns_list]
-        ns_log Notice "qss_txt_to_tcl_list_of_lists: col len $columns, columns_list ${columns_list}"
+#        ns_log Notice "qss_txt_to_tcl_list_of_lists: col len $columns, columns_list ${columns_list}"
         if { $columns > 0 } {
             lappend lists_list $columns_list
         }
@@ -106,7 +106,7 @@ ad_proc -public qss_txt_table_stats {
         foreach row $rows_set {
             set col_set [split $row $delimiter]
             set colsC [llength $col_set]
- ns_log Notice "qss_txt_table_stats: delimiter $delimiter colsC $colsC"
+# ns_log Notice "qss_txt_table_stats: delimiter $delimiter colsC $colsC"
             if { [info exists columns_arr(${colsC})] } {
                 set columns_arr(${colsC}) [expr { $columns_arr(${colsC}) + 1 } ]
             } else {
@@ -202,7 +202,7 @@ ad_proc -public qss_txt_table_stats {
         set table_arr(${delimC}-delim) $delimiter
         set table_arr(${delimC}-linebrk) $linebreak_char
         incr delimC
-#ns_log Notice "qss_txt_table_stats: delimC $delimC cols_avg $cols_avg variance $variance median $median median_old $median_old bguess $bguess bguessD $bguessD rowCt $rowCt"
+#ns_log Notice "qss_txt_table_stats: delimC '$delimC' cols_avg $cols_avg variance $variance median $median median_old $median_old bguess $bguess bguessD $bguessD rowCt $rowCt"
     }
     set bguessD $table_arr(0-bguessD)
     set bguess $table_arr(0-bguess)
