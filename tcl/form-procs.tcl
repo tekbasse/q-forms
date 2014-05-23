@@ -1096,12 +1096,13 @@ ad_proc -public qf_input {
     }
 
     if { ![info exists __qf_remember_attributes] } {
-        ns_log Error "qf_input(L801): invoked before qf_form or used in a different namespace than qf_form.."
-        ad_script_abort
+        ns_log Notice "qf_input(L801): invoked before qf_form or used in a different namespace than qf_form.."
+        set __qf_remember_attributes 0
     }
     if { ![info exists __form_ids_list] } {
-        ns_log Error "qf_input:(L805) invoked before qf_form or used in a different namespace than qf_form.."
-        ad_script_abort
+        ns_log Warning "qf_input:(L805) invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [random]]
+        set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
     if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
@@ -1166,7 +1167,7 @@ ad_proc -public qf_input {
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
      
-    return 
+    return "${tag_html}\n"
 }
 
 ad_proc -public qf_append { 
