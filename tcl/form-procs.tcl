@@ -1206,8 +1206,9 @@ ad_proc -public qf_append {
     }
 
     if { ![info exists __form_ids_list] } {
-        ns_log Error "qf_append: invoked before qf_form or used in a different namespace than qf_form.."
-        ad_script_abort
+        ns_log Warning "qf_append:(L1209) invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [random]]
+        set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
     set form_id_exists [info exists attributes_arr(form_id)]
@@ -1230,7 +1231,7 @@ ad_proc -public qf_append {
 
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) $attributes_arr(html)
-    return 
+    return $attributes_arr(html)
 }
 
 ad_proc -private qf_insert_attributes {
