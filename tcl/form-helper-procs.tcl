@@ -800,6 +800,7 @@ ad_proc -public qf_abbreviate {
     }
     return $abbrev_phrase
 }
+
 ad_proc -public qf_webify {
  description
 } {
@@ -823,4 +824,37 @@ ad_proc -public qf_webify {
     regsub -all -nocase {\'} $description {} description1
     regsub -all -nocase {&[a-z]+;} $description1 {} description
     return $description
+}
+
+ad_proc -public qf_is_decimal {
+ value
+} {
+   checks if value is a decimal number that can be used in tcl decimal math. Returns 1 if true, otherwise 0.
+} {
+    # following regexp from acs-tcl/tcl/json-procs.tcl which references json.org, ietf.org, Thomas Maeder, Glue Software Engineering AG and Don Baccus
+    
+    # tokens consisting of a single character
+    #variable singleCharTokens { "{" "}" ":" "\\[" "\\]" "," }
+    #variable singleCharTokenRE "\[[join $singleCharTokens {}]\]"
+    
+    # quoted string tokens
+    #variable escapableREs { "[\\\"\\\\/bfnrt]" "u[[:xdigit:]]{4}" }
+    #variable escapedCharRE "\\\\(?:[join $escapableREs |])"
+    #variable unescapedCharRE {[^\\\"]}
+    #variable stringRE "\"(?:$escapedCharRE|$unescapedCharRE)*\""
+    
+    # (unquoted) words
+    #variable wordTokens { "true" "false" "null" }
+    #variable wordTokenRE [join $wordTokens "|"]
+    
+    # number tokens
+    # negative lookahead (?!0)[[:digit:]]+ might be more elegant, but
+    # would slow down tokenizing by a factor of up to 3!
+    set positiveRE {[1-9][[:digit:]]*}
+    set cardinalRE "-?(?:$positiveRE|0)"
+    set fractionRE {[.][[:digit:]]+}
+    set exponentialRE {[eE][+-]?[[:digit:]]+}
+    set numberRE "^${cardinalRE}(?:$fractionRE)?(?:$exponentialRE)?$"
+    set type_decimal_p [regexp -- $numberRE $value]
+    return $type_decimal_p
 }
