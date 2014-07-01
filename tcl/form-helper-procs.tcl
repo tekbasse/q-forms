@@ -38,7 +38,7 @@ ad_proc -public qss_txt_to_tcl_list_of_lists {
         set columns_list $column_set
 
         set columns [llength $columns_list]
-        ns_log Notice "qss_txt_to_tcl_list_of_lists: col len $columns, columns_list ${columns_list}"
+#        ns_log Notice "qss_txt_to_tcl_list_of_lists: col len $columns, columns_list ${columns_list}"
         if { $columns > 0 } {
             lappend lists_list $columns_list
         }
@@ -106,7 +106,7 @@ ad_proc -public qss_txt_table_stats {
         foreach row $rows_set {
             set col_set [split $row $delimiter]
             set colsC [llength $col_set]
- ns_log Notice "qss_txt_table_stats: delimiter $delimiter colsC $colsC"
+# ns_log Notice "qss_txt_table_stats: delimiter $delimiter colsC $colsC"
             if { [info exists columns_arr(${colsC})] } {
                 set columns_arr(${colsC}) [expr { $columns_arr(${colsC}) + 1 } ]
             } else {
@@ -202,7 +202,7 @@ ad_proc -public qss_txt_table_stats {
         set table_arr(${delimC}-delim) $delimiter
         set table_arr(${delimC}-linebrk) $linebreak_char
         incr delimC
-#ns_log Notice "qss_txt_table_stats: delimC $delimC cols_avg $cols_avg variance $variance median $median median_old $median_old bguess $bguess bguessD $bguessD rowCt $rowCt"
+#ns_log Notice "qss_txt_table_stats: delimC '$delimC' cols_avg $cols_avg variance $variance median $median median_old $median_old bguess $bguess bguessD $bguessD rowCt $rowCt"
     }
     set bguessD $table_arr(0-bguessD)
     set bguess $table_arr(0-bguess)
@@ -800,20 +800,61 @@ ad_proc -public qf_abbreviate {
     }
     return $abbrev_phrase
 }
+
 ad_proc -public qf_webify {
  description
 } {
    standardizes and sanitizes some junky data for use in web content
 } {
     # need to remove code between script tags and hidden comments
-    set description [qf_remove_tag_contents {<script} {</script>} $description ]
-                     set description [qf_remove_tag_contents {<!--} {-->} $description ]
-
-    regsub -all "<\[^\>\]*>" $description "" description1
+    set description_list [qf_remove_tag_contents {<script} {</script>} $description ]
+    set description_new ""
+    foreach desc_part $description_list {
+        append description_new $desc_part
+    }
+    set description_list [qf_remove_tag_contents {<!--} {-->} $description_new ]
+    set description_new ""
+    foreach desc_part $description_list {
+        append description_new $desc_part
+    }
+    regsub -all "<\[^\>\]*>" $description_new "" description1
     regsub -all "<" $description1 ":" description
     regsub -all ">" $description ":" description1
     regsub -all -nocase {\"} $description1 {} description
     regsub -all -nocase {\'} $description {} description1
     regsub -all -nocase {&[a-z]+;} $description1 {} description
     return $description
+}
+
+ad_proc -public qf_is_decimal {
+ value
+} {
+   checks if value is a decimal number that can be used in tcl decimal math. Returns 1 if true, otherwise 0.
+} {
+    # following regexp from acs-tcl/tcl/json-procs.tcl which references json.org, ietf.org, Thomas Maeder, Glue Software Engineering AG and Don Baccus
+    
+    # tokens consisting of a single character
+    #variable singleCharTokens { "{" "}" ":" "\\[" "\\]" "," }
+    #variable singleCharTokenRE "\[[join $singleCharTokens {}]\]"
+    
+    # quoted string tokens
+    #variable escapableREs { "[\\\"\\\\/bfnrt]" "u[[:xdigit:]]{4}" }
+    #variable escapedCharRE "\\\\(?:[join $escapableREs |])"
+    #variable unescapedCharRE {[^\\\"]}
+    #variable stringRE "\"(?:$escapedCharRE|$unescapedCharRE)*\""
+    
+    # (unquoted) words
+    #variable wordTokens { "true" "false" "null" }
+    #variable wordTokenRE [join $wordTokens "|"]
+    
+    # number tokens
+    # negative lookahead (?!0)[[:digit:]]+ might be more elegant, but
+    # would slow down tokenizing by a factor of up to 3!
+    set positiveRE {[1-9][[:digit:]]*}
+    set cardinalRE "-?(?:$positiveRE|0)"
+    set fractionRE {[.][[:digit:]]+}
+    set exponentialRE {[eE][+-]?[[:digit:]]+}
+    set numberRE "^${cardinalRE}(?:$fractionRE)?(?:$exponentialRE)?$"
+    set type_decimal_p [regexp -- $numberRE $value]
+    return $type_decimal_p
 }

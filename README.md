@@ -13,7 +13,7 @@ Q-Forms provides procedures for building forms dynamically in OpenACS.
 It is an OpenACS service package that allows convenient building and
 interpreting of web-based forms via tcl in a web page.
 
-Q-Forms procedures begin with qf_* and parallel form html tags with many
+Q-Forms procedures begin with qf_* and parallel html's form tags with many
 automatic defaults that remove the tedious nature of building forms 
 via html or an alternate form building context, such as OpenACS form
 builder, ad_form or acs-templating.
@@ -22,7 +22,7 @@ license
 -------
 Copyright (c) 2013 Benjamin Brink
 po box 20, Marylhurst, OR 97036-0020 usa
-email: kappa@dekka.com
+email: tekbasse@yahoo.com
 
 Q-Forms is open source and published under the GNU General Public License, consistent with the OpenACS system: http://www.gnu.org/licenses/gpl.html
 A local copy is available at q-forms/LICENSE.html
@@ -45,7 +45,7 @@ features
 
 Low learning-curve. Uses tcl context. Procedures match tags. List friendly.
 
-Built in API defaults. Takes less keystrokes to build a form than typing manually.
+Built-in API defaults. Takes less keystrokes to build a form than typing manually.
 
 Can build multiple forms concurently using Tcl file terminology.
 
@@ -54,6 +54,9 @@ No limitations to building dynamic forms with specialized inputs.
 Form values are retrieved as an array named by the programmer.
 
 Form values are automatically quoted, a requirement of secure input handling.
+
+Optional automatic hash generation helps secure form transactions 
+and ignores multiple posts caused from mouse double-clicks and browsing page history.
 
 Multiple values of same key can be combined as a list (instead of producing
 a form post error).
@@ -65,3 +68,6 @@ No UI javascript is used. Technologies with limited UI or cpu power can use it.
 Integrates with acs-templating features.
 
 
+installation
+------------
+See file q-forms/INSTALL.TXT for directions on installing.

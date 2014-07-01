@@ -696,7 +696,7 @@ ad_proc -public qf_select {
 
     set attributes_tag_list [list accesskey align class cols id name readonly rows style tabindex title wrap]
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list value form_id value_html
+    lappend attributes_full_list value form_id value_html multiple
     set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9 $arg10 $arg11 $arg12 $arg13 $arg14 $arg15 $arg16 $arg17 $arg18 $arg19 $arg20 $arg21 $arg22 $arg23 $arg24 $arg25 $arg26 $arg27 $arg28]
     set attributes_list [list]
     foreach {attribute value} $arg_list {
@@ -748,12 +748,15 @@ ad_proc -public qf_select {
     }
 
     set tag_html ""
+    ## auto closing the select tag has been debrecated because qf_choice and qf_choicesexists.
+    # TO add this feature requires checking other input tags etc too.
+    # This code will be ignored for now, but left in place for future expansion.
     set previous_select 0
     # first close any existing selects tag with form_id
     set __select_open_list_exists [info exists __form_ids_select_open_list]
     if { $__select_open_list_exists } {
         if { [lsearch $__form_ids_select_open_list $attributes_arr(form_id)] > -1 } {
-            append tag_html "</select>\n"
+#            append tag_html "</select>\n"
             set previous_select 1
         }
     }
@@ -776,6 +779,7 @@ ad_proc -public qf_select {
     }
     if { [info exists attributes_arr(value)] } {
         append value_list_html [qf_options $attributes_arr(value)]
+        
     }
 
     append tag_html "<select[qf_insert_attributes $tag_attributes_list]>$value_list_html</select>"
@@ -789,7 +793,7 @@ ad_proc -private qf_options {
 } {
     Returns the sequence of options tags usually associated with SELECT tag. 
     Does not append to an open form. These results are usually passed to qf_select that appends an open form.
-    Option tags are added in sequentail order. A blank list in a list_of_lists is ignored. 
+    Option tags are added in sequential order. A blank list in a list_of_lists is ignored. 
     To add a blank option, include the value attribute with a blank/empty value; 
     The option tag will wrap an attribute called "name".  
     To indicate "SELECTED" attribute, include the attribute "selected" with the paired value of 1.
@@ -862,9 +866,9 @@ ad_proc -private qf_option {
     if { [info exists attributes_arr(checked)] && ![info exists attributes_arr(selected)] } {
         set attributes_arr(selected) "1"
     }
-    if { [info exists attributes_arr(selected)] && $attributes_arr(selected) == 1 } {
+    if { ([info exists attributes_arr(selected)] && $attributes_arr(selected) eq "1") && $attributes_arr(selected) eq "1" } {
         set option_html "<option[qf_insert_attributes $tag_attributes_list] selected>$name_html</option>\n"
-    } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) == 1 } {
+    } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) eq "1" } {
         set option_html "<option[qf_insert_attributes $tag_attributes_list] disabled>$name_html</option>\n"
     } else {
         set option_html "<option[qf_insert_attributes $tag_attributes_list]>$name_html</option>\n"
@@ -1092,12 +1096,13 @@ ad_proc -public qf_input {
     }
 
     if { ![info exists __qf_remember_attributes] } {
-        ns_log Error "qf_input(L801): invoked before qf_form or used in a different namespace than qf_form.."
-        ad_script_abort
+        ns_log Notice "qf_input(L801): invoked before qf_form or used in a different namespace than qf_form.."
+        set __qf_remember_attributes 0
     }
     if { ![info exists __form_ids_list] } {
-        ns_log Error "qf_input:(L805) invoked before qf_form or used in a different namespace than qf_form.."
-        ad_script_abort
+        ns_log Warning "qf_input:(L805) invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [random]]
+        set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
     if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
@@ -1122,7 +1127,7 @@ ad_proc -public qf_input {
         set attributes_arr(value) ""
     }
     # convert a "selected" parameter to checked
-    if { [info exists attributes_arr(selected)] && ![info exists attributes_arr(checked)] } {
+    if { ([info exists attributes_arr(selected)] && $attributes_arr(selected) eq "1") && ![info exists attributes_arr(checked)] } {
         set attributes_arr(checked) $attributes_arr(selected)
         lappend attributes_list "checked"
     }
@@ -1131,7 +1136,7 @@ ad_proc -public qf_input {
     if { [info exists attributes_arr(label)] && [info exists attributes_arr(type) ] && $attributes_arr(type) ne "hidden" } {
         if { ![info exists attributes_arr(id) ] } {
             set attributes_arr(id) $attributes_arr(name)
-            append attributes_arr(id) "-[string range [clock clicks -milliseconds] end-3 end]-[string range [expr { rand() }] 2 end]"
+            append attributes_arr(id) "-[string range [clock clicks -milliseconds] end-3 end]-[string range [random ] 2 end]"
             lappend attributes_list "id"
         }
     }
@@ -1162,7 +1167,7 @@ ad_proc -public qf_input {
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
      
-    return 
+    return "${tag_html}\n"
 }
 
 ad_proc -public qf_append { 
@@ -1201,8 +1206,9 @@ ad_proc -public qf_append {
     }
 
     if { ![info exists __form_ids_list] } {
-        ns_log Error "qf_append: invoked before qf_form or used in a different namespace than qf_form.."
-        ad_script_abort
+        ns_log Warning "qf_append:(L1209) invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [random]]
+        set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
     set form_id_exists [info exists attributes_arr(form_id)]
@@ -1225,7 +1231,7 @@ ad_proc -public qf_append {
 
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) $attributes_arr(html)
-    return 
+    return $attributes_arr(html)
 }
 
 ad_proc -private qf_insert_attributes {
@@ -1436,12 +1442,12 @@ ad_proc -public qf_choices {
     {arg23 ""}
     {arg24 ""}
  } {
-    returns html of a select/option bar or radio button list (where only 1 value is returned to a posted form).
+    returns html of a select multiple box or list  of checkboxes (where multiple values may be sent with form post).
      Required attributes:  name, value.  
-     Set "type" to "select" for select bar, or "checkbox" for checkboxes.
+     Set "type" to "select" for multi select box, or "checkbox" for checkboxes.
      The value of the "value" attribute is a list_of_lists, each list item contains attribute/value pairs for a radio or option/bar item.
      If "label" not provided for tags in the list_of_lists, the value of the "value" attribute is also used for label.
-     Set "selected" attribute to 1 in the value list_of_lists to indicate item selected. Default is unselected.
+     Set "selected" attribute to 1 in the value list_of_lists to indicate item selected. Default is unselected (if selected attributed is not included, or its value not 1)..
  } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -1533,12 +1539,12 @@ ad_proc -public qf_choices {
                 set input_arr(name) $attributes_arr(name)
             }
             set input_attributes_list [array get input_arr]
-            lappend input_attributes_list form_id $attributes_arr(form_id) type radio
+            lappend input_attributes_list form_id $attributes_arr(form_id) type checkbox
             qf_append form_id $attributes_arr(form_id) html "<li>"
             qf_input $input_attributes_list
             qf_append form_id $attributes_arr(form_id) html "</li>"
         }
-        append args_html "</${tag_wrapping}>"
+        qf_append form_id $attributes_arr(form_id) html "</${tag_wrapping}>\n"
     } else {
         set args_html [qf_select $select_list]
     }

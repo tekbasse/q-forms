@@ -1,0 +1,64 @@
+Q-FORMS Installation Instructions
+
+To install in an OpenACS system, follow the standard practices for
+downloading, uncompressing, and installing a local copy of this package.
+
+Detailed instructions follow.
+
+Download Q-Forms
+
+The easiest way is to go to https://github.com/tekbasse/q-forms
+and click on the ZIP button on the left side.
+
+# From shell, that would be something like:
+
+wget https://github.com/tekbasse/q-forms/archive/master.zip
+
+# if wget isn't available locally, try fetch or curl.
+
+Uncompress Q-Forms
+
+# Once downloaded, unzip the file with 'unzip'.
+# That might have to be grabbed from freebsd ports.
+
+unzip master.zip
+
+# Then rename the directory:
+
+mv q-forms-master q-forms
+
+# move the directory to the openacs/packages/ directory
+
+mv q-forms your-openacs-4/packages/.
+
+# change to the openacs-4/packages directory
+
+cd your-openacs-4/packages
+
+# changes permissions to match other packages
+# replace user_name and user_group with your local ones. Sometimes they're openacs:openacs, sometimes nobody:nogroup etc
+
+chown -R user_name:user_group q-forms
+
+# make sure the file permissions are consistent with the rest of openacs
+
+chmod -R 754 q-forms
+
+# Then start openacs if it isn't already.
+
+# Browse to your website's local url:
+
+/acs-admin/
+
+# click "Install Software"
+
+# click "Install from Local"
+
+# click on the box next to Q-Forms
+
+# click the "Install or update checked applications" button
+
+# follow instructions (usually requiring server restart) 
+
+# That's it!
+
