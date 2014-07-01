@@ -1442,12 +1442,12 @@ ad_proc -public qf_choices {
     {arg23 ""}
     {arg24 ""}
  } {
-    returns html of a select/option bar or radio button list (where only 1 value is returned to a posted form).
+    returns html of a select multiple box or list  of checkboxes (where multiple values may be sent with form post).
      Required attributes:  name, value.  
-     Set "type" to "select" for select bar, or "checkbox" for checkboxes.
+     Set "type" to "select" for multi select box, or "checkbox" for checkboxes.
      The value of the "value" attribute is a list_of_lists, each list item contains attribute/value pairs for a radio or option/bar item.
      If "label" not provided for tags in the list_of_lists, the value of the "value" attribute is also used for label.
-     Set "selected" attribute to 1 in the value list_of_lists to indicate item selected. Default is unselected.
+     Set "selected" attribute to 1 in the value list_of_lists to indicate item selected. Default is unselected (if selected attributed is not included, or its value not 1)..
  } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
