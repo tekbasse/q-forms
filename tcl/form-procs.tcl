@@ -1052,9 +1052,9 @@ ad_proc -public qf_input {
     {arg32 ""}
 } {
     creates a form input tag, supplying attributes where nonempty values are supplied. when using CHECKED, set the attribute to 1.
-    allowed attributes: type accesskey align alt border checked class id maxlength name readonly size src tabindex value.
+    allowed attributes: type accesskey align alt border checked class id maxlength name readonly size src tabindex value title.
     other allowed: form_id label. label is used to wrap the input tag with a label tag containing a label that is associated with the input.
-    checkbox and radio inputs present label after input tag, other inputs are preceeded by label. Omit label attribute to not use this feature.
+    checkbox and radio inputs present label after input tag, other inputs are preceeded by label. Omit label attribute to not use this feature. Attribute title is associated with label.
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -1077,7 +1077,7 @@ ad_proc -public qf_input {
 
     set attributes_tag_list [list type accesskey align alt border checked class id maxlength name readonly size src tabindex value]
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list form_id label selected
+    lappend attributes_full_list form_id label selected title
     set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9 $arg10 $arg11 $arg12 $arg13 $arg14 $arg15 $arg16 $arg17 $arg18 $arg19 $arg20 $arg21 $arg22 $arg23 $arg24 $arg25 $arg26 $arg27 $arg28 $arg29 $arg30 $arg31 $arg32]
 
     set attributes_list [list]
@@ -1139,6 +1139,10 @@ ad_proc -public qf_input {
             append attributes_arr(id) "-[string range [clock clicks -milliseconds] end-3 end]-[string range [random ] 2 end]"
             lappend attributes_list "id"
         }
+        if { [info exists attributes_arr(title) ] } {
+            set label_title $attributes_arr(title)
+            unset attributes_arr(title)
+        }
     }
     # prepare attributes to process
     set tag_attributes_list [list]
@@ -1156,9 +1160,17 @@ ad_proc -public qf_input {
     # by default, wrap the input with a label tag for better UI, part 2
     if { [info exists attributes_arr(label)] && [info exists attributes_arr(type) ] && $attributes_arr(type) ne "hidden" } {
         if { $attributes_arr(type) eq "checkbox" || $attributes_arr(type) eq "radio" } {
-            set tag_html "<label for=\"${attributes_arr(id)}\"><input[qf_insert_attributes $tag_attributes_list]${tag_suffix}>${attributes_arr(label)}</label>"
+            set tag_html "<label for=\"${attributes_arr(id)}\""
+            if { [info exists label_title] } {
+                append tag_html " title=\"${label_title}\""
+            }
+            append tag_html "><input[qf_insert_attributes $tag_attributes_list]${tag_suffix}>${attributes_arr(label)}</label>"
         } else {
-            set tag_html "<label for=\"${attributes_arr(id)}\">${attributes_arr(label)}<input[qf_insert_attributes $tag_attributes_list]></label>"
+            set tag_html "<label for=\"${attributes_arr(id)}\""
+            if { [info exists label_title] } {
+                append tag_html " title=\"${label_title}\""
+            }
+            append tag_html ">${attributes_arr(label)}<input[qf_insert_attributes $tag_attributes_list]></label>"
         }
     } else {
         set tag_html "<input[qf_insert_attributes $tag_attributes_list]${tag_suffix}>"
