@@ -851,7 +851,7 @@ ad_proc -public qf_is_decimal {
     # negative lookahead (?!0)[[:digit:]]+ might be more elegant, but
     # would slow down tokenizing by a factor of up to 3!
     set positiveRE {[1-9][[:digit:]]+[.]?|[[:digit:]][.]?}
-    set cardinalRE "-?(?:$positiveRE)"
+    set cardinalRE "-?(?:$positiveRE)?"
     set fractionRE {[.][[:digit:]]+}
     set exponentialRE {[eE][+-]?[[:digit:]]+}
     set numberRE "^${cardinalRE}(?:$fractionRE)?(?:$exponentialRE)?$"
