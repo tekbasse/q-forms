@@ -201,15 +201,16 @@ ad_proc -public qss_txt_table_stats {
         set table_arr(${delimC}-rows) $rowCt
         set table_arr(${delimC}-delim) $delimiter
         set table_arr(${delimC}-linebrk) $linebreak_char
+        ns_log Notice "qss_txt_table_stats: delimC '$delimC' delimiter '${delimiter}' cols_avg $cols_avg variance $variance median $median median_old $median_old bguess $bguess bguessD $bguessD rowCt $rowCt"
         incr delimC
-#ns_log Notice "qss_txt_table_stats: delimC '$delimC' cols_avg $cols_avg variance $variance median $median median_old $median_old bguess $bguess bguessD $bguessD rowCt $rowCt"
     }
     set bguessD $table_arr(0-bguessD)
     set bguess $table_arr(0-bguess)
     set rows_count $table_arr(0-rows)
     set delimiter $table_arr(0-delim)
+    # bguessD is absolute value of bguess from variance
     for { set i 0 } { $i < $delimC } { incr i } {
-        if { $table_arr(${i}-bguessD) <= $bguessD && $table_arr(${i}-bguess) > 1 } {
+        if { ( $table_arr(${i}-bguessD) <= $bguessD || $bguess < 2 ) && $table_arr(${i}-bguess) > 1 } {
             if { ( $bguess > 1 && $table_arr(${i}-bguess) < $bguess ) || $bguess < 2 } {
                 set bguess $table_arr(${i}-bguess)
                 set bguessD $table_arr(${i}-bguessD)
@@ -218,6 +219,7 @@ ad_proc -public qss_txt_table_stats {
             }
         }
     }
+    ns_log Notice "qss_txt_table_stats linebreak '${linebreak_char}' delim '${delimiter}' rows '${rows_count}' columns '${bguess}'"
     set return_list [list $linebreak_char $delimiter $rows_count $bguess]
 #    ns_log Notice "qss_txt_table_stats: return_list $return_list"
     return $return_list
