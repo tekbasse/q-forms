@@ -256,10 +256,13 @@ ad_proc -public qss_list_of_lists_to_html_table {
     table_list_of_lists 
     {table_attribute_list ""}
     {td_attribute_lists ""}
+    {th_rows "1"}
 } {
     Converts a tcl list_of_lists to an html table, returns table as text/html
     table_attribute_list can be a list of attribute pairs to pass to the TABLE tag: attribute1 value1 attribute2 value2..
-    The td_attribute_lists adds attributes to TD tags at the same position as table_list_of_lists 
+    td_attribute_lists adds attributes to TD tags at the same position as table_list_of_lists 
+    First row(s) use html accessibility guidelines TH tag inplace of TD.
+    Number of th_rows sets the number of rows that use TH tag. Default is 1.
     the list is represented {row1 {cell1} {cell2} {cell3} .. {cell x} } {row2 {cell1}...}
     Note that attribute - value pairs in td_attribute_lists can be added uniquely to each TD tag.
 } {
@@ -278,10 +281,19 @@ ad_proc -public qss_list_of_lists_to_html_table {
         set repeat_last_row_p 1
         set repeat_row [expr { [llength $td_attribute_lists] - 1 } ]
     }
+    set td_tag "th"
+    set td_tag_html "<"
+    append td_tag_html $td_tag
     foreach row_list $table_list_of_lists {
         append table_html "<tr>"
+        if { $row_i == $th_rows } {
+            set td_tag "td"
+            set td_tag_html "<"
+            append td_tag_html $td_tag
+        }
+
         foreach column $row_list {
-            append table_html "<td"
+            append table_html $td_tag_html
             if { $repeat_last_row_p && $row_i > $repeat_row } {
                 set attribute_value_list [lindex [lindex $td_attribute_lists $repeat_row] $column_i]
 
@@ -292,7 +304,7 @@ ad_proc -public qss_list_of_lists_to_html_table {
                 regsub -all -- {\"} $value {\"} value
                 append table_html " $attribute=\"$value\""
             }
-            append table_html ">${column}</td>"
+            append table_html ">${column}</${td_tag}>"
             incr column_i
         }
         append table_html "</tr>\n"
