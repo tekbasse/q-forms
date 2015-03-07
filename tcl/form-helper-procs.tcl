@@ -217,34 +217,43 @@ ad_proc -public qss_txt_table_stats {
         }
     }
     # sort by smallest variance
-    set sorted_bg_lists [lsort -increasing -real -index 2 $bguess_lists]
-    ns_log Notice "qss_txt_table_stats.220: sorted_bg_lists ${sorted_bg_lists}"
-    set i [lindex [lindex $sorted_bg_lists 0] 0]
-    set bguess $table_arr(${i}-bguess)
-    set bguessD $table_arr(${i}-bguessD)
-    set rows_count $table_arr(${i}-rows)
-    set delimiter $table_arr(${i}-delim)
-
-    # If there are no bguesses over 2, then use this process:
-    if { [llength $bguess_lists] == 0 } {
-        # This following techinque is not dynamic enough to handle all conditions.
-        set bguessD $table_arr(0-bguessD)
-        set bguess $table_arr(0-bguess)
-        set rows_count $table_arr(0-rows)
-        set delimiter $table_arr(0-delim)
-        # bguessD is absolute value of bguess from variance
-        for { set i 0 } { $i < $delimC } { incr i } {
-            if { ( $table_arr(${i}-bguessD) <= $bguessD ) && $table_arr(${i}-bguess) > 1 } {
-                if { ( $bguess > 1 && $table_arr(${i}-bguess) < $bguess ) || $bguess < 2 } {
-                    set bguess $table_arr(${i}-bguess)
-                    set bguessD $table_arr(${i}-bguessD)
-                    set rows_count $table_arr(${i}-rows)
-                    set delimiter $table_arr(${i}-delim)
+    if { [llength $bguess_lists] > 0 } {
+        set sorted_bg_lists [lsort -increasing -real -index 2 $bguess_lists]
+        ns_log Notice "qss_txt_table_stats.220: sorted_bg_lists '${sorted_bg_lists}'"
+        set i [lindex [lindex $sorted_bg_lists 0] 0]
+        set bguess $table_arr(${i}-bguess)
+        set bguessD $table_arr(${i}-bguessD)
+        set rows_count $table_arr(${i}-rows)
+        set delimiter $table_arr(${i}-delim)
+        
+        # If there are no bguesses over 2, then use this process:
+        if { [llength $bguess_lists] == 0 } {
+            # This following techinque is not dynamic enough to handle all conditions.
+            set bguessD $table_arr(0-bguessD)
+            set bguess $table_arr(0-bguess)
+            set rows_count $table_arr(0-rows)
+            set delimiter $table_arr(0-delim)
+            # bguessD is absolute value of bguess from variance
+            for { set i 0 } { $i < $delimC } { incr i } {
+                if { ( $table_arr(${i}-bguessD) <= $bguessD ) && $table_arr(${i}-bguess) > 1 } {
+                    if { ( $bguess > 1 && $table_arr(${i}-bguess) < $bguess ) || $bguess < 2 } {
+                        set bguess $table_arr(${i}-bguess)
+                        set bguessD $table_arr(${i}-bguessD)
+                        set rows_count $table_arr(${i}-rows)
+                        set delimiter $table_arr(${i}-delim)
+                    }
                 }
             }
         }
+        ns_log Notice "qss_txt_table_stats linebreak '${linebreak_char}' delim '${delimiter}' rows '${rows_count}' columns '${bguess}'"
+    } else {
+        # There appears to be no rows or columns
+        # create defaults
+        set linebreak_char "\n"
+        set delimiter "\t"
+        set rows_count 1
+        set bguess 1
     }
-    ns_log Notice "qss_txt_table_stats linebreak '${linebreak_char}' delim '${delimiter}' rows '${rows_count}' columns '${bguess}'"
     set return_list [list $linebreak_char $delimiter $rows_count $bguess]
 #    ns_log Notice "qss_txt_table_stats: return_list $return_list"
     return $return_list
