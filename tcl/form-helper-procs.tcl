@@ -907,3 +907,13 @@ ad_proc -public qf_is_decimal {
     return $type_decimal_p
 }
 
+ad_proc -public qf_unquote {
+ value
+} {
+   unquotes html similar to ad_unquotehtml except language keys, so that they are not rendered. Useful when creating forms with existing input values.
+} {
+    set value_quoted [ad_unquotehtml $value]
+    regsub -all -- {\#} $value_quoted {\&num;} value_quoted
+    return $value_quoted
+}
+
