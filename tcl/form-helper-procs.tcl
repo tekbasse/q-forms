@@ -13,7 +13,45 @@ ad_library {
 
 }
 
+ad_proc -public qss_table_cols_filter {
+    table_lists
+    col_names
+    {blank_missing_cols_p "0"}
+} {
+    Excludes all columns not referenced by name. 
+    Columns are ordered in order of names.
+    If column not found in table and blank_missing_cols_p is 1,
+    an empty column is included in returned table.
+    Otherwise, column is not included in table.
+} {
+    set col_names_list [split $col_names]
 
+    # create an index list of column titles
+    set titles_list [lindex $table_lists 0]
+    set cols_idx_list [list ]
+    foreach name $col_names_list {
+        set col_name [string trim $name]
+        set col_idx [lsearch -exact $col_name $titles_list]
+        if { $col_idx > -1 || $blank_missing_cols_p } {
+            lappend cols_idx_list $col_idx
+        }
+    }
+    # build new table with column titles index
+    set new_table_lists [list ]
+    foreach row_list $table_lists {
+        set new_row_list [list ]
+        foreach col_idx $cols_idx_list {
+            if { $col_idx > -1 } {
+                set col_value [lindex $row_list $col_idx]
+            } else {
+                set col_value ""
+            }
+            lappend new_row_list $col_value
+        }
+        lappend new_table_lists $new_row_list
+    }
+    return $new_table_lists
+}
 
 ad_proc -public qss_txt_to_tcl_list_of_lists {
     textarea
