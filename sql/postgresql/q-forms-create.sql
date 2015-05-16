@@ -1,8 +1,10 @@
 -- q-forms-create.sql
 --
--- @author Benjamin Brink
--- @for OpenACS
--- @cvs-id
+--  @Copyright (c) 2010-5 Benjamin Brink
+--  @license GNU General Public License 3, see project home or http://www.gnu.org/licenses/gpl-3.0.en.html
+--  @project home: http://github.com/tekbasse/q-forms
+--  @address: po box 20, Marylhurst, OR 97036-0020 usa
+--  @email: tekbasse@yahoo.com
 --
 
 -- The purpose of table qf_key_map is to answer the question:
