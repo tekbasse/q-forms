@@ -2,7 +2,11 @@ ad_library {
 
     routines for creating, managing input via html forms
     @creation-date 21 Nov 2010
-    @cs-id $Id:
+    @Copyright (c) 2010-5 Benjamin Brink
+    @license GNU General Public License 3, see project home or http://www.gnu.org/licenses/gpl-3.0.en.html
+    @project home: http://github.com/tekbasse/q-forms
+    @address: po box 20, Marylhurst, OR 97036-0020 usa
+    @email: tekbasse@yahoo.com
 }
 
 # use _ to clear a new default
