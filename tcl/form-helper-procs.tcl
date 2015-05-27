@@ -296,6 +296,7 @@ ad_proc -public qss_txt_table_stats {
         set rows_count 1
         set bguess 1
     }
+    ns_log Notice "qss_txt_table_stats linebreak '${linebreak_char}' delim '${delimiter}' rows '${rows_count}' columns '${bguess}'"
     set return_list [list $linebreak_char $delimiter $rows_count $bguess]
 #    ns_log Notice "qss_txt_table_stats: return_list $return_list"
     return $return_list
