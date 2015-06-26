@@ -469,6 +469,16 @@ ad_proc -public qf_is_natural_number {
     return $is_natural
 }
 
+ad_proc -public qf_is_integer {
+    value
+} {
+    answers question: is value an integer?
+    returns 0 or 1
+} {
+    set is_integer [regexp {^(0*)(([\-]?[1-9][0-9]*|0))$} $value match zeros value]
+    return $is_integer
+}
+
 ad_proc -public qf_remove_from_list {
     value value_list
 } {
