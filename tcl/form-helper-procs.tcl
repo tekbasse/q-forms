@@ -17,6 +17,32 @@ ad_library {
 
 }
 
+ad_proc -public qf_lists_to_vars {
+    values_list
+    keys_list
+} {
+    Returns variables assigned to the values in values_list, paired by index.
+    For example the fourth index of keys_list is assigned the value of the 
+    fourth index of values_list.
+    If values_list is shorter, the orphaned keys are assigned an empty string.
+    If keys_list is shorter, excess values are returned as a list.
+} {
+    set remainder_list [list ]
+    set values_list_len [llength $values_list]
+    set keys_list_len [llength $keys_list]
+    if { $values_list_len > $keys_list_len } {
+        set remainder_list [lrange $values_list $keys_list_len end]
+        set values_list [lrange $values_list 0 ${keys_list_len}-1]
+    }
+    set i 0
+    foreach key $keys_list {
+        upvar 1 $key val_${key}
+        set val_${key} [lindex $values_list $i]
+        incr i
+    }
+    return $remainder_list
+}
+
 ad_proc -public qss_table_cols_filter {
     table_lists
     col_names
