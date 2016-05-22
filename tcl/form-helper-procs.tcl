@@ -43,6 +43,26 @@ ad_proc -public qf_lists_to_vars {
     return $remainder_list
 }
 
+ad_proc -public qf_array_to_vars {
+    array_name
+    keys_list
+} {
+e   Returns variables assigned to the values in array(variable) for variables in keys_list.
+    This returns a selection of array values, not all elements as done by template::util::array_to-vars 
+    If a key doesn't exist, the variable is created and assigned the empty string.
+} {
+    upvar 1 $array_name an_arr
+    foreach key $keys_list {
+        if { [info exists $an_arr(${key}) ] } {
+            uplevel [list set $key $an_arr(${key}) ]
+        } else {
+            uplevel [list set $key ""]
+        }
+    }
+    return 1
+}
+
+
 ad_proc -public qss_table_cols_filter {
     table_lists
     col_names
