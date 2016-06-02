@@ -47,8 +47,8 @@ ad_proc -public qf_array_to_vars {
     array_name
     keys_list
 } {
-e   Returns variables assigned to the values in array(variable) for variables in keys_list.
-    This returns a selection of array values, not all elements as done by template::util::array_to-vars 
+    Returns variables assigned to the values in array(variable) for variables named in keys_list.
+    This returns a selection of array values, not all elements as done by template::util::array_to_vars 
     If a key doesn't exist, the variable is created and assigned the empty string.
 } {
     upvar 1 $array_name an_arr
