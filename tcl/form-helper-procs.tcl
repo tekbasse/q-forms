@@ -43,6 +43,35 @@ ad_proc -public qf_lists_to_vars {
     return $remainder_list
 }
 
+
+ad_proc -public qf_lists_to_array {
+    array_name
+    values_list
+    keys_list
+} {
+    Returns an array with elements in key_list assigned to the values in values_list, paired by list index.
+    For example the fourth index of keys_list is an element assigned the value of the 
+    fourth index of values_list.
+    If values_list is shorter, the orphaned keys are assigned an empty string.
+    If keys_list is shorter, excess values are returned as a list.
+} {
+    upvar 1 array_name name_arr
+    set remainder_list [list ]
+    set values_list_len [llength $values_list]
+    set keys_list_len [llength $keys_list]
+    if { $values_list_len > $keys_list_len } {
+        set remainder_list [lrange $values_list $keys_list_len end]
+        set values_list [lrange $values_list 0 ${keys_list_len}-1]
+    }
+    set i 0
+    foreach key $keys_list {
+        set name_arr(${key}) [lindex $values_list $i]
+        incr i
+    }
+    return $remainder_list
+}
+
+
 ad_proc -public qf_array_to_vars {
     array_name
     keys_list
