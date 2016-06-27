@@ -82,7 +82,7 @@ ad_proc -public qf_array_to_vars {
 } {
     upvar 1 $array_name an_arr
     foreach key $keys_list {
-        if { [info exists $an_arr(${key}) ] } {
+        if { [info exists an_arr(${key}) ] } {
             uplevel [list set $key $an_arr(${key}) ]
         } else {
             uplevel [list set $key ""]
