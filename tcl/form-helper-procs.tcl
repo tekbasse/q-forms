@@ -1045,3 +1045,6 @@ ad_proc -public qf_unquote {
     return $value_quoted
 }
 
+# tcl now has:
+# string is true -strict $value
+# string is false -strict $value
