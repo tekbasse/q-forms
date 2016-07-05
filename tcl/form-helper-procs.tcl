@@ -1048,3 +1048,20 @@ ad_proc -public qf_unquote {
 # tcl now has:
 # string is true -strict $value
 # string is false -strict $value
+# in openacs api: template::util::is_true, but that looks like an wip since description does not fit actual.
+
+ad_proc -public qf_is_true {
+    value
+    {default "0"}
+} {
+    Intreprets value as a boolean. If value is ambiguous, defaults to the value of default, usually 0.
+} {
+    set test1 [string is true -strict $value]
+    set test2 [string is false -strict $value]
+    if { $test1 == $test2 } {
+        set interp_p $default
+    } else {
+        set interp_p $test1
+    }
+    return $test1
+}
