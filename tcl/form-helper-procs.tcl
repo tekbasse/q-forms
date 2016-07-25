@@ -20,12 +20,15 @@ ad_library {
 ad_proc -public qf_lists_to_vars {
     values_list
     keys_list
+    {only_these_keys_list ""}
 } {
     Returns variables assigned to the values in values_list, paired by index.
     For example the fourth index of keys_list is assigned the value of the 
     fourth index of values_list.
     If values_list is shorter, the orphaned keys are assigned an empty string.
     If keys_list is shorter, excess values are returned as a list.
+    If only_these_keys_list is not empty, only these keys will be converted. 
+    Anything in only_these_keys_list that is not in keys_list is ignored.
 } {
     set remainder_list [list ]
     set values_list_len [llength $values_list]
@@ -34,11 +37,24 @@ ad_proc -public qf_lists_to_vars {
         set remainder_list [lrange $values_list $keys_list_len end]
         set values_list [lrange $values_list 0 ${keys_list_len}-1]
     }
-    set i 0
-    foreach key $keys_list {
-        upvar 1 $key val_${key}
-        set val_${key} [lindex $values_list $i]
-        incr i
+
+    if { $only_these_keys_list eq "" } {
+        set i 0
+        foreach key $keys_list {
+            upvar 1 $key val_${key}
+            set val_${key} [lindex $values_list $i]
+            incr i
+        }
+    } else {
+        # fkey = filtered key
+        set otk_list [split $only_these_keys_list]
+        foreach fkey $otk_list {
+            set i [lsearch -exact $keys_list $fkey]
+            if { $i > -1 } {
+                upvar 1 $fkey val_${fkey}
+                set val_${fkey} [lindex $values_list $i]
+            }
+        }
     }
     return $remainder_list
 }
