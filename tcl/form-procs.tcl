@@ -278,13 +278,16 @@ ad_proc -public qf_form {
     {value1 ""}
     args
 } {
-    Initiates a form with form tag and supplied attributes. Returns an id. A clumsy url based id is provided if not passed (not recommended). 
+    Initiates a form with form tag and supplied attributes. 
+    Returns an id. 
+    A clumsy url-based id is provided if not passed (not recommended).
     If hash_check passed, creates a hash to be checked on submit for server-client transaction continuity.
-    
+    <pre>
     To create a form that uploads a file, set attribute enctype to "multipart/form-data", set method to "post".
     Also, create an input tag with type attribute  set to "file" to choose a file to upload, 
     and set name attribute to name of file as it will be received at the server along with
     other input from the form.
+
     In the following example, name is set to "clientfile".
     
     Data can be retreived via ns_queryget:
@@ -292,8 +295,8 @@ ad_proc -public qf_form {
     set uploaded_filename \[ns_queryget clientfile \]
 
     set file_pathname_on_server \[ns_queryget clientfile.tmpfile \]
-
-    For more info, see <a href="http://naviserver.sourceforge.net/n/naviserver/files/ns_queryget.html">Naviserver documentation for ns_queryget</a>
+    </pre><p>
+    For more info, see <a href="http://naviserver.sourceforge.net/n/naviserver/files/ns_queryget.html">Naviserver documentation for ns_queryget</a></p>
     
 } {
     # use upvar to set form content, set/change defaults
