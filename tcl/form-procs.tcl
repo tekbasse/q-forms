@@ -234,24 +234,28 @@ ad_proc -public qf_get_inputs_as_array {
             # next key-value pair
         }
     }
-    if { $arg_arr(hash_check) } {
-        if { [info exists __form_buffer_arr(qf_security_hash) ] } {
-            set accepted_p [qf_submit_key_accepted_p $__form_buffer_arr(qf_security_hash) ]
-            if { $accepted_p } {
-                unset __form_buffer_arr(qf_security_hash)
-                array set __form_input_arr [array get __form_buffer_arr]
-                return $__form_input_exists
+    if { $__form_input_exists } {
+        if { $arg_arr(hash_check) } {
+            if { [info exists __form_buffer_arr(qf_security_hash) ] } {
+                set accepted_p [qf_submit_key_accepted_p $__form_buffer_arr(qf_security_hash) ]
+                if { $accepted_p } {
+                    unset __form_buffer_arr(qf_security_hash)
+                    array set __form_input_arr [array get __form_buffer_arr]
+                    return $__form_input_exists
+                } else {
+                    ns_log Notice "qf_get_inputs_as_array: hash_check with form input of '$__form_buffer_arr(qf_security_hash)' did not match."
+                    return 0
+                }
             } else {
-                ns_log Notice "qf_get_inputs_as_array: hash_check with form input of '$__form_buffer_arr(qf_security_hash)' did not match."
+                set accepted_p 0
+                ns_log Notice "qf_get_inputs_as_array: hash_check requires qf_security_hash, but was not included with form input."
                 return 0
             }
         } else {
-            set accepted_p 0
-            ns_log Notice "qf_get_inputs_as_array: hash_check requires qf_security_hash, but was not included with form input."
-            return 0
+            array set __form_input_arr [array get __form_buffer_arr]
+            return $__form_input_exists
         }
     } else {
-        array set __form_input_arr [array get __form_buffer_arr]
         return $__form_input_exists
     }
 }
