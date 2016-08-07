@@ -290,14 +290,15 @@ ad_proc -public qf_form {
 
     In the following example, name is set to "clientfile".
     
-    Data can be retreived via ns_queryget:
+    After the form has been submitted, data can be retreived via ns_queryget (or qf_get_inputs_as_array ):
 
     set uploaded_filename \[ns_queryget clientfile \]
 
     set file_pathname_on_server \[ns_queryget clientfile.tmpfile \]
     </pre><p>
     For more info, see <a href="http://naviserver.sourceforge.net/n/naviserver/files/ns_queryget.html">Naviserver documentation for ns_queryget</a></p>
-    
+
+    @see qf_get_inputs_as_array
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
