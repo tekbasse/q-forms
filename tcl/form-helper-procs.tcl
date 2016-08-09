@@ -71,7 +71,7 @@ ad_proc -public qf_lists_to_array {
     If values_list is shorter, the orphaned keys are assigned an empty string.
     If keys_list is shorter, excess values are returned as a list.
 } {
-    upvar 1 array_name name_arr
+    upvar 1 $array_name name_arr
     set remainder_list [list ]
     set values_list_len [llength $values_list]
     set keys_list_len [llength $keys_list]
