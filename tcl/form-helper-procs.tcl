@@ -1079,5 +1079,5 @@ ad_proc -public qf_is_true {
     } else {
         set interp_p $test1
     }
-    return $test1
+    return $interp_p
 }
