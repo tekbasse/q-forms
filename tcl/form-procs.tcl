@@ -112,9 +112,9 @@ ad_proc -private qf_submit_key_accepted_p {
         where instance_id =:instance_id and sec_hash =:sec_hash and submit_timestamp is null } ]
     if { !$accepted_p } {
         # there is nothing to compare. log current values:
-        ns_log Warning "qf_submit_key_accepted_p: is false. action_url '$action_url' sec_hash '$sec_hash'"
+        ns_log Warning "qf_submit_key_accepted_p: is false. action_url '${action_url}' sec_hash '${sec_hash}'"
         if { $connected_p } {
-            ns_log Warning "qf_submit_key_accepted_p: session_id '$session_id' secure_p '$secure_p' client_ip '$client_ip'"
+            ns_log Warning "qf_submit_key_accepted_p: session_id '${session_id}' secure_p '${secure_p}' client_ip '${client_ip}'"
         }
     } else {
         # Mark the key expired
@@ -147,7 +147,7 @@ ad_proc -public qf_get_inputs_as_array {
     set arg_arr(multiple_key_as_list) 0
     set arg_arr(hash_check) 0
     set arg_full_list [list duplicate_key_check multiple_key_as_list hash_check]
-    #set arg_list [list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 ]
+    #set arg_list \[list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 \]
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
         set arg_list $arg1
@@ -164,7 +164,7 @@ ad_proc -public qf_get_inputs_as_array {
     foreach {name value} $arg_list {
         set attribute_index [lsearch -exact $arg_full_list $name]
         if { $attribute_index > -1 } {
-            set arg_arr($name) $value
+            set arg_arr(${name}) $value
         } else {
             if { $name ne "" } {
                 ns_log Error "qf_get_inputs_as_array: '${name}' is not a valid name for use with args."
@@ -191,8 +191,8 @@ ad_proc -public qf_get_inputs_as_array {
         # no inserting tcl commands etc!
         if { $__form_key_exists == 0 || ( $__form_key_exists == 1 && [string length $__form_key] == 0 ) } {
             # let's make this an error for now, so we log any attempts
-            #            ns_log Notice "qf_get_inputs_as_array: __form_key_exists ${__form_key_exists} length __form_key [string length ${__form_key}]"
-            #           ns_log Notice "qf_get_inputs_as_array(ref156: attempt to insert unallowed characters to user input '{__form_key}' as '[ns_set key $__form $__form_counter_i]' for counter ${__form_counter_i}."
+            #            ns_log Notice "qf_get_inputs_as_array: __form_key_exists ${__form_key_exists} length __form_key \[string length ${__form_key}\]"
+            #           ns_log Notice "qf_get_inputs_as_array(ref156: attempt to insert unallowed characters to user input '{__form_key}' as '\[ns_set key $__form $__form_counter_i\]' for counter ${__form_counter_i}."
             if { $__form_counter_i > 0 } {
                 ns_log Notice "qf_get_inputs_as_array: attempt to insert unallowed characters to user input '{__form_key}'."
             }
@@ -206,10 +206,10 @@ ad_proc -public qf_get_inputs_as_array {
 
             set __form_input_exists 1
             # check for duplicate key?
-            if { $arg_arr(duplicate_key_check) && [info exists __form_buffer_arr($__form_key) ] } {
-                if { $__form_input ne $__form_buffer_arr($__form_key) } {
+            if { $arg_arr(duplicate_key_check) && [info exists __form_buffer_arr(${__form_key}) ] } {
+                if { $__form_input ne $__form_buffer_arr(${__form_key}) } {
                     # which one is correct? log error
-                    ns_log Error "qf_get_form_input: form input error. duplcate key provided for ${__form_key}"
+                    ns_log Error "qf_get_form_input: form input error. duplcate key provided for '${__form_key}'"
                     ad_script_abort
                     # set __form_input_exists to -1 instead of ad_script_abort?
                 } else {
@@ -217,17 +217,17 @@ ad_proc -public qf_get_inputs_as_array {
                 }
             } elseif { $arg_arr(multiple_key_as_list) } {
                 ns_log Notice "qf_get_inputs_as_array: A key has been posted with multible values. Values assigned to the key as a list."
-                if { [llength $__form_buffer_arr($__form_key)] > 1 } {
+                if { [llength $__form_buffer_arr(${__form_key})] > 1 } {
                     # value is a list, lappend
-                    lappend __form_buffer_arr($__form_key) $__form_input
+                    lappend __form_buffer_arr(${__form_key}) $__form_input
                 } else {
                     # convert the key value to a list
-                    set __value_one $__form_buffer_arr($__form_key)
-                    unset __form_buffer_arr($__form_key)
-                    set __form_buffer_arr($__form_key) [list $__value_one $__form_input]
+                    set __value_one $__form_buffer_arr(${__form_key})
+                    unset __form_buffer_arr(${__form_key})
+                    set __form_buffer_arr(${__form_key}) [list $__value_one $__form_input]
                 }
             } else {
-                set __form_buffer_arr($__form_key) $__form_input
+                set __form_buffer_arr(${__form_key}) $__form_input
                 #                ns_log Debug "qf_get_inputs_as_array: set ${form_array_name}($__form_key) '${__form_input}'."
             }
 
@@ -329,7 +329,7 @@ ad_proc -public qf_form {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
                 lappend attributes_list $attribute
             }
@@ -360,8 +360,8 @@ ad_proc -public qf_form {
     # use previous tag attribute values?
     if { $__qf_remember_attributes } {
         foreach attribute $attributes_list {
-            if { $attribute ne "id" && ![info exists attributes_arr($attribute)] && [info exists __qf_arr(form_$attribute)] } {
-                set attributes_arr($attribute) $__qf_arr(form_$attribute)
+            if { $attribute ne "id" && ![info exists attributes_arr(${attribute})] && [info exists __qf_arr(form_${attribute})] } {
+                set attributes_arr(${attribute}) $__qf_arr(form_${attribute})
             }
         }
     }
@@ -371,7 +371,7 @@ ad_proc -public qf_form {
         set id_exists [info exists attributes_arr(id) ]
         if { $id_exists == 0 || ( $id_exists == 1 && $attributes_arr(id) eq "" ) } { 
             regsub {/} [ad_conn url] {-} form_key
-            append form_key "-[llength $__form_ids_list]"
+            append form_key "-[llength ${__form_ids_list}]"
         } else {
             # since a FORM id has to be unique, lets use it
             set form_key $attributes_arr(id)
@@ -383,16 +383,16 @@ ad_proc -public qf_form {
     # prepare attributes to process
     set tag_attributes_list [list]
     foreach attribute $attributes_list {
-        set __qf_arr(form_$attribute) $attributes_arr($attribute)
+        set __qf_arr(form_${attribute}) $attributes_arr(${attribute})
         # if a form tag requires an attribute, the following test needs to  be forced true
-        if { $attributes_arr($attribute) ne "" } {
-            lappend tag_attributes_list $attribute $attributes_arr($attribute)
+        if { $attributes_arr(${attribute}) ne "" } {
+            lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         }
     }
     
-    set tag_html "<form[qf_insert_attributes $tag_attributes_list]>"
+    set tag_html "<form[qf_insert_attributes ${tag_attributes_list}]>"
     # set results  __form_arr 
-    append __form_arr($attributes_arr(form_id)) "$tag_html\n"
+    append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
     if { [lsearch $__form_ids_list $attributes_arr(form_id)] == -1 } {
         lappend __form_ids_list $attributes_arr(form_id)
 
@@ -407,8 +407,8 @@ ad_proc -public qf_form {
             set attributes_arr(key_id) ""
         }
         set tag_html "<input[qf_insert_attributes [list type hidden name qf_security_hash value [qf_form_key_create $attributes_arr(key_id) $attributes_arr(action)]]]>"
-        append __form_arr($attributes_arr(form_id)) "$tag_html\n"
-        ns_log Notice "qf_form: adding $tag_html"
+        append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
+        ns_log Notice "qf_form: adding ${tag_html}"
     }
     
     set __qf_arr(form_id) $attributes_arr(form_id)
@@ -452,7 +452,7 @@ ad_proc -public qf_fieldset {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
                 lappend attributes_list $attribute
             }
@@ -483,8 +483,8 @@ ad_proc -public qf_fieldset {
     # use previous tag attribute values?
     if { $__qf_remember_attributes } {
         foreach attribute $attributes_list {
-            if { $attribute ne "id" && ![info exists attributes_arr($attribute)] && [info exists __qf_arr(fieldset_$attribute)] } {
-                set attributes_arr($attribute) $__qf_arr(form_$attribute)
+            if { $attribute ne "id" && ![info exists attributes_arr(${attribute})] && [info exists __qf_arr(fieldset_${attribute})] } {
+                set attributes_arr(${attribute}) $__qf_arr(form_${attribute})
             }
         }
     }
@@ -492,8 +492,8 @@ ad_proc -public qf_fieldset {
     # prepare attributes to process
     set tag_attributes_list [list]
     foreach attribute $attributes_list {
-        set __qf_arr(fieldset_$attribute) $attributes_arr($attribute)
-        lappend tag_attributes_list $attribute $attributes_arr($attribute)
+        set __qf_arr(fieldset_${attribute}) $attributes_arr(${attribute})
+        lappend tag_attributes_list $attribute $attributes_arr(${attribute})
     }
     set tag_html ""
     set previous_fs 0
@@ -505,7 +505,7 @@ ad_proc -public qf_fieldset {
             set previous_fs 1
         }
     }
-    append tag_html "<fieldset[qf_insert_attributes $tag_attributes_list]>"
+    append tag_html "<fieldset[qf_insert_attributes ${tag_attributes_list}]>"
 
     # set results __form_ids_fieldset_open_list
     if { $previous_fs } {
@@ -518,7 +518,7 @@ ad_proc -public qf_fieldset {
         }
     }
     # set results  __form_arr, we checked form_id above.
-    append __form_arr($attributes_arr(form_id)) "$tag_html\n"
+    append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
 }
 
 ad_proc -public qf_textarea { 
@@ -560,7 +560,7 @@ ad_proc -public qf_textarea {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             if { [lsearch -exact $attributes_tag_list $attribute ] > -1 } {
                 lappend attributes_list $attribute
             }
@@ -591,8 +591,8 @@ ad_proc -public qf_textarea {
     # use previous tag attribute values?
     if { $__qf_remember_attributes } {
         foreach attribute $attributes_list {
-            if { $attribute ne "id" && ![info exists attributes_arr($attribute)] && [info exists __qf_arr(textarea_$attribute)] } {
-                set attributes_arr($attribute) $__qf_arr(textarea_$attribute)
+            if { $attribute ne "id" && ![info exists attributes_arr(${attribute})] && [info exists __qf_arr(textarea_${attribute})] } {
+                set attributes_arr(${attribute}) $__qf_arr(textarea_${attribute})
             }
         }
     }
@@ -612,15 +612,15 @@ ad_proc -public qf_textarea {
     # prepare attributes to process
     set tag_attributes_list [list]
     foreach attribute $attributes_list {
-        set __qf_arr(textarea_$attribute) $attributes_arr($attribute)
-        lappend tag_attributes_list $attribute $attributes_arr($attribute)
+        set __qf_arr(textarea_${attribute}) $attributes_arr(${attribute})
+        lappend tag_attributes_list $attribute $attributes_arr(${attribute})
     }
 
     # by default, wrap the input with a label tag for better UI
     if { [info exists attributes_arr(id) ] && [info exists attributes_arr(label)] && $attributes_arr(label) ne "" } {
-        set tag_html "<label for=\"${attributes_arr(id)}\">${attributes_arr(label)}</label><textarea[qf_insert_attributes $tag_attributes_list]>${attributes_arr(value)}</textarea>"
+        set tag_html "<label for=\"${attributes_arr(id)}\">${attributes_arr(label)}</label><textarea[qf_insert_attributes ${tag_attributes_list}]>${attributes_arr(value)}</textarea>"
     } else {
-        set tag_html "<textarea[qf_insert_attributes $tag_attributes_list]>${attributes_arr(value)}</textarea>"
+        set tag_html "<textarea[qf_insert_attributes ${tag_attributes_list}]>${attributes_arr(value)}</textarea>"
     }
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
@@ -670,7 +670,7 @@ ad_proc -public qf_select {
                 lappend attributes_list $attribute
             }
         } else {
-            ns_log Error "qf_select: '[ad_quotehtml [string range $attribute 0 15]]' is not a valid attribute."
+            ns_log Error "qf_select: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute."
             ad_script_abort
         }
     }
@@ -695,8 +695,8 @@ ad_proc -public qf_select {
     # use previous tag attribute values?
     if { $__qf_remember_attributes } {
         foreach attribute $attributes_list {
-            if { $attribute ne "id" && ![info exists attributes_arr($attribute)] && [info exists __qf_arr(select_$attribute)] } {
-                set attributes_arr($attribute) $__qf_arr(select_$attribute)
+            if { $attribute ne "id" && ![info exists attributes_arr(${attribute})] && [info exists __qf_arr(select_${attribute})] } {
+                set attributes_arr(${attribute}) $__qf_arr(select_${attribute})
             }
         }
     }
@@ -704,8 +704,8 @@ ad_proc -public qf_select {
     # prepare attributes to process
     set tag_attributes_list [list]
     foreach attribute $attributes_list {
-        set __qf_arr(select_$attribute) $attributes_arr($attribute)
-        lappend tag_attributes_list $attribute $attributes_arr($attribute)
+        set __qf_arr(select_${attribute}) $attributes_arr(${attribute})
+        lappend tag_attributes_list $attribute $attributes_arr(${attribute})
     }
 
     set tag_html ""
@@ -743,7 +743,7 @@ ad_proc -public qf_select {
         
     }
 
-    append tag_html "<select[qf_insert_attributes $tag_attributes_list]>$value_list_html</select>"
+    append tag_html "<select[qf_insert_attributes ${tag_attributes_list}]>${value_list_html}</select>"
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) "${tag_html}\n"
 
@@ -796,14 +796,14 @@ ad_proc -private qf_option {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
                 lappend attributes_list $attribute
             }
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_options: $attribute is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
+            ns_log Error "qf_options: ${attribute} is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
             ad_script_abort
         }
     }
@@ -812,7 +812,7 @@ ad_proc -private qf_option {
     set tag_attributes_list [list]
     foreach attribute $attributes_list {
         if { $attribute ne "selected" && $attribute ne "disabled" && $attribute ne "checked" } {
-            lappend tag_attributes_list $attribute $attributes_arr($attribute)
+            lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         } 
     }
     if { [info exists attributes_arr(label)] } {
@@ -828,11 +828,11 @@ ad_proc -private qf_option {
         set attributes_arr(selected) "1"
     }
     if { ([info exists attributes_arr(selected)] && $attributes_arr(selected) eq "1") && $attributes_arr(selected) eq "1" } {
-        set option_html "<option[qf_insert_attributes $tag_attributes_list] selected>$name_html</option>\n"
+        set option_html "<option[qf_insert_attributes ${tag_attributes_list}] selected>${name_html}</option>\n"
     } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) eq "1" } {
-        set option_html "<option[qf_insert_attributes $tag_attributes_list] disabled>$name_html</option>\n"
+        set option_html "<option[qf_insert_attributes ${tag_attributes_list}] disabled>${name_html}</option>\n"
     } else {
-        set option_html "<option[qf_insert_attributes $tag_attributes_list]>$name_html</option>\n"
+        set option_html "<option[qf_insert_attributes ${tag_attributes_list}]>${name_html}</option>\n"
     }
     return $option_html
 }
@@ -856,7 +856,7 @@ ad_proc -public qf_close {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
         } else {
             if { $attribute ne "" } {
@@ -890,13 +890,13 @@ ad_proc -public qf_close {
                 # close fieldset tag if form has an open one.
                 set form_id_fs_position [lsearch -exact $__form_ids_fieldset_open_list $form_id]
                 if { $form_id_fs_position > -1 } {
-                    append __form_arr($form_id) "</fieldset>\n"
+                    append __form_arr(${form_id}) "</fieldset>\n"
                     # remove form_id from __form_ids_fieldset_open_list
                     set __form_ids_fieldset_open_list [lreplace $__form_ids_fieldset_open_list $form_id_fs_position $form_id_fs_position]
                 }
             }
             # close form
-            append __form_arr($form_id) "</form>\n"    
+            append __form_arr(${form_id}) "</form>\n"    
             # remove form_id from __form_ids_open_list            
             set __form_ids_open_list [lreplace $__form_ids_open_list $form_id_position $form_id_position]
         }
@@ -920,12 +920,12 @@ ad_proc -public qf_read {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_read: $attribute is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
+            ns_log Error "qf_read: '${attribute}' is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
             ad_script_abort
         }
     }
@@ -967,9 +967,9 @@ ad_proc -public qf_read {
             # check if form_id is valid
             set form_id_position [lsearch $__form_ids_list $form_id]
             if { $form_id_position == -1 } {
-                ns_log Warning "qf_read: unknown form_id $form_id"
+                ns_log Warning "qf_read: unknown form_id '${form_id}'"
             } else {
-                lappend forms_list $__form_arr($form_id)
+                lappend forms_list $__form_arr(${form_id})
             }
         }
         set form_s $forms_list
@@ -1017,7 +1017,7 @@ ad_proc -public qf_input {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
                 lappend attributes_list $attribute
             }
@@ -1049,8 +1049,8 @@ ad_proc -public qf_input {
     # use previous tag attribute values?
     if { $__qf_remember_attributes } {
         foreach attribute $attributes_list {
-            if { $attribute ne "id" && $attribute ne "value" && ![info exists attributes_arr($attribute)] && [info exists __qf_arr(input_$attribute)] } {
-                set attributes_arr($attribute) $__qf_arr(input_$attribute)
+            if { $attribute ne "id" && $attribute ne "value" && ![info exists attributes_arr(${attribute})] && [info exists __qf_arr(input_${attribute})] } {
+                set attributes_arr(${attribute}) $__qf_arr(input_${attribute})
             }
         }
     }
@@ -1081,9 +1081,9 @@ ad_proc -public qf_input {
     set tag_attributes_list [list]
     set tag_suffix ""
     foreach attribute $attributes_list {
-        set __qf_arr(input_$attribute) $attributes_arr($attribute)
+        set __qf_arr(input_${attribute}) $attributes_arr(${attribute})
         if { $attribute ne "checked" && $attribute ne "disabled" } {
-            lappend tag_attributes_list $attribute $attributes_arr($attribute)
+            lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         } else {
             set tag_suffix " ${attribute}"
             # set to checked or disabled
@@ -1097,16 +1097,16 @@ ad_proc -public qf_input {
             if { [info exists label_title] } {
                 append tag_html " title=\"${label_title}\""
             }
-            append tag_html "><input[qf_insert_attributes $tag_attributes_list]${tag_suffix}>${attributes_arr(label)}</label>"
+            append tag_html "><input[qf_insert_attributes ${tag_attributes_list}]${tag_suffix}>${attributes_arr(label)}</label>"
         } else {
             set tag_html "<label for=\"${attributes_arr(id)}\""
             if { [info exists label_title] } {
                 append tag_html " title=\"${label_title}\""
             }
-            append tag_html ">${attributes_arr(label)}<input[qf_insert_attributes $tag_attributes_list]></label>"
+            append tag_html ">${attributes_arr(label)}<input[qf_insert_attributes ${tag_attributes_list}]></label>"
         }
     } else {
-        set tag_html "<input[qf_insert_attributes $tag_attributes_list]${tag_suffix}>"
+        set tag_html "<input[qf_insert_attributes ${tag_attributes_list}]${tag_suffix}>"
     }
 
     # set results  __form_arr, we checked form_id above.
@@ -1149,7 +1149,7 @@ ad_proc -public qf_append {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
         } else {
             ns_log Error "qf_append: '${attribute}' is not a valid attribute."
@@ -1193,11 +1193,12 @@ ad_proc -private qf_insert_attributes {
 } {
     set args_html ""
     foreach {attribute value} $args_list {
-        if { [string range $attribute 1 1] eq "-" } {
+        # following range 1 1 changed to 0 0. Provided in case someone puts adds a dash as prefix to attribute
+        if { [string range $attribute 0 0] eq "-" } {
             set $attribute [string range $attribute 1 end]
         }
         regsub -all -- {\"} $value {\"} value
-        append args_html " $attribute=\"$value\""
+        append args_html " " ${attribute} "=\"" ${value} "\""
     }
     return $args_html
 }
@@ -1268,7 +1269,7 @@ ad_proc -public qf_choice {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
             if { [lsearch -exact $attributes_select_list $attribute] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
@@ -1277,7 +1278,7 @@ ad_proc -public qf_choice {
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_choice: [string range $attribute 0 15] is not a valid attribute."
+            ns_log Error "qf_choice: [string range ${attribute} 0 15] is not a valid attribute."
             ad_script_abort
         }
     }
@@ -1288,7 +1289,7 @@ ad_proc -public qf_choice {
         set attributes_arr(form_id) $__qf_arr(form_id) 
     }
     if { [lsearch $__form_ids_list $attributes_arr(form_id)] == -1 } {
-        ns_log Error "qf_choice: unknown form_id $attributes_arr(form_id)"
+        ns_log Error "qf_choice: unknown form_id '$attributes_arr(form_id)'"
         ad_script_abort
     }
     lappend select_list form_id $attributes_arr(form_id)
@@ -1315,8 +1316,8 @@ ad_proc -public qf_choice {
             # ignore proc parameters that are not tag attributes for the tag_wrapping tag
             if { $attribute eq "id" || $attribute eq "style" || $attribute eq "class"  } {
                 # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
-                regsub -all -- {\"} $attributes_arr($attribute) {\"} attributes_arr($attribute)
-                append args_html " $attribute=\"$attributes_arr($attribute)\""
+                regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
+                append args_html " ${attribute}=\"$attributes_arr(${attribute})\""
             }
         }
         append args_html ">\n"
@@ -1347,7 +1348,7 @@ ad_proc -public qf_choice {
                 qf_input $input_attributes_list
                 qf_append form_id $attributes_arr(form_id) html "</li>"
             } else {
-                ns_log Notice "qf_choice: list not even number of members, skipping rendering of value attribute with list: $input_attributes_list"
+                ns_log Notice "qf_choice: list not even number of members, skipping rendering of value attribute with list: '${input_attributes_list}'"
             }
         }
         append args_html "</${tag_wrapping}>"
@@ -1403,14 +1404,14 @@ ad_proc -public qf_choices {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
+            set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
             if { [lsearch -exact $attributes_select_list $attribute ] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
                 lappend select_list $attribute $value
             } 
         } else {
-            ns_log Error "qf_choices: [string range $attribute 0 15] is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
+            ns_log Error "qf_choices: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
             ad_script_abort
         }
     }
@@ -1447,8 +1448,8 @@ ad_proc -public qf_choices {
             # ignore proc parameters that are not tag attributes
             if { $attribute eq "id" || $attribute eq "style" || $attribute eq "class"  } {
                 # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
-                regsub -all -- {\"} $attributes_arr($attribute) {\"} attributes_arr($attribute)
-                append args_html " $attribute=\"$attributes_arr($attribute)\""
+                regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
+                append args_html " ${attribute}=\"$attributes_arr(${attribute})\""
             }
         }
         append args_html ">\n"
