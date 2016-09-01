@@ -1054,11 +1054,15 @@ ad_proc -public qf_is_decimal {
 ad_proc -public qf_unquote {
  value
 } {
-   unquotes html similar to ad_unquotehtml except language keys, so that they are not rendered. Useful when creating forms with existing input values.
+   unquotes html similar to ad_unquotehtml except language keys, 
+    so that they are not rendered. 
+    Useful when creating forms with existing input values.
+    Does not unqoute square brackets.
 } {
-    set value_quoted [ad_unquotehtml $value]
-    regsub -all -- {\#} $value_quoted {\&num;} value_quoted
-    return $value_quoted
+    # following from ad_unquotehtml
+    set value_unquoted [string map {&amp; & &gt; > &lt; < &quot; \" &#34; \" &#39; '} $value]
+    regsub -all -- {\#} $value_unquoted {\&num;} value_unquoted
+    return $value_unquoted
 }
 
 # tcl now has:
@@ -1081,3 +1085,4 @@ ad_proc -public qf_is_true {
     }
     return $interp_p
 }
+
