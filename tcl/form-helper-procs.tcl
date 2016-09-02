@@ -3,7 +3,7 @@ ad_library {
     procedures for helping render form data or presentation for form data
     @creation-date 15 May 2012
     @Copyright (c) 2012-5 Benjamin Brink
-    @license GNU General Public License 3, see project home or http://www.gnu.org/licenses/gpl-3.0.en.html
+    @license GNU General Public License 2, see project home or http://www.gnu.org/licenses/gpl.html
     @project home: http://github.com/tekbasse/q-forms
     @address: po box 20, Marylhurst, OR 97036-0020 usa
     @email: tekbasse@yahoo.com
