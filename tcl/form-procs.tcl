@@ -111,8 +111,11 @@ ad_proc -private qf_submit_key_accepted_p {
     }
     # the key_id is used to help generate unpredictable hashes, but isn't used at this level of input validation
     set accepted_p [db_0or1row qf_form_key_check_hash { 
-        select session_id as session_id_i, action_url as action_url_i, secure_conn_p as secure_conn_p_i, client_ip as client_ip_i from qf_key_map
-        where instance_id =:instance_id and sec_hash =:sec_hash and submit_timestamp is null } ]
+        select session_id as session_id_i, action_url as action_url_i, secure_conn_p as secure_conn_p_i, client_ip as client_ip_i, sh_key_id
+        from qf_key_map
+        where instance_id =:instance_id 
+        and sec_hash =:sec_hash 
+        and submit_timestamp is null } ]
     if { !$accepted_p } {
         # there is nothing to compare. log current values:
         ns_log Warning "qf_submit_key_accepted_p.115: is false. action_url '${action_url}' sec_hash '${sec_hash}'"
@@ -152,6 +155,7 @@ ad_proc -public qf_get_inputs_as_array {
     set arg_arr(hash_check) 0
     set arg_full_list [list duplicate_key_check multiple_key_as_list hash_check]
     #set arg_list \[list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 \]
+    set instance_id [ad_conn package_id]
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
         set arg_list $arg1
@@ -249,7 +253,7 @@ ad_proc -public qf_get_inputs_as_array {
                     set name_value_lists [db_list_of_lists qf_name_value_pairs_r {select arg_name,arg_value
                         from qf_name_value_pairs
                         where instance_id=:instance_id
-                        and sh_key_id=:__sh_key_id} ]
+                        and sh_key_id=:sh_key_id} ]
                     foreach {__form_key __form_input} $name_value_lists {
                         
                         # For consistency, this is a repeat of external form logic checks above.
