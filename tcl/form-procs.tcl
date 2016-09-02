@@ -37,6 +37,9 @@ ad_proc -private qf_form_key_create {
 } {
     creates the form key for a more secure form transaction. Returns the security hash. See also qf_submit_key_accepted_p
 } {
+    upvar 1 __qf_hc_arr __qf_hc_arr
+    upvar 1 attributes_arr attributes_arr
+
     # This proc is inspired from sec_random_token
     if { $instance_id eq "" } {
         # set instance_id package_id
@@ -76,6 +79,7 @@ ad_proc -private qf_form_key_create {
     db_dml qf_form_key_create {insert into qf_key_map
         (instance_id,sh_key_id,rendered_timestamp,sec_hash,key_id,session_id,action_url,secure_conn_p,client_ip)
         values (:instance_id,:sh_key_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_ip) }
+    set __qf_hc_arr($attributes_arr(form_id)) $sh_key_id
     return $sec_hash
 }
 
@@ -86,7 +90,7 @@ ad_proc -private qf_submit_key_accepted_p {
     Checks the form key against existing ones. Returns 1 if matches and unexpired, otherwise returns 0.
 } {
     # sh_key_id is passed to qf_get_inputs_as_array to collect hidden name value pairs.
-    upvar 1 __sh_key_id sh_key_id
+    upvar 1 sh_key_id sh_key_id
     # This proc is inspired from sec_random_token
     if { $instance_id eq "" } {
         # set instance_id package_id
@@ -125,8 +129,10 @@ ad_proc -private qf_submit_key_accepted_p {
     } else {
         # Mark the key expired
         set submit_timestamp [ns_time]
-        db_dml qf_form_key_expire { update qf_key_map
-            set submit_timestamp = :submit_timestamp where instance_id =:instance_id and sec_hash =:sec_hash and submit_timestamp is null }
+        db_dml qf_form_key_expire { update qf_key_map set submit_timestamp=:submit_timestamp 
+            where instance_id =:instance_id 
+            and sec_hash=:sec_hash 
+            and submit_timestamp is null }
     }
     return $accepted_p
 }
@@ -148,7 +154,6 @@ ad_proc -public qf_get_inputs_as_array {
 } {
     # get args
     upvar 1 $form_array_name __form_input_arr
-    upvar 1 __sh_key_id sh_key_id
     set array __form_buffer_arr
     set arg_arr(duplicate_key_check) 0
     set arg_arr(multiple_key_as_list) 0
@@ -248,12 +253,22 @@ ad_proc -public qf_get_inputs_as_array {
             if { [info exists __form_buffer_arr(qf_security_hash) ] } {
                 set accepted_p [qf_submit_key_accepted_p $__form_buffer_arr(qf_security_hash) ]
                 if { $accepted_p } {
-                    
+
                     # Are there any hidden name pairs to grab from db?
                     set name_value_lists [db_list_of_lists qf_name_value_pairs_r {select arg_name,arg_value
                         from qf_name_value_pairs
                         where instance_id=:instance_id
                         and sh_key_id=:sh_key_id} ]
+                    # clear any external input and warn if it is different
+                    foreach {__form_key __form_input} $name_value_lists {
+                        if { [info exists __form_buffer_arr(${__form_key}) ] } {
+                            set test [ad_unquotehtml $__form_buffer_arr(${__form_key})]
+                            if { $test ne $__form_input } {
+                                ns_log Warning "qf_get_inputs_as_array.12000: input of type 'hidden' from form does not match for name '${__form_key}'. Internal used. internal '${__form_input}' from form '${test}'"
+                                array unset __form_buffer_arr $__form_key
+                            }
+                        }
+                    }
                     foreach {__form_key __form_input} $name_value_lists {
                         
                         # For consistency, this is a repeat of external form logic checks above.
@@ -350,11 +365,13 @@ ad_proc -public qf_form {
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
+    # __qf_hc_arr(form_id) contains value of hash_check. 
     upvar 1 __form_ids_list __form_ids_list
     upvar 1 __form_arr __form_arr
     upvar 1 __form_ids_open_list __form_ids_open_list
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
+    upvar 1 __qf_hc_arr __qf_hc_arr
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -457,10 +474,14 @@ ad_proc -public qf_form {
             set attributes_arr(key_id) ""
         }
         set tag_html "<input"
-        append tag_html [qf_insert_attributes [list type hidden name qf_security_hash value [qf_form_key_create $attributes_arr(key_id) $attributes_arr(action)]]]
+        set input_val [qf_form_key_create $attributes_arr(key_id) $attributes_arr(action)]
+        #set __qf_hc_arr($attributes_arr(form_id)) $sh_key_id (done by qf_form_key_create)
+        append tag_html [qf_insert_attributes [list type hidden name qf_security_hash value $input_val]]
         append tag_html ">"
         append __form_arr($attributes_arr(form_id)) ${tag_html} "\n"
         ns_log Notice "qf_form.411: adding ${tag_html}"
+    } else {
+        set __qf_hc_arr($attributes_arr(form_id)) 0
     }
     
     set __qf_arr(form_id) $attributes_arr(form_id)
@@ -1062,7 +1083,7 @@ ad_proc -public qf_input {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_fieldset_open_list __form_ids_fieldset_open_list
-
+    upvar 1 __qf_hc_arr __qf_hc_arr
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
         set arg_list $arg1
@@ -1108,6 +1129,7 @@ ad_proc -public qf_input {
     if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
         set attributes_arr(form_id) $__qf_arr(form_id) 
     }
+    
     if { [lsearch $__form_ids_list $attributes_arr(form_id)] == -1 } {
         ns_log Error "qf_input.1045: unknown form_id $attributes_arr(form_id)"
         ad_script_abort
@@ -1179,8 +1201,24 @@ ad_proc -public qf_input {
             append tag_html [qf_insert_attributes $tag_attributes_list] "></label>"
         }
     } else {
+        if { $attributes_arr(type) eq "hidden" } {
+            if { [info exists __qf_hc_arr($attributes_arr(form_id))] && $__qf_hc_arr($attributes_arr(form_id)) > 0 } {
+                # pass via db for integrity of internal references
+                set instance_id [ad_conn package_id]
+                set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
+                set arg_name_idx [lsearch -exact $tag_attributes_list name]
+                set arg_name [lindex $tag_attributes_list $arg_name_idx+1]
+                set arg_value_idx [lsearch -exact $tag_attributes_list value]
+                set arg_value [lindex $tag_attributes_list $arg_value_idx+1]
+                db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
+                    (instance_id,sh_key_id,arg_name,arg_value) 
+                    values (:instance_id,:sh_key_id,:arg_name,:arg_value) }
+            }
+            # and create some honey for sweet tooths regardless.
+        }
         set tag_html "<input"
         append tag_html [qf_insert_attributes $tag_attributes_list] $tag_suffix ">"
+
     }
 
     # set results  __form_arr, we checked form_id above.
@@ -1268,7 +1306,7 @@ ad_proc -private qf_insert_attributes {
 } {
     set args_html ""
     foreach {attribute value} $args_list {
-        # following range 1 1 changed to 0 0. Provided in case someone puts adds a dash as prefix to attribute
+        # following range 1 1 changed to 0 0. Provided in case someone puts a dash as prefix to attribute
         if { [string range $attribute 0 0] eq "-" } {
             set $attribute [string range $attribute 1 end]
         }

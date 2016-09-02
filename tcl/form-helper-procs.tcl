@@ -420,7 +420,7 @@ ad_proc -public qss_list_of_lists_to_html_table {
     #setup repeat pattern for formatting rows, if last formatting row is not blank
     set repeat_last_row_p 0
     if { [llength [lindex $td_attribute_lists end] ] > 0 } {
-        # this feature only comes into play if td_attrubte_lists is not as long as table_list_of_lists
+        # this feature only comes into play if td_attribute_lists is not as long as table_list_of_lists
         set repeat_last_row_p 1
         set repeat_row [expr { [llength $td_attribute_lists] - 1 } ]
     }
