@@ -72,9 +72,10 @@ ad_proc -private qf_form_key_create {
     }
     append sec_hash_string $start_clicks $session_id $secure_p $client_ip $action_url $time_sec $key_id
     set sec_hash [ns_sha1 $sec_hash_string]
+    set sh_key_id [db_nextval qf_id_seq]
     db_dml qf_form_key_create {insert into qf_key_map
-        (instance_id,rendered_timestamp,sec_hash,key_id,session_id,action_url,secure_conn_p,client_ip)
-        values (:instance_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_ip) }
+        (instance_id,sh_key_id,rendered_timestamp,sec_hash,key_id,session_id,action_url,secure_conn_p,client_ip)
+        values (:instance_id,:sh_key_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_ip) }
     return $sec_hash
 }
 
@@ -84,6 +85,8 @@ ad_proc -private qf_submit_key_accepted_p {
 } {
     Checks the form key against existing ones. Returns 1 if matches and unexpired, otherwise returns 0.
 } {
+    # sh_key_id is passed to qf_get_inputs_as_array to collect hidden name value pairs.
+    upvar 1 __sh_key_id sh_key_id
     # This proc is inspired from sec_random_token
     if { $instance_id eq "" } {
         # set instance_id package_id
@@ -142,6 +145,7 @@ ad_proc -public qf_get_inputs_as_array {
 } {
     # get args
     upvar 1 $form_array_name __form_input_arr
+    upvar 1 __sh_key_id sh_key_id
     set array __form_buffer_arr
     set arg_arr(duplicate_key_check) 0
     set arg_arr(multiple_key_as_list) 0
@@ -233,22 +237,62 @@ ad_proc -public qf_get_inputs_as_array {
 
             # next key-value pair
         }
+        
     }
     if { $__form_input_exists } {
         if { $arg_arr(hash_check) } {
             if { [info exists __form_buffer_arr(qf_security_hash) ] } {
                 set accepted_p [qf_submit_key_accepted_p $__form_buffer_arr(qf_security_hash) ]
                 if { $accepted_p } {
+                    
+                    # Are there any hidden name pairs to grab from db?
+                    set name_value_lists [db_list_of_lists qf_name_value_pairs_r {select arg_name,arg_value
+                        from qf_name_value_pairs
+                        where instance_id=:instance_id
+                        and sh_key_id=:__sh_key_id} ]
+                    foreach {__form_key __form_input} $name_value_lists {
+                        
+                        # For consistency, this is a repeat of external form logic checks above.
+                        
+                        # check for duplicate key?
+                        if { $arg_arr(duplicate_key_check) && [info exists __form_buffer_arr(${__form_key}) ] } {
+                            if { $__form_input ne $__form_buffer_arr(${__form_key}) } {
+                                # which one is correct? log error
+                                ns_log Error "qf_get_form_input.312: form input error. duplcate key provided for '${__form_key}'"
+                                ad_script_abort
+                                # set __form_input_exists to -1 instead of ad_script_abort?
+                            } else {
+                                ns_log Warning "qf_get_form_input.316: notice, form has a duplicate key with multiple values containing same info.."
+                            }
+                        } elseif { $arg_arr(multiple_key_as_list) } {
+                            ns_log Notice "qf_get_inputs_as_array.319: A key has been posted with multible values. Values assigned to the key as a list."
+                            if { [llength $__form_buffer_arr(${__form_key})] > 1 } {
+                                # value is a list, lappend
+                                lappend __form_buffer_arr(${__form_key}) $__form_input
+                            } else {
+                                # convert the key value to a list
+                                set __value_one $__form_buffer_arr(${__form_key})
+                                unset __form_buffer_arr(${__form_key})
+                                set __form_buffer_arr(${__form_key}) [list $__value_one $__form_input]
+                            }
+                        } else {
+                            set __form_buffer_arr(${__form_key}) $__form_input
+                            #                ns_log Debug "qf_get_inputs_as_array.231: set ${form_array_name}($__form_key) '${__form_input}'."
+                        }
+                        
+                        # next key-value pair
+                    }
+
                     unset __form_buffer_arr(qf_security_hash)
                     array set __form_input_arr [array get __form_buffer_arr]
                     return $__form_input_exists
                 } else {
-                    ns_log Notice "qf_get_inputs_as_array.246: hash_check with form input of '$__form_buffer_arr(qf_security_hash)' did not match."
+                    ns_log Notice "qf_get_inputs_as_array.346: hash_check with form input of '$__form_buffer_arr(qf_security_hash)' did not match."
                     return 0
                 }
             } else {
                 set accepted_p 0
-                ns_log Notice "qf_get_inputs_as_array.251: hash_check requires qf_security_hash, but was not included with form input."
+                ns_log Notice "qf_get_inputs_as_array.351: hash_check requires qf_security_hash, but was not included with form input."
                 return 0
             }
         } else {
