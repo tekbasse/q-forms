@@ -21,35 +21,41 @@ ad_proc -private qf::schedule::flush {
 } {
     set success_p 1
     # flush used forms
-    db_transaction {
-        set key_list [db_list qf_sched_keys_r {select sh_key_id from qf_key_map 
-            where submit_timestamp not null} ]
-        db_dml qf_sched_qf_key_map_d { 
-            delete from qf_key_map 
-            where sh_key_id in ([template::util::tcl_to_sql_list $key_list]) }
-        db dml qf_sched_qf_name_value_pairs_d {
-            delete from qf_name_value_pairs 
-            where sh_key_id in ([template::util::tcl_to_sql_list $key_list]) }
-    } on_error {
-        ns_log Error "qf::schedule::flush.34: Error is: '${errmsg}'"
-        set success_p 0
+
+    set key_list [db_list qf_sched_keys_r {select sh_key_id from qf_key_map 
+        where submit_timestamp is not null} ]
+    set count [llength $key_list]
+    if { $count > 0 } {
+        ns_log Notice "qf::schedule::flush '${count}' used items"
+        db_transaction {
+            db_dml qf_sched_qf_key_map_d "delete from qf_key_map 
+                where sh_key_id in ([template::util::tcl_to_sql_list $key_list])"
+            db_dml qf_sched_qf_name_value_pairs_d "delete from qf_name_value_pairs 
+                where sh_key_id in ([template::util::tcl_to_sql_list $key_list])"
+        } on_error {
+            ns_log Error "qf::schedule::flush.34: Error is: '${errmsg}'"
+            set success_p 0
+        }
     }
+
     # flush old forms
     set timeout_s 3600
     set stale_timestamp [expr { [ns_time] - $timeout_s } ]
-    db_transaction {
-        set key_list [db_list qf_sched_keys_r {select sh_key_id from qf_key_map 
-            where submit_timestamp is null 
-            and rendered_timestamp < :stale_timestamp } ]
-        db_dml qf_sched_qf_key_map_d { 
-            delete from qf_key_map 
-            where sh_key_id in ([template::util::tcl_to_sql_list $key_list]) }
-        db dml qf_sched_qf_name_value_pairs_d {
-            delete from qf_name_value_pairs 
-            where sh_key_id in ([template::util::tcl_to_sql_list $key_list]) }
-    } on_error {
-        ns_log Error "qf::schedule::flush.51: Error is: '${errmsg}'"
-        set success_p 0
+    set key_list [db_list qf_sched_keys_r {select sh_key_id from qf_key_map 
+        where submit_timestamp is null 
+        and rendered_timestamp < :stale_timestamp } ]
+    set count [llength $key_list]
+    if { $count > 0 } {
+        ns_log Notice "qf::schedule::flush '${count}' stale items"
+        db_transaction {
+            db_dml qf_sched_qf_key_map_d "delete from qf_key_map 
+                where sh_key_id in ([template::util::tcl_to_sql_list $key_list])"
+            db_dml qf_sched_qf_name_value_pairs_d "delete from qf_name_value_pairs 
+                where sh_key_id in ([template::util::tcl_to_sql_list $key_list])"
+        } on_error {
+            ns_log Error "qf::schedule::flush.51: Error is: '${errmsg}'"
+            set success_p 0
+        }
     }
 
     return $success_p
