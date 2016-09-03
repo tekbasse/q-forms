@@ -57,6 +57,8 @@ Form values are automatically quoted, a requirement of secure input handling.
 Optional automatic hash generation helps secure form transactions 
 and ignores multiple posts caused from mouse double-clicks and browsing page history.
 
+This extra secure feature also prevents tampering of hidden form values.
+
 Multiple values of same key can be combined as a list (instead of producing
 a form post error).
 
