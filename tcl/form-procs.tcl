@@ -9,6 +9,10 @@ ad_library {
     @email: tekbasse@yahoo.com
 }
 
+#agenda:
+##code a proc called qf_bypass that does like qf_input hidden with sec_hash
+## but emits no html tag to the form.
+
 # use _ to clear a new default
 # use upvar to grab previous defaults and re-use (with qf_input only)
 # main namespace vars:
