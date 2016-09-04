@@ -1131,6 +1131,7 @@ ad_proc -public qf_bypass {
 
 ad_proc -public qf_bypass_nv_list {
     args_list
+    {form_id ""}
 } {
     Places name value pairs in a temporary db cache for passing between form generation and form post.
     qf_bypass_nv_list is expected to be used in context of a form_id. Data is retrieved via qf_get_inputs_as_array.
@@ -1149,19 +1150,18 @@ ad_proc -public qf_bypass_nv_list {
     if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
         set attributes_arr(form_id) $__qf_arr(form_id) 
     }
-    set form_id_idx [lsearch -exact $args_list "form_id"]
-    if { [qf_is_even $form_id_idx ] } {
-        set form_id [lindex $args_list $form_id_idx+1]
+    if { $form_id ne "" } {
         if { $form_id in $__form_ids_list } {
             set attributes_arr(form_id) $form_id
         } else {
             ns_log Notice "qf_bypass_nv_list.1154: form_id '${form_id}' not known. Using last modified form."
         }
     }
+
     set instance_id [ad_conn package_id]
     set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
     foreach {$arg_name $arg_value} $args_list {
-        if { $arg_name ne "" && $arg_name ne "form_id" } {
+        if { $arg_name ne "" } {
             # pass via db for integrity of internal references
             db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
                 (instance_id,sh_key_id,arg_name,arg_value) 
