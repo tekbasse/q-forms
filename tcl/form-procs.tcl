@@ -18,6 +18,7 @@ ad_library {
 # __form_ids_fieldset_open_list = list that contains form ids where a fieldset tag is open
 # __form_arr contains an array of forms. Each form built as a string by appending tags, indexed by form_id, for example __form_arr($id)
 # __qf_arr contains last attribute values of a tag (for all forms), indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
+# __qf_hc_arr contains sh_key_id for each form_id
 # a blank id passed in anything other than qf_form assumes the current (most recent used form_id)
 
 # to fix:  id for nonform tag should not be same as form_id. use an attribute "form_id" for assigning tags to specific forms.
@@ -1064,6 +1065,118 @@ ad_proc -public qf_read {
     }
     return $form_s
 }
+
+
+ad_proc -public qf_bypass {
+    args
+} {
+    Places a name value pair in a temporary db cache for passing between form generation and form post.
+    qf_bypass is expected to be used in context of a form_id. Data is retrieved via qf_get_inputs_as_array.
+    Input is similar to qf_input. Acceptable attributes: name, value, form_id
+    Returns 1 if successful. Otherwise returns 0.
+} {
+    upvar 1 __qf_arr __qf_arr
+    upvar 1 __qf_hc_arr __qf_hc_arr
+    upvar 1 __form_ids_list __form_ids_list
+
+    if { ![info exists __form_ids_list] } {
+        ns_log Warning "qf_bypass.1083: invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [random]]
+        set __qf_arr(form_id) $__form_ids_list
+    }
+    # default to last modified form_id
+    if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
+        set attributes_arr(form_id) $__qf_arr(form_id) 
+    }
+    # defaults
+    set arg_name ""
+    set arg_value ""
+    set success_p 1
+    foreach {attribute value} $args {
+        switch -exact -- $attribute {
+            name {
+                set arg_name $value
+            }
+            value {
+                set arg_value $value
+            }
+            form_id {
+                if { $value in $__form_ids_list } {
+                    set attriburtes_arr(form_id) $value
+                } else {
+                    ns_log Notice "qf_bypass.1106: form_id '${value}' not found; Using last modified form form_id."
+                }
+            }
+            default {
+                ns_log Notice "qf_bypass.1110: attribute '${attribute}' unrecognized. skipped. value '${value}'"
+            }
+        }
+    }
+    if { $name ne "" } {
+        # pass via db for integrity of internal references
+        set instance_id [ad_conn package_id]
+        set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
+        db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
+            (instance_id,sh_key_id,arg_name,arg_value) 
+            values (:instance_id,:sh_key_id,:arg_name,:arg_value) }
+    } else {
+        set success_p 0
+    }
+    return $success_p
+}
+
+##code
+ad_proc -public qf_bypass_nv_list {
+    args_list
+} {
+    Places name value pairs in a temporary db cache for passing between form generation and form post.
+    qf_bypass_nv_list is expected to be used in context of a form_id. Data is retrieved via qf_get_inputs_as_array.
+    
+} {
+    upvar 1 __qf_arr __qf_arr
+    upvar 1 __qf_hc_arr __qf_hc_arr
+    upvar 1 __form_ids_list __form_ids_list
+
+    if { ![info exists __form_ids_list] } {
+        ns_log Warning "qf_input.1036: invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [random]]
+        set __qf_arr(form_id) $__form_ids_list
+    }
+    # default to last modified form_id
+    if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
+        set attributes_arr(form_id) $__qf_arr(form_id) 
+    }
+    foreach {attribute value} $args_list {
+
+        switch -exact -- $attribute {
+            name {
+                set arg_name $value
+            }
+            value {
+                set arg_value $value
+            }
+            form_id {
+                if { $value in $__form_ids_list } {
+                    set attriburtes_arr(form_id) $value
+                } else {
+                    ns_log Notice "qf_bypass.1100: form_id '${value}' not found; Using last modified form form_id."
+                }
+            }
+            default {
+                ns_log Notice "qf_bypass.1104: attribute '${attribute}' unrecognized. skipped. value '${value}'"
+            }
+        }
+    }
+    if { $name ne "" } {
+        # pass via db for integrity of internal references
+        set instance_id [ad_conn package_id]
+        set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
+        db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
+            (instance_id,sh_key_id,arg_name,arg_value) 
+            values (:instance_id,:sh_key_id,:arg_name,:arg_value) }
+    }
+}
+
 
 
 ad_proc -public qf_input {
