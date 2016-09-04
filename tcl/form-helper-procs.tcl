@@ -1086,3 +1086,16 @@ ad_proc -public qf_is_true {
     return $interp_p
 }
 
+ad_proc -public qf_is_even {
+    number
+} {
+    Returns 1 if number is even, otherwise returns 0. Works for base 1 to 16 (hexidecimal).
+} {
+    set even_p 0
+    set last_digit [string range $number end end]
+    set even_digits_list [list 0 2 4 6 8 a c e A C E]
+    if { $last_digit in $even_digits_list } {
+        set even_p 1
+    }
+    return $even_p
+}

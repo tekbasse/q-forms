@@ -1125,7 +1125,6 @@ ad_proc -public qf_bypass {
     return $success_p
 }
 
-##code
 ad_proc -public qf_bypass_nv_list {
     args_list
 } {
@@ -1138,7 +1137,7 @@ ad_proc -public qf_bypass_nv_list {
     upvar 1 __form_ids_list __form_ids_list
 
     if { ![info exists __form_ids_list] } {
-        ns_log Warning "qf_input.1036: invoked before qf_form or used in a different namespace than qf_form.."
+        ns_log Warning "qf_bhypass_nv_list.1140: invoked before qf_form or used in a different namespace than qf_form.."
         set __form_ids_list [list [random]]
         set __qf_arr(form_id) $__form_ids_list
     }
@@ -1146,35 +1145,26 @@ ad_proc -public qf_bypass_nv_list {
     if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
         set attributes_arr(form_id) $__qf_arr(form_id) 
     }
-    foreach {attribute value} $args_list {
-
-        switch -exact -- $attribute {
-            name {
-                set arg_name $value
-            }
-            value {
-                set arg_value $value
-            }
-            form_id {
-                if { $value in $__form_ids_list } {
-                    set attriburtes_arr(form_id) $value
-                } else {
-                    ns_log Notice "qf_bypass.1100: form_id '${value}' not found; Using last modified form form_id."
-                }
-            }
-            default {
-                ns_log Notice "qf_bypass.1104: attribute '${attribute}' unrecognized. skipped. value '${value}'"
-            }
+    set form_id_idx [lsearch -exact $args_list "form_id"]
+    if { [qf_is_even $form_id_idx ] } {
+        set form_id [lindex $args_list $form_id_idx+1]
+        if { $form_id in $__form_ids_list } {
+            set attributes_arr(form_id) $form_id
+        } else {
+            ns_log Notice "qf_bypass_nv_list.1154: form_id '${form_id}' not known. Using last modified form."
         }
     }
-    if { $name ne "" } {
-        # pass via db for integrity of internal references
-        set instance_id [ad_conn package_id]
-        set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
-        db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
-            (instance_id,sh_key_id,arg_name,arg_value) 
-            values (:instance_id,:sh_key_id,:arg_name,:arg_value) }
+    set instance_id [ad_conn package_id]
+    set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
+    foreach {$arg_name $arg_value} $args_list {
+        if { $arg_name ne "" && $arg_name ne "form_id" } {
+            # pass via db for integrity of internal references
+            db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
+                (instance_id,sh_key_id,arg_name,arg_value) 
+                values (:instance_id,:sh_key_id,:arg_name,:arg_value) }
+        }
     }
+    return 1
 }
 
 
