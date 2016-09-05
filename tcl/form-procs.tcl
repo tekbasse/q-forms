@@ -122,8 +122,8 @@ ad_proc -private qf_submit_key_accepted_p {
     set accepted_p [db_0or1row qf_form_key_check_hash { 
         select session_id as session_id_i, action_url as action_url_i, secure_conn_p as secure_conn_p_i, client_ip as client_ip_i, sh_key_id
         from qf_key_map
-        where instance_id =:instance_id 
-        and sec_hash =:sec_hash 
+        where instance_id=:instance_id 
+        and sec_hash=:sec_hash 
         and submit_timestamp is null } ]
     if { !$accepted_p } {
         # there is nothing to compare. log current values:
