@@ -9,7 +9,7 @@
     <implements-subsite-p>f</implements-subsite-p>
     <inherit-templates-p>f</inherit-templates-p>
     
-    <version name="0.079" url="http://openacs.org/repository/download/apm/q-forms-0.079.apm">
+    <version name="0.093" url="http://openacs.org/repository/download/apm/q-forms-0.093.apm">
         <owner url="mailto:tekbasse@yahoo.com">Benjamin Brink</owner>
         <owner url="http://openacs.org">OpenACS Community</owner>
         <summary>Provides code for building forms dynamically in tcl</summary>
@@ -18,7 +18,7 @@
         <license>GNU Gpl 2.0 or higher</license>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPL2</license>
 
-        <provides url="q-forms" version="0.079"/>
+        <provides url="q-forms" version="0.093"/>
 
         <callbacks>
         </callbacks>
