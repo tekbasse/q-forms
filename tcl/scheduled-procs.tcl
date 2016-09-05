@@ -39,7 +39,8 @@ ad_proc -private qf::schedule::flush {
     }
 
     # flush old forms
-    set timeout_s 3600
+    # 3600 = 1 hour,  14400 = 4 hours
+    set timeout_s 14400
     set stale_timestamp [expr { [ns_time] - $timeout_s } ]
     set key_list [db_list qf_sched_keys_r {select sh_key_id from qf_key_map 
         where submit_timestamp is null 

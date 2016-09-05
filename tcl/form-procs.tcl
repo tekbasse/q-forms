@@ -1116,7 +1116,7 @@ ad_proc -public qf_bypass {
             }
         }
     }
-    if { $name ne "" } {
+    if { $arg_name ne "" } {
         # pass via db for integrity of internal references
         set instance_id [ad_conn package_id]
         set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
@@ -1160,7 +1160,7 @@ ad_proc -public qf_bypass_nv_list {
 
     set instance_id [ad_conn package_id]
     set sh_key_id $__qf_hc_arr($attributes_arr(form_id))
-    foreach {$arg_name $arg_value} $args_list {
+    foreach {arg_name arg_value} $args_list {
         if { $arg_name ne "" } {
             # pass via db for integrity of internal references
             db_dml qf_name_value_pairs_c { insert into qf_name_value_pairs
