@@ -265,7 +265,9 @@ ad_proc -public qf_get_inputs_as_array {
                         where instance_id=:instance_id
                         and sh_key_id=:sh_key_id} ]
                     # clear any external input and warn if it is different
-                    foreach {__form_key __form_input} $name_value_lists {
+                    foreach pair_list $name_value_lists {
+                        set __form_key [lindex $pair_list 0]
+                        set __form_input [lindex $pair_list 1]
                         if { [info exists __form_buffer_arr(${__form_key}) ] } {
                             set test [ad_unquotehtml $__form_buffer_arr(${__form_key})]
                             if { $test ne $__form_input } {
@@ -274,8 +276,9 @@ ad_proc -public qf_get_inputs_as_array {
                             }
                         }
                     }
-                    foreach {__form_key __form_input} $name_value_lists {
-                        
+                    foreach pair_list $name_value_lists {
+                        set __form_key [lindex $pair_list 0]
+                        set __form_input [lindex $pair_list 1]
                         # For consistency, this is a repeat of external form logic checks above.
                         
                         # check for duplicate key?
