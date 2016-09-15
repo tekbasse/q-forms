@@ -1114,6 +1114,12 @@ ad_proc -public qf_bypass {
                     ns_log Notice "qf_bypass.1106: form_id '${value}' not found; Using last modified form form_id."
                 }
             }
+            type {
+                # if hidden. Ignore without logging.
+                if { ![string match -nocase "hidden" $value] } {
+                    ns_log Notice "qf_bypass.1109: type specified not required. FYI is '${value}' but should be 'hidden'."
+                }
+            }
             default {
                 ns_log Notice "qf_bypass.1110: attribute '${attribute}' unrecognized. skipped. value '${value}'"
             }
