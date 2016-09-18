@@ -34,8 +34,10 @@ qf_form action test method post id 20160904 hash_check 1
 qf_bypass_nv_list [list name1 val1 name2 val2 name3 3 name4 4 name5 -5.14 -name6 -6.268]
 qf_bypass name qf_bypass_name value qf_bypass_value
 qf_input type text value $input_text name "input_text" label "input text" size 40 maxlength 80
+qf_input type hidden name blank1 value ""
+qf_bypass name blank2 value ""
 qf_bypass value qf_value2 name qf_name2
-qf_bypass_nv_list [list n1 v1 n2 v2 n3 3 n4 4 n5 -5 -n6 6]
+qf_bypass_nv_list [list n1 v1 n2 v2 n3 3 n4 4 n5 -5 -n6 6 blank3 ""]
 qf_input type submit value "#acs-kernel.common_Save#"
 qf_append html " &nbsp; &nbsp; &nbsp; <a href=\"test\">"
 qf_close
