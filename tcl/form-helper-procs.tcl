@@ -1099,3 +1099,125 @@ ad_proc -public qf_is_even {
     }
     return $even_p
 }
+
+
+ad_proc -public hf_list_filter_by_alphanum {
+    user_input_list
+} {
+    Returns a list of alphanumeric items from user_input_list
+} {
+    set filtered_list [list ]
+    foreach input_unfiltered $user_input_list {
+        # added dash and underscore, because these are often used in alpha/text references
+        if { [regsub -all -nocase -- {[^a-z0-9,\.\-\_]+} $input_unfiltered {} input_filtered ] } {
+            lappend filtered_list $input_filtered
+        }
+    }
+    return $filtered_list
+}
+
+ad_proc -public hf_list_filter_by_decimal {
+    user_input_list
+} {
+    set filtered_list [list ]
+    foreach input_unfiltered $user_input_list {
+        if { [qf_is_decimal $input_unfiltered] } {
+            lappend filtered_list $input_unfiltered
+        }
+    }
+    return $filtered_list
+}
+
+ad_proc -public hf_list_filter_by_natural_number {
+    user_input_list
+} {
+    set filtered_list [list ]
+    foreach input_unfiltered $user_input_list {
+        if { [qf_is_natural_number $input_unfiltered] } {
+            lappend filtered_list $input_unfiltered
+        }
+    }
+    return $filtered_list
+}
+
+ad_proc -public hf_natural_number_list_validate {
+    natural_number_list
+} {
+    Retuns 1 if list only contains natural numbers, otherwise returns 0
+} {
+    set nn_list [hf_list_filter_by_natural_number $natural_number_list]
+    if { [llength $nn_list] != [llength $natural_number_list] } {
+        set natnums_p 0
+    } else {
+        set natnums_p 1
+    }
+    return $natnums_p
+}
+
+ad_proc -public hf_are_visible_characters_q {
+    user_input
+} {
+    Verifies that characters are printable, or spaces.
+} {
+    if { [regexp -- {^[[:graph:]\ ]+$} $user_input scratch ] } {
+        set visible_p 1
+    } else {
+        set visible_p 0
+    }
+    return $visible_p
+}
+
+ad_proc -public hf_are_safe_and_visible_characters_q {
+    user_input
+} {
+    Verifies that characters are printable (or space) and safe for use in dynamic arguments, such as eval.
+} {
+    set visible_p [hf_are_visible_characters_q $user_input]
+    if { $visible_p && [string match {*[\[;]*} $user_input] } {
+        # unsafe for safe_eval etc.
+        # Test here for Ui handling 
+        # instead of forcing error per safe_eval
+        set visible_p 0
+    }
+    return $visible_p
+}
+
+ad_proc -public hf_are_printable_characters_q {
+    user_input
+} {
+    Verifies that characters are printable.
+} {
+    if { [regexp -- {^[[:graph:]]+$} $user_input scratch ] } {
+        set printable_p 1
+    } else {
+        set printable_p 0
+    }
+    return $printable_p
+}
+
+ad_proc -public hf_are_safe_and_printable_characters_q {
+    user_input
+} {
+    Verifies that characters are printable and safe for use in dynamic arguments, such as eval.
+} {
+    set printable_p [hf_are_printable_characters_q $user_input]
+    if { $printable_p && [string match {*[\[;]*} $user_input] } {
+        # unsafe for safe_eval etc.
+        # Test here for Ui handling 
+        # instead of forcing error per safe_eval
+        set printable_p 0
+    }
+    return $printable_p
+}
+
+ad_proc -public hf_list_filter_by_printable {
+    user_input_list
+} {
+    set filtered_list [list ]
+    foreach input_unfiltered $user_input_list {
+        if { [hf_are_printable_characters_q $input_unfiltered] } {
+            lappend filtered_list $input_unfiltered
+        }
+    }
+    return $filtered_list
+}
