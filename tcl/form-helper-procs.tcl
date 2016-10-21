@@ -1221,3 +1221,16 @@ ad_proc -public hf_list_filter_by_printable {
     }
     return $filtered_list
 }
+
+ad_proc -public qf_listify {
+    scalar_or_list
+} {
+    Returns a list for all cases ie if a scalar is passed, converts it to list format.
+} {
+    if { [llength $scalar_or_list] > 0 } {
+        set return_list $scalar_or_list
+    } else {
+        set return_list [list $scalar_or_list]
+    }
+    return $return_list
+}
