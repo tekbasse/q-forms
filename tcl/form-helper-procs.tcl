@@ -1104,7 +1104,7 @@ ad_proc -public qf_is_even {
 ad_proc -public hf_list_filter_by_alphanum {
     user_input_list
 } {
-    Returns a list of alphanumeric items from user_input_list
+    Returns a list of alphanumeric items from user_input_list. Allows period, comma, dash and underscore also.
 } {
     set filtered_list [list ]
     foreach input_unfiltered $user_input_list {
