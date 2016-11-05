@@ -963,10 +963,11 @@ return $description
 ad_proc -public qf_abbreviate {
     phrase
     {max_length {}}
+    {suffix ".."}
+    {space_substitute "&nbsp;"}
 } {
     abbreviates a pretty title or phrase to first word, or to max_length characters if max_length is a number > 0
 } {
-    set suffix ".."
     set suffix_len [string length $suffix]
 
     if { [ad_var_type_check_number_p $max_length] && $max_length > 0 } {
@@ -978,10 +979,13 @@ ad_proc -public qf_abbreviate {
                 set cat_end $phrase_len_limit
             }
             set phrase [string range $phrase 0 $cat_end ]
-        append phrase $suffix
+            append phrase $suffix
             regsub {[^a-zA-Z0-9]+\.\.} $phrase $suffix phrase
         }
-        regsub -all -- { } $phrase {\&nbsp;} phrase
+        if { $space_substitute eq "&nbsp;" } {
+            set space {\&nbsp;}
+        }
+        regsub -all -- { } $phrase $space phrase
         set abbrev_phrase $phrase
 
     } else {
