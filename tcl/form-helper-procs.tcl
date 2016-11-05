@@ -984,6 +984,8 @@ ad_proc -public qf_abbreviate {
         }
         if { $space_substitute eq "&nbsp;" } {
             set space {\&nbsp;}
+        } else {
+            set space $space_substitute
         }
         regsub -all -- { } $phrase $space phrase
         set abbrev_phrase $phrase
