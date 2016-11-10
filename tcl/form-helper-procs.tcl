@@ -1233,7 +1233,11 @@ ad_proc -public qf_listify {
 } {
     Returns a list for all cases ie if a scalar is passed, converts it to list format.
 } {
-    if { [llength $scalar_or_list] > 0 } {
+    # This is mainly used for cases where an empty string is passed to a procedure,
+    # Checking this special case first.
+    if { $scalar_or_list eq "" } {
+        set return_list [list ]
+    } elseif { [llength $scalar_or_list] > 0 } {
         set return_list $scalar_or_list
     } else {
         set return_list [list $scalar_or_list]
