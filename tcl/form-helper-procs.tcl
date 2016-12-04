@@ -1244,3 +1244,15 @@ ad_proc -public qf_listify {
     }
     return $return_list
 }
+
+ad_proc -public qf_uniques_of {
+    a_list
+} {
+    Returns unique elements of a list
+} {
+    foreach e $a_list {
+        set a(${e}) 0
+    }
+    set e_list [array names a]
+    return $e_list
+}
