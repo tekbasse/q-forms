@@ -1467,6 +1467,7 @@ ad_proc -public qf_choice {
 &lt;/select>"
     </pre>
     <!-- &lt; is used to prevent browser views from rendering the code presented here -->
+    <p>For a complete example case, see tcl/adp files at q-forms/www/admin/test.tcl and test.adp</p>
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -1599,10 +1600,35 @@ ad_proc -public qf_choices {
 } {
     returns html of a select multiple box or list  of checkboxes (where multiple values may be sent with form post).
     Required attributes:  name, value.  
+
     Set "type" to "select" for multi select box, or "checkbox" for checkboxes.
+
+
     The value of the "value" attribute is a list_of_lists, each list item contains attribute/value pairs for a radio or option/bar item.
+
+
     If "label" not provided for tags in the list_of_lists, the value of the "value" attribute is also used for label.
+
+
     Set "selected" attribute to 1 in the value list_of_lists to indicate item selected. Default is unselected (if selected attributed is not included, or its value not 1)..
+
+<pre>
+    Example usage. This code:
+
+    set multi_choice_tag_attribute_list [list [list name card1 label " label1 " value visa1 selected 1] [list name card2 label " label2 " value visa2 selected 0] [list name card3 label " label3 " value visa3] ]
+    qf_choices type checkbox value $multi_choice_tag_attribute_list
+
+    Generates:
+
+&lt;ul>
+&lt;li>&lt;label for="card1-9713-9984053497942387">&lt;input value="visa1" name="card1" type="checkbox" id="card1-9713-9984053497942387" checked> label1 &lt;/label>
+&lt;/li>&lt;li>&lt;label for="card2-9713-37947959533607684">&lt;input value="visa2" name="card2" type="checkbox" id="card2-9713-37947959533607684"> label2 &lt;/label>
+&lt;/li>&lt;li>&lt;label for="card3-9713-7510373799725651">&lt;input value="visa3" name="card3" type="checkbox" id="card3-9713-7510373799725651"> label3 &lt;/label>
+&lt;/li>&lt;/ul>
+
+</pre>
+    <p>The id and for attributes are auto generated when not supplied.</p>
+    <p>For a complete example case, see tcl/adp files at q-forms/www/admin/test.tcl and test.adp</p>
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
