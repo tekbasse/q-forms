@@ -38,7 +38,18 @@ qf_input type hidden name blank1 value ""
 qf_bypass name blank2 value ""
 qf_bypass value qf_value2 name qf_name2
 qf_bypass_nv_list [list n1 v1 n2 v2 n3 3 n4 4 n5 -5 -n6 6 blank3 ""]
+
+set one_choice_tag_attribute_list [list [list label " label1 " value visa1] [list label " label2 " value visa2] [list label " label3 " value visa3] ]
+
+qf_choice type radio name creditcard value $one_choice_tag_attribute_list
+
+set multi_choice_tag_attribute_list [list [list name card1 label " label1 " value visa1 selected 1] [list name card2 label " label2 " value visa2 selected 0] [list name card3 label " label3 " value visa3] ]
+
+qf_choices type checkbox value $multi_choice_tag_attribute_list
+
+qf_input type submit name charlie value bravo
+
 qf_input type submit value "#acs-kernel.common_Save#"
-qf_append html " &nbsp; &nbsp; &nbsp; <a href=\"test\">"
-qf_close
+qf_append html " &nbsp; &nbsp; &nbsp; <a href=\"test\">"q
+f_close
 append content [qf_read]
