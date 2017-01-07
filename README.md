@@ -2,7 +2,7 @@ Q-Forms
 =======
 
 The lastest version of the code is available at the site:
- http://github.com/dcpm/q-forms
+ http://github.com/xdcpm/q-forms
 
 introduction
 ------------
