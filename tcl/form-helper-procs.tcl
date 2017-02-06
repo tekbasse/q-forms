@@ -69,6 +69,8 @@ ad_proc -public qf_nv_list_to_vars {
     fourth index of name_val_list.
     If name_val_list is missing a last value, name is assigned an empty string.
     If only_these_keys_list is not empty, only these keys will be converted. 
+    Any key in only_these_keys_list that is not a name in name_val_list will be
+    assigned an empty string value.
     Any name value pair not made a variable with value will be returned in a name_value_list.
 } {
     set remainder_list [list ]
