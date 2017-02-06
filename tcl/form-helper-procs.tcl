@@ -60,6 +60,49 @@ ad_proc -public qf_lists_to_vars {
 }
 
 
+ad_proc -public qf_nv_list_to_vars {
+    name_val_list
+    {only_these_keys_list ""}
+} {
+    Returns names as variables assigned to the values in name_val_list,
+    For example the third index of name_val_list is assigned the value of the 
+    fourth index of name_val_list.
+    If name_val_list is missing a last value, name is assigned an empty string.
+    If only_these_keys_list is not empty, only these keys will be converted. 
+    Any name value pair not made a variable with value will be returned in a name_value_list.
+} {
+    set remainder_list [list ]
+    set name_val_list_len [llength $name_val_list]
+    if { ![qf_is_even $name_val_list_len] } {
+        lappend name_val_list ""
+    }
+    if { $only_these_keys_list eq "" } {
+        foreach {name val} $name_val_list {
+            upvar 1 $name val_${name}
+            set val_${name} $val
+        }
+    } else {
+        set done_list [list ]
+        foreach {name val} $name_val_list {
+            if { $name in $only_these_keys_list } {
+                upvar 1 $name val_${name}
+                set val_${name} $val
+                lappend done_list
+            } else {
+                lappend remainder_list $name $val
+            }
+        }
+        set diff_list [set_difference $only_these_keys_list $done_list]
+        set val ""
+        foreach name $diff_list {
+            upvar 1 $name val_${name}
+            set val_${name} $val
+        }
+    }
+    return $remainder_list
+}
+
+
 ad_proc -public qf_lists_to_array {
     array_name
     values_list
