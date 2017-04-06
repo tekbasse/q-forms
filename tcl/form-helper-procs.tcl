@@ -1301,3 +1301,49 @@ ad_proc -public qf_uniques_of {
     set e_list [array names a]
     return $e_list
 }
+
+ad_proc -public qf_clock_scan {
+    timestamp
+    {scan_format ""}
+} {
+    Returns time_from_epoch in seconds, or empty string if there is an error. 
+    Useful for converting a useful timestamp from user input.
+    If format string is provided, scans according to format string's specifications.
+} {
+    if { $scan_format ne "" } {
+        if {[catch { set t_s [clock scan $timestamp -format $scan_format]  }]} {
+            set t_s ""
+        } 
+    } else {
+        if {[catch { set t_s [clock scan $timestamp ] }]} {
+            set t_s ""
+        } 
+    }
+    return $t_s
+}
+
+ad_proc -public qf_clock_format {
+    {clock_s ""}
+    {format_str "%Y-%m-%dT%H:%M:%S"}
+} {
+    Returns timestamp of epoch time (in seconds) in a standard timestamp format for use in database. 
+    PG prefers ISO 8601 "yyyy-mm-dd hh:mm:ss".
+    If clock_s is "", assumes current time.
+    If format is "", timestamp uses scan's default format for example: "Thu Apr 06 20:23:00 GMT 2017"
+
+} {
+    if { $clock_s ne "" } {
+        if { $format_str ne "" } {
+            set timestamp [clock format $clock_s -gmt true -format $format_str]
+        } else {
+            set timestamp [clock format $clock_s -gmt true]
+        }
+    } else {
+        if { $format_str ne "" } {
+            set timestamp [clock format [clock seconds] -gmt true -format $format_str]
+        } else {
+            set timestamp [clock format [clock seconds] -gmt true]
+        }
+    }
+    return $timestamp
+}
