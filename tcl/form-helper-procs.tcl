@@ -1306,9 +1306,10 @@ ad_proc -public qf_clock_scan {
     timestamp
     {scan_format ""}
 } {
-    Returns time_from_epoch in seconds, or empty string if there is an error. 
+    Returns time_since_epoch in seconds, or empty string if there is an error. 
     Useful for converting a useful timestamp from user input.
-    If format string is provided, scans according to format string's specifications.
+    If format string is provided, scans according to format string's specifications:
+    @url https://www.tcl.tk/man/tcl/TclCmd/clock.htm#M26
 } {
     if { $scan_format ne "" } {
         if {[catch { set t_s [clock scan $timestamp -format $scan_format]  }]} {
@@ -1319,19 +1320,71 @@ ad_proc -public qf_clock_scan {
             set t_s ""
         } 
     }
+    if { $t_s eq "" && $timestamp ne "" } {
+        # Try again in case timestamp is from db and supplied and default scan_format are not standard.
+        # Timestamp from db might look like this: 2017-04-09 14:39:20.994444-04
+        # Get rid of decimal seconds
+        set timestamp_alt $timestamp
+        regsub {[\.][0-9]+} $timestamp_alt {} timestamp_alt
+        set ts_len [string length $timestamp_alt]
+        if { $ts_len < 20 } {
+            # no %z value. 
+            append timestamp_alt "-00"
+        }
+        set scan_format_alt "%Y-%m-%d %H:%M:%S%z"
+        if {[catch { set t_s [clock scan $timestamp -format $scan_format_alt]  }]} {
+            set t_s ""
+        } else {
+            ns_log Notice "qf_uniques_of: supplied scan_format '${scan_format}' didn't work for '${timestamp}'. Used '${scan_format_alt}' on '${timestamp_alt}'"
+        }
+    }
     return $t_s
 }
 
+ad_proc -public qf_clock_scan_from_db {
+    timestamp
+    {scan_format "%Y-%m-%d %H:%M:%S%z"}
+} {
+    Returns time_since_epoch in seconds, or empty string if there is an error. 
+    Useful for converting a useful timestamp from database.
+    Since database sourced timestamps are more consistent than user input, 
+    a faster solution can be used than used in qf_clock_scan.
+    If format string is provided, scans according to format string's specifications:
+    @url https://www.tcl.tk/man/tcl/TclCmd/clock.htm#M26
+    @see qf_clock_scan
+} {
+    # Truncate any decimal seconds
+    regsub {[\.][0-9]+} $timestamp {} timestamp
+    set ts_len [string length $timestamp]
+    if { $ts_len < 20 } {
+        # no %z value. 
+        append timestamp "-00"
+    }
+    if { $scan_format ne "" } {
+        set t_s [clock scan $timestamp -format $scan_format] 
+    } else {
+        set t_s [clock scan $timestamp ]
+    }
+    return $t_s
+}
+
+
 ad_proc -public qf_clock_format {
     {clock_s ""}
-    {format_str "%Y-%m-%dT%H:%M:%S"}
+    {format_str "%Y-%m-%d %H:%M:%S"}
 } {
-    Returns timestamp of epoch time (in seconds) in a standard timestamp format for use in database. 
-    PG prefers ISO 8601 "yyyy-mm-dd hh:mm:ss".
+    Returns timestamp of seconds since epoch time in a standard timestamp format (and UTC) for use in database. 
+    PG timestamp w/o timezone prefers ISO 8601 "yyyy-mm-dd hh:mm:ss" ie "%Y-%m-%d %H:%M:%S".
+    PG timestamp with timezone prefers ISO 8601 "yyyy-mm-dd hh:mm:ss-tz" ie "%Y-%m-%d %H:%M:%S%z"
+   
     If clock_s is "", assumes current time.
-    If format is "", timestamp uses scan's default format for example: "Thu Apr 06 20:23:00 GMT 2017"
-
+    If format is "", timestamp uses scan's default format "%a %b %d %H:%M:%S %Z %Y" for example: "Thu Apr 06 20:23:00 GMT 2017"
+    
 } {
+    # %z consists of a + or - and upto 6 digits to offset by hhmmss
+    # See pg table qf_test_types for additional notes.
+
+    # '-gmt true' should eventually be replaced with '-timezone :UTC' http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M24
     if { $clock_s ne "" } {
         if { $format_str ne "" } {
             set timestamp [clock format $clock_s -gmt true -format $format_str]
