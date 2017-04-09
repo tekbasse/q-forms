@@ -69,3 +69,25 @@ CREATE TABLE qf_name_value_pairs (
 );
 
 CREATE index qf_name_value_pairs_sh_key_id_idx on qf_name_value_pairs(sh_key_id);
+
+
+CREATE TABLE qf_test_types (
+       ref integer,
+       -- microsecond precision is from 0 to 6 decimals, varies
+       -- timestamp defaults to:
+       timestamp_wo_tz timestamp without time zone,
+       -- microsecond precision is from 0 to 6 decimals, varies
+       -- abbreviation is: timestamptz
+       -- "..All timezone-aware dates and times are stored internally in UTC.." 
+       -- "..One should be wary that the POSIX-style time zone feature can lead to silently accepting bogus input.."
+       -- "..To complicate matters, some jurisdictions have used the same timezone abbreviation to mean different UTC offsets at different times.."
+       -- https://www.postgresql.org/docs/9.1/static/datatype-datetime.html#DATATYPE-DATETIME-OUTPUT
+       -- NOTE: pg tends to ignore tz input unless in specific format.
+       -- best to convert to UTC before writing to db
+       timestamp_w_tz timestamp with time zone,
+       integer_val integer,
+       bigint_val bigint,
+       varchar_val varchar(10),
+       -- accepts '1','0', true, false, y, n etc.. prefers 'TRUE' 'FALSE' returns 't' or 'f'
+       boolean_val boolean
+);

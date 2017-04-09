@@ -6,6 +6,8 @@
 --  @address: po box 20, Marylhurst, OR 97036-0020 usa
 --  @email: tekbasse@yahoo.com
 --
+drop table qf_test_types;
+
 drop index qf_name_value_pairs_sh_key_id_idx;
 
 drop table qf_name_value_pairs;
