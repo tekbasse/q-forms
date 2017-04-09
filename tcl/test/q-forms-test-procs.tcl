@@ -21,7 +21,9 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             db_1row qf_test_table_r1 {
                 select timestamp_wo_tz,timestamp_w_tz,bigint_val from qf_test_table where ref=:ref0
             }
+            #compare nowts with pre-write timestamp_wo_tz timestamp_w_tz and
 
+            #compare nowts with read from database
         } 
     # -teardown_code {
     # 

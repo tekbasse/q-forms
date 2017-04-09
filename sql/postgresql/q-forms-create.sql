@@ -74,6 +74,7 @@ CREATE index qf_name_value_pairs_sh_key_id_idx on qf_name_value_pairs(sh_key_id)
 CREATE TABLE qf_test_types (
        ref integer,
        -- microsecond precision is from 0 to 6 decimals, varies
+       -- timezones are ignored when presented for input
        -- timestamp defaults to:
        timestamp_wo_tz timestamp without time zone,
        -- microsecond precision is from 0 to 6 decimals, varies
@@ -84,6 +85,7 @@ CREATE TABLE qf_test_types (
        -- https://www.postgresql.org/docs/9.1/static/datatype-datetime.html#DATATYPE-DATETIME-OUTPUT
        -- NOTE: pg tends to ignore tz input unless in specific format.
        -- best to convert to UTC before writing to db
+       -- expects a timezone
        timestamp_w_tz timestamp with time zone,
        integer_val integer,
        bigint_val bigint,
