@@ -1310,32 +1310,63 @@ ad_proc -public qf_clock_scan {
     Useful for converting a useful timestamp from user input.
     If format string is provided, scans according to format string's specifications:
     @url https://www.tcl.tk/man/tcl/TclCmd/clock.htm#M26
+    If no timezone or timezone-offset is provided, assumes utc instead of clock scan's localized preference.
 } {
     if { $scan_format ne "" } {
         if {[catch { set t_s [clock scan $timestamp -format $scan_format]  }]} {
             set t_s ""
+            ns_log Notice "qf_clock_scan.1err timestamp '${timestamp}' t_s ${t_s}"
         } 
+        ns_log Notice "qf_clock_scan.1 timestamp '${timestamp}' t_s ${t_s}"
     } else {
         if {[catch { set t_s [clock scan $timestamp ] }]} {
             set t_s ""
+            ns_log Notice "qf_clock_scan.2err timestamp '${timestamp}' t_s ${t_s}"
         } 
+        ns_log Notice "qf_clock_scan.2 timestamp '${timestamp}' t_s ${t_s}"
     }
-    if { $t_s eq "" && $timestamp ne "" } {
-        # Try again in case timestamp is from db and supplied and default scan_format are not standard.
-        # Timestamp from db might look like this: 2017-04-09 14:39:20.994444-04
-        # Get rid of decimal seconds
-        set timestamp_alt $timestamp
-        regsub {[\.][0-9]+} $timestamp_alt {} timestamp_alt
-        set ts_len [string length $timestamp_alt]
-        if { $ts_len < 20 } {
-            # no %z value. 
-            append timestamp_alt "-00"
+    if { $t_s ne "" } {
+        if { ![string match -nocase "*z*" $scan_format] } {       
+            # get local tcl default offset at timestamp
+            # z% Produces the current time zone, 
+            # expressed in hours and minutes east (+hhmm) or west (-hhmm) of Greenwich
+            # from http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M78
+            set tz_offset [clock format $t_s -format "%z"]
+            if { ![string match "?0000" $tz_offset ] } {
+                # adjust seconds by negative of offset to get utc
+                set hh [string range $tz_offset 1 2]
+                set mm [string range $tz_offset 3 4]
+                set k [expr { ( $hh * 3600 ) + ( $mm * 60 ) } ]
+                if { [string range $tz_offset 0 0] eq "+" } {
+                    # subtract the offset
+                    set $t_s [expr { $t_s - $k } ]
+                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} -k '${k}'"
+                } else {
+                    # add the offset
+                    set $t_s [expr { $t_s + $k } ]
+                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}'"
+                }
+            }
         }
-        set scan_format_alt "%Y-%m-%d %H:%M:%S%z"
-        if {[catch { set t_s [clock scan $timestamp -format $scan_format_alt]  }]} {
-            set t_s ""
-        } else {
-            ns_log Notice "qf_uniques_of: supplied scan_format '${scan_format}' didn't work for '${timestamp}'. Used '${scan_format_alt}' on '${timestamp_alt}'"
+    } else {
+        # t_s eq ""
+        if { $timestamp ne "" } {
+            # Try again in case timestamp is from db and supplied and default scan_format are not standard.
+            # Timestamp from db might look like this: 2017-04-09 14:39:20.994444-04
+            # Get rid of decimal seconds
+            set timestamp_alt $timestamp
+            regsub {[\.][0-9]+} $timestamp_alt {} timestamp_alt
+            set ts_len [string length $timestamp_alt]
+            if { $ts_len < 20 } {
+                # no %z value. 
+                append timestamp_alt "-00"
+            }
+            set scan_format_alt "%Y-%m-%d %H:%M:%S%z"
+            if {[catch { set t_s [clock scan $timestamp -format $scan_format_alt]  }]} {
+                set t_s ""
+            } else {
+                ns_log Notice "qf_uniques_of: supplied scan_format '${scan_format}' didn't work for '${timestamp}'. Used '${scan_format_alt}' on '${timestamp_alt}'"
+            }
         }
     }
     return $t_s
@@ -1363,7 +1394,7 @@ ad_proc -public qf_clock_scan_from_db {
     if { $scan_format ne "" } {
         set t_s [clock scan $timestamp -format $scan_format] 
     } else {
-        set t_s [clock scan $timestamp ]
+        set t_s [clock scan $timestamp -gmt true]
     }
     return $t_s
 }
@@ -1373,11 +1404,11 @@ ad_proc -public qf_clock_format {
     {clock_s ""}
     {format_str "%Y-%m-%d %H:%M:%S"}
 } {
-    Returns timestamp of seconds since epoch time in a standard timestamp format (and UTC) for use in database. 
+    Returns a standard timestamp format (and UTC) for use in database. 
     PG timestamp w/o timezone prefers ISO 8601 "yyyy-mm-dd hh:mm:ss" ie "%Y-%m-%d %H:%M:%S".
     PG timestamp with timezone prefers ISO 8601 "yyyy-mm-dd hh:mm:ss-tz" ie "%Y-%m-%d %H:%M:%S%z"
    
-    If clock_s is "", assumes current time.
+    If clock_s is "", assumes current system time from 'clock seconds'.
     If format is "", timestamp uses scan's default format "%a %b %d %H:%M:%S %Z %Y" for example: "Thu Apr 06 20:23:00 GMT 2017"
     
 } {
