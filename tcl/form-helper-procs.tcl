@@ -1313,43 +1313,44 @@ ad_proc -public qf_clock_scan {
     If no timezone or timezone-offset is provided, assumes utc instead of clock scan's localized preference.
 } {
     if { $scan_format ne "" } {
-        if {[catch { set t_s [clock scan $timestamp -format $scan_format]  }]} {
-            set t_s ""
-            ns_log Notice "qf_clock_scan.1err timestamp '${timestamp}' t_s ${t_s}"
+        if {[catch { set ts [clock scan $timestamp -format $scan_format]  }]} {
+            set ts ""
+            ns_log Notice "qf_clock_scan.1err timestamp '${timestamp}' ts ${ts}"
         } 
-        ns_log Notice "qf_clock_scan.1 timestamp '${timestamp}' t_s ${t_s}"
+        ns_log Notice "qf_clock_scan.1 timestamp '${timestamp}' ts ${ts}"
     } else {
-        if {[catch { set t_s [clock scan $timestamp ] }]} {
-            set t_s ""
-            ns_log Notice "qf_clock_scan.2err timestamp '${timestamp}' t_s ${t_s}"
+        if {[catch { set ts [clock scan $timestamp ] }]} {
+            set ts ""
+            ns_log Notice "qf_clock_scan.2err timestamp '${timestamp}' ts ${ts}"
         } 
-        ns_log Notice "qf_clock_scan.2 timestamp '${timestamp}' t_s ${t_s}"
+        ns_log Notice "qf_clock_scan.2 timestamp '${timestamp}' ts ${ts}"
     }
-    if { $t_s ne "" } {
+    if { $ts ne "" } {
         if { ![string match -nocase "*z*" $scan_format] } {       
             # get local tcl default offset at timestamp
             # z% Produces the current time zone, 
             # expressed in hours and minutes east (+hhmm) or west (-hhmm) of Greenwich
             # from http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M78
-            set tz_offset [clock format $t_s -format "%z"]
+            set tz_offset [clock format $ts -format "%z"]
             if { ![string match "?0000" $tz_offset ] } {
                 # adjust seconds by negative of offset to get utc
-                set hh [string range $tz_offset 1 2]
-                set mm [string range $tz_offset 3 4]
+                set hh [template::util::leadingTrim [string range $tz_offset 1 2]]
+                set mm [template::util::leadingTrim [string range $tz_offset 3 4]]
                 set k [expr { ( $hh * 3600 ) + ( $mm * 60 ) } ]
+
                 if { [string range $tz_offset 0 0] eq "+" } {
                     # subtract the offset
-                    set $t_s [expr { $t_s + $k } ]
-                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}' t_s='${t_s}'"
+                    set ts [expr { $ts + $k } ]
+                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}' ts '${ts}'"
                 } elseif { [string range $tz_offset 0 0] eq "-" } {
                     # add the offset
-                    set $t_s [expr { $t_s - $k } ]
-                    ns_log Notice "qf_clock_scan.4 tz_offset '${tz_offset} -k '${k}' t_s='${t_s}'"
+                    set ts [expr { $ts - $k } ]
+                    ns_log Notice "qf_clock_scan.4 tz_offset '${tz_offset} -k '${k}' ts '${ts}'"
                 }
             }
         }
     } else {
-        # t_s eq ""
+        # ts eq ""
         if { $timestamp ne "" } {
             # Try again in case timestamp is from db and supplied and default scan_format are not standard.
             # Timestamp from db might look like this: 2017-04-09 14:39:20.994444-04
@@ -1362,14 +1363,14 @@ ad_proc -public qf_clock_scan {
                 append timestamp_alt "-00"
             }
             set scan_format_alt "%Y-%m-%d %H:%M:%S%z"
-            if {[catch { set t_s [clock scan $timestamp -format $scan_format_alt]  }]} {
-                set t_s ""
+            if {[catch { set ts [clock scan $timestamp -format $scan_format_alt]  }]} {
+                set ts ""
             } else {
                 ns_log Notice "qf_uniques_of: supplied scan_format '${scan_format}' didn't work for '${timestamp}'. Used '${scan_format_alt}' on '${timestamp_alt}'"
             }
         }
     }
-    return $t_s
+    return $ts
 }
 
 ad_proc -public qf_clock_scan_from_db {
