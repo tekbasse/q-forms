@@ -57,6 +57,7 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             set timestamp_wo_tz_s [qf_clock_scan_from_db $timestamp_wo_tz]
             set ts_wo_tz_s [qf_clock_scan $timestamp_wo_tz]
             set timestamp_w_tz_s [qf_clock_scan_from_db $timestamp_w_tz]
+            ns_log Notice "q-forms-test-procs.tcl.68 part m"
             set ts_w_tz_s [qf_clock_scan $timestamp_w_tz]
             #compare nowts with read from database
             aa_log "from db: timestamp_wo_tz '${timestamp_wo_tz}' timestamp_w_tz '${timestamp_w_tz}' bigint_val '${bigint_val}'"
@@ -65,11 +66,12 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             aa_equals "J. qf_clock_scan_from_db timestamp_wo_tz equals nowts_utc_s" $timestamp_wo_tz_s $nowts_utc_s
             aa_equals "K. qf_clock_scan timestamp_wo_tz equals nowts_utc_s" $ts_wo_tz_s $nowts_utc_s
             aa_equals "L. qf_clock_scan_from_db timestamp_w_tz equals nowts_utc_s" $timestamp_w_tz_s $nowts_utc_s
+
             aa_equals "M. qf_clock_scan timestamp_w_tz equals nowts_utc_s" $ts_w_tz_s $nowts_utc_s
             aa_equals "N. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
             # nowts_w_tz example format: 2017-04-11 20:12:41+0000
-            set nowts_w_tz_in_ts_w_tz [qal_timestamp_to_tz $nowts_w_tz]
-            if { $timestamp_w_tz eq $nowts_w_tz } {
+            set nowts_w_tz_in_ts_w_tz [qf_timestamp_w_tz_to_tz $nowts_w_tz]
+            if { $timestamp_w_tz eq $nowts_w_tz_in_ts_w_tz } {
                 set equiv_p 1
             } else {
                 set equiv_p 0

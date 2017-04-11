@@ -1503,3 +1503,22 @@ ad_proc -public qf_first_number_in {
     }            
     return $number
 }
+
+ad_proc -public qf_timestamp_w_tz_to_tz {
+    timestamp_any_tz
+    {tz ""}
+    {timestamp_format "%Y-%m-%d %H:%M:%S%z"}
+} {
+    Converts a timestamp to specified timezone. 
+    If timezone (tz) is empty string, converts to tcl interpreter's default timezone.
+    If timestamp_format is empty string, uses clock scan's default interpretation.
+} {
+    # proc expects a '%z' in timestamp_format
+    set ts_s [qf_clock_scan $timestamp_any_tz $timestamp_format]
+    if { $tz eq "" } {
+        set tz_offset [clock format $ts_s -format "%z"]
+    }
+    set ts_new_tz [clock format $ts_s -format $timestamp_format -timezone $tz]
+    return $ts_new_tz
+}
+
