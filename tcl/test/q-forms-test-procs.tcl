@@ -13,6 +13,7 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             set format_str "%Y-%m-%d %H:%M:%S%z"
 
             set nowts_s [clock seconds]
+            ns_log Notice "qf_ts_checks.1   nowts_s $nowts_s"
             aa_log "nowts_s $nowts_s"
 
             set nowts_utc [qf_clock_format $nowts_s]
@@ -22,8 +23,10 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             #compare nowts with pre-write timestamp_wo_tz timestamp_w_tz and
 
             set nowts_utc_s [qf_clock_scan $nowts_utc]
-            aa_log "nowts_utc_s = 'qf_clock_scan $nowts_utc' = $nowts_utc_s"
+            ns_log Notice "qf_ts_checks.25  nowts_utc_s $nowts_utc_s"
+            aa_log "nowts_utc_s = 'qf_clock_scan ${nowts_utc}' = ${nowts_utc_s}"
             set diff1 [expr { $nowts_s - $nowts_utc_s } ]
+            ns_log Notice "qf_ts_checks.28 diff1 $diff1"
             aa_log "Diff1: nowts_s - nowts_utc_s = $diff1"
             aa_equals "qf_clock_scan nowts_utc_s equals nowts_s" $nowts_utc_s $nowts_s
 

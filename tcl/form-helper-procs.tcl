@@ -1339,12 +1339,12 @@ ad_proc -public qf_clock_scan {
                 set k [expr { ( $hh * 3600 ) + ( $mm * 60 ) } ]
                 if { [string range $tz_offset 0 0] eq "+" } {
                     # subtract the offset
-                    set $t_s [expr { $t_s - $k } ]
-                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} -k '${k}'"
-                } else {
-                    # add the offset
                     set $t_s [expr { $t_s + $k } ]
-                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}'"
+                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}' t_s='${t_s}'"
+                } elseif { [string range $tz_offset 0 0] eq "-" } {
+                    # add the offset
+                    set $t_s [expr { $t_s - $k } ]
+                    ns_log Notice "qf_clock_scan.4 tz_offset '${tz_offset} -k '${k}' t_s='${t_s}'"
                 }
             }
         }
