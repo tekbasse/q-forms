@@ -61,11 +61,20 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             #compare nowts with read from database
             aa_log "from db: timestamp_wo_tz '${timestamp_wo_tz}' timestamp_w_tz '${timestamp_w_tz}' bigint_val '${bigint_val}'"
             aa_equals "I. ref equals nowts_utc_s" $bigint_val $nowts_utc_s
-            aa_equals "J. qf_clock_scan_from_db timestamps equal" $timestamp_wo_tz_s $timestamp_w_tz_s
+  
             aa_equals "J. qf_clock_scan_from_db timestamp_wo_tz equals nowts_utc_s" $timestamp_wo_tz_s $nowts_utc_s
-            aa_equals "J. qf_clock_scan_from_db timestamp_w_tz equals nowts_utc_s" $timestamp_w_tz_s $nowts_utc_s
-            aa_equals "K. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
-            aa_equals "L. qf_clock_format nowts_w_tz equals timestamp_w_tz" $timestamp_w_tz $nowts_w_tz
+            aa_equals "K. qf_clock_scan timestamp_wo_tz equals nowts_utc_s" $ts_wo_tz_s $nowts_utc_s
+            aa_equals "L. qf_clock_scan_from_db timestamp_w_tz equals nowts_utc_s" $timestamp_w_tz_s $nowts_utc_s
+            aa_equals "M. qf_clock_scan timestamp_w_tz equals nowts_utc_s" $ts_w_tz_s $nowts_utc_s
+            aa_equals "N. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
+            # nowts_w_tz example format: 2017-04-11 20:12:41+0000
+            set nowts_w_tz_in_ts_w_tz [qal_timestamp_to_tz $nowts_w_tz]
+            if { $timestamp_w_tz eq $nowts_w_tz } {
+                set equiv_p 1
+            } else {
+                set equiv_p 0
+            }
+            aa_true "O. qf_clock_format nowts_w_tz equivalent to timestamp_w_tz" $equiv_p
 
         } 
     # -teardown_code {
