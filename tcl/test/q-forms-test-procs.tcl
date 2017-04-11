@@ -7,8 +7,8 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
     Test encoding decoding api of timestamps
 } {
     aa_run_with_teardown \
-        -rollback \
         -test_code {
+            #         -rollback \
             ns_log Notice "qf_timestamp_checks.12: Begin test"
             set format_str "%Y-%m-%d %H:%M:%S%z"
 
@@ -55,12 +55,17 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
                 select timestamp_wo_tz,timestamp_w_tz,bigint_val from qf_test_types where ref=:ref0
             }
             set timestamp_wo_tz_s [qf_clock_scan_from_db $timestamp_wo_tz]
+            set ts_wo_tz_s [qf_clock_scan $timestamp_wo_tz]
             set timestamp_w_tz_s [qf_clock_scan_from_db $timestamp_w_tz]
+            set ts_w_tz_s [qf_clock_scan $timestamp_w_tz]
             #compare nowts with read from database
-            aa_equals "ref equals nowts_utc_s" $bigint_val $nowts_utc_s
-            aa_equals "qf_clock_scan_from_db timestamps equal" $timestamp_wo_tz_s $timestamp_w_tz_s
-            aa_equals "qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
-            aa_equals "qf_clock_format nowts_w_tz equals timestamp_w_tz" $timestamp_w_tz $nowts_w_tz
+            aa_log "from db: timestamp_wo_tz '${timestamp_wo_tz}' timestamp_w_tz '${timestamp_w_tz}' bigint_val '${bigint_val}'"
+            aa_equals "I. ref equals nowts_utc_s" $bigint_val $nowts_utc_s
+            aa_equals "J. qf_clock_scan_from_db timestamps equal" $timestamp_wo_tz_s $timestamp_w_tz_s
+            aa_equals "J. qf_clock_scan_from_db timestamp_wo_tz equals nowts_utc_s" $timestamp_wo_tz_s $nowts_utc_s
+            aa_equals "J. qf_clock_scan_from_db timestamp_w_tz equals nowts_utc_s" $timestamp_w_tz_s $nowts_utc_s
+            aa_equals "K. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
+            aa_equals "L. qf_clock_format nowts_w_tz equals timestamp_w_tz" $timestamp_w_tz $nowts_w_tz
 
         } 
     # -teardown_code {

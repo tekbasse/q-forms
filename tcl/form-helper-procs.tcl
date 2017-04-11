@@ -1315,38 +1315,50 @@ ad_proc -public qf_clock_scan {
     if { $scan_format ne "" } {
         if {[catch { set ts [clock scan $timestamp -format $scan_format]  }]} {
             set ts ""
-            ns_log Notice "qf_clock_scan.1err timestamp '${timestamp}' ts ${ts}"
+            ns_log Notice "qf_clock_scan.1 unable to scan timestamp '${timestamp}' ts '${ts}'"
         } 
-        ns_log Notice "qf_clock_scan.1 timestamp '${timestamp}' ts ${ts}"
+        #ns_log Notice "qf_clock_scan.1: timestamp '${timestamp}' ts ${ts}"
     } else {
         if {[catch { set ts [clock scan $timestamp ] }]} {
             set ts ""
-            ns_log Notice "qf_clock_scan.2err timestamp '${timestamp}' ts ${ts}"
+            ns_log Notice "qf_clock_scan.2 unable to scan timestamp '${timestamp}' ts '${ts}'"
         } 
-        ns_log Notice "qf_clock_scan.2 timestamp '${timestamp}' ts ${ts}"
+        #ns_log Notice "qf_clock_scan.2: timestamp '${timestamp}' ts ${ts}"
     }
     if { $ts ne "" } {
-        if { ![string match -nocase "*z*" $scan_format] } {       
-            # get local tcl default offset at timestamp
-            # z% Produces the current time zone, 
-            # expressed in hours and minutes east (+hhmm) or west (-hhmm) of Greenwich
-            # from http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M78
-            set tz_offset [clock format $ts -format "%z"]
-            if { ![string match "?0000" $tz_offset ] } {
-                # adjust seconds by negative of offset to get utc
-                set hh [template::util::leadingTrim [string range $tz_offset 1 2]]
-                set mm [template::util::leadingTrim [string range $tz_offset 3 4]]
-                set k [expr { ( $hh * 3600 ) + ( $mm * 60 ) } ]
+        if { ![string match -nocase "*z*" $scan_format] } { 
+            # timezone offset ignored? Maybe accounted for in timestamp
+            append timestamp_test "  "
+            if { [regexp {[\-\+][0][0][0\ ][0\ ]} $timestamp_test match ts_os] } {
+                # ts_os = timestamp offset
+                ns_log Notice "qf_clock_scan.1335. Found timestamp offset '${ts_os}'. Not making localization adjustments"
 
-                if { [string range $tz_offset 0 0] eq "+" } {
-                    # subtract the offset
-                    set ts [expr { $ts + $k } ]
-                    ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}' ts '${ts}'"
-                } elseif { [string range $tz_offset 0 0] eq "-" } {
-                    # add the offset
-                    set ts [expr { $ts - $k } ]
-                    ns_log Notice "qf_clock_scan.4 tz_offset '${tz_offset} -k '${k}' ts '${ts}'"
+            } else {
+                #adjust for localization adjustments
+
+                # get local tcl default offset at timestamp
+                # z% Produces the current time zone, 
+                # expressed in hours and minutes east (+hhmm) or west (-hhmm) of Greenwich
+                # from http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M78
+                set tz_offset [clock format $ts -format "%z"]
+                if { ![string match "?0000" $tz_offset ] } {
+                    # adjust seconds by negative of offset to get utc
+                    set hh [qf_first_number_in [string range $tz_offset 1 2]]
+                    # mm might be blank
+                    set mm [qf_first_number_in [string range $tz_offset 3 4]]
+                    set k [expr { ( $hh * 3600 ) + ( $mm * 60 ) } ]
+                    
+                    if { [string range $tz_offset 0 0] eq "+" } {
+                        # subtract the offset
+                        set ts [expr { $ts + $k } ]
+                        #ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset} +k '${k}' ts '${ts}'"
+                    } elseif { [string range $tz_offset 0 0] eq "-" } {
+                        # add the offset
+                        set ts [expr { $ts - $k } ]
+                        #ns_log Notice "qf_clock_scan.4 tz_offset '${tz_offset} -k '${k}' ts '${ts}'"
+                    }
                 }
+
             }
         }
     } else {
@@ -1356,7 +1368,7 @@ ad_proc -public qf_clock_scan {
             # Timestamp from db might look like this: 2017-04-09 14:39:20.994444-04
             # Get rid of decimal seconds
             set timestamp_alt $timestamp
-            regsub {[\.][0-9]+} $timestamp_alt {} timestamp_alt
+            regsub -- {[\.][0-9]+} $timestamp_alt {} timestamp_alt
             set ts_len [string length $timestamp_alt]
             if { $ts_len < 20 } {
                 # no %z value. 
@@ -1386,8 +1398,9 @@ ad_proc -public qf_clock_scan_from_db {
     @see qf_clock_scan
 } {
     # Truncate any decimal seconds
-    regsub {[\.][0-9]+} $timestamp {} timestamp
+    regsub -- {[\.][0-9]+} $timestamp {} timestamp
     set ts_len [string length $timestamp]
+
     if { $ts_len < 20 } {
         # no %z value. 
         append timestamp "-00"
@@ -1431,4 +1444,62 @@ ad_proc -public qf_clock_format {
         }
     }
     return $timestamp
+}
+
+ad_proc -public qf_sign {
+    number
+} {
+    Returns the sign of the number value represented as -1, 0, or 1.
+    If not a number, returns 0
+} {
+    if {[catch { set sign [expr { round( $number / double( abs ( $number ) ) ) } ] } ] } {
+        set sign 0
+    }
+    return $sign
+}
+
+ad_proc -public qf_trimleft_zeros {
+    decimal_number
+} {
+    Returns a tcl friendly representation of a loosely defined decimal number. 
+    For example, '-0001.1' becomes '-1.1'.
+} {
+    if { [string range $decimal_number 0 0] eq "-" } {
+        set tcl_num "-"
+        set decimal_number [string range $decimal_number 1 end]
+    }
+    set decimal_number [string trimleft $decimal_number "0"]
+    if { $decimal_number ne "" } {
+        append tcl_num $decimal_number
+    } else {
+        set tcl_num 0
+    }
+    return $tcl_num
+}
+
+ad_proc -public qf_first_number_in {
+    a_number_in_string
+} {
+    Returns first valid decimal number in a string. Ignores scientific notation. If no decimal found, returns 0.
+} {
+    set number 0
+    if { [regexp -- {[\.\-0-9]+} $a_number_in_string number_maybe] } {
+
+        # remove any inappropriate dash and anything following
+        set end_idx_1 [string first "-" $number_maybe 1]
+        if { $end_idx_1 > -1 } {
+            set number_maybe [string range $number_maybe 0 ${end_idx_1}-1]
+        }
+        # remove any inappropriate period and anything following
+        set dot_idx [string first "." $number_maybe ]
+        if { $dot_idx > -1 } {
+            set end_idx_2 [string first "." $number_maybe ${dot_idx}+1]
+            if { $end_idx_2 > -1 } {
+                set number_maybe [string range $number_maybe 0 ${end_idx_2}-1]
+            }
+        }
+
+        set number [qf_trimleft_zeros $number_maybe]
+    }            
+    return $number
 }
