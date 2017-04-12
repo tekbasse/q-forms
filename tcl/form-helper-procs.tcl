@@ -1402,6 +1402,7 @@ ad_proc -public qf_clock_scan {
 ad_proc -public qf_clock_scan_from_db {
     timestamp
     {scan_format "%Y-%m-%d %H:%M:%S%z"}
+    {tz_adjust_p "0"}
 } {
     Returns time_since_epoch in seconds, or empty string if there is an error. 
     Useful for converting a useful timestamp from database.
@@ -1410,19 +1411,81 @@ ad_proc -public qf_clock_scan_from_db {
     If format string is provided, scans according to format string's specifications:
     @url https://www.tcl.tk/man/tcl/TclCmd/clock.htm#M26
     @see qf_clock_scan
+
+    To pass localized adjustments to timestamps from database that do not have a timezone,
+    @see qf_clock_scan_from_db_wo_tz
+
 } {
     # Truncate any decimal seconds
     regsub -- {[\.][0-9]+} $timestamp {} timestamp
     set ts_len [string length $timestamp]
-
     if { $ts_len < 20 } {
         # no %z value. 
-        append timestamp "-00"
+        # Assume timestamp was written in UTC.
+        append timestamp  "-00"
+        # The other choice would be to assume timestamp was written assuming localized timezone,
+        # See qf_clock_scan_from_db_wo_tz
     }
     if { $scan_format ne "" } {
         set t_s [clock scan $timestamp -format $scan_format] 
     } else {
         set t_s [clock scan $timestamp -gmt true]
+    }
+    return $t_s
+}
+
+
+ad_proc -public qf_clock_scan_from_db_wo_tz {
+    timestamp
+    {scan_format "%Y-%m-%d %H:%M:%S%z"}
+} {
+    Returns time_since_epoch in seconds, or empty string if there is an error. 
+    Useful for converting a useful timestamp from database.
+    Since database sourced timestamps are more consistent than user input, 
+    a faster solution can be used than used in qf_clock_scan.
+    If format string is provided, scans according to format string's specifications:
+    @url https://www.tcl.tk/man/tcl/TclCmd/clock.htm#M26
+
+    If tz_adjust_p is "1", then localized adjustments will be made to timestamps that
+    are passed without a timezone. See qf_db_api_test unit testcases for example.
+
+    @see qf_clock_scan
+} {
+    # Truncate any decimal seconds
+    regsub -- {[\.][0-9]+} $timestamp {} timestamp
+    set ts_len [string length $timestamp]
+    set adjust_p 0
+    if { $ts_len < 20 } {
+        set adjust_p 1
+        # no %z value. 
+        # Assume timestamp was written in UTC.
+        append timestamp  "-00"
+        # The other choice would be to assume timestamp was written assuming localized timezone,
+        # and so make adjustments out as well (similar to tz_offset calcs in qf_clock_scan.
+        # And yet, that has its own can of worms, since tcl clock scan assumes 00 offsets.
+    }
+    if { $scan_format ne "" } {
+        set t_s [clock scan $timestamp -format $scan_format] 
+    } else {
+        set t_s [clock scan $timestamp -gmt true]
+    }
+    if { $adjust_p } {
+        set tz_offset [clock format $t_s -format "%z"]
+        #adjust for localization adjustments
+        if { ![string match "?0000" $tz_offset ] } {
+            # adjust seconds by negative of offset to get utc
+            set hh [qf_first_number_in [string range $tz_offset 1 2]]
+            # mm might be blank
+            set mm [qf_first_number_in [string range $tz_offset 3 4]]
+            set sign [string range $tz_offset 0 0]
+            append sign 1
+            if { $mm != 0 || $hh != 0 } {
+                set k [expr { -1 * $sign * ( ( $hh * 3600 ) + ( $mm * 60 ) ) } ]
+                # adjust by offset
+                set t_s [expr { $t_s + $k } ]
+                ns_log Notice "qf_clock_scan_from_db.3 tz_offset '${tz_offset}' +k '${k}' t_s '${t_s}'"
+            }
+        }
     }
     return $t_s
 }
@@ -1526,13 +1589,17 @@ ad_proc -public qf_timestamp_w_tz_to_tz {
     Converts a timestamp to specified timezone. 
     If timezone (tz) is empty string, converts to tcl interpreter's default timezone.
     If timestamp_format is empty string, uses clock scan's default interpretation.
+    If unable to parse, returns an empty string.
 } {
+    set ts_new_tz ""
     # proc expects a '%z' in timestamp_format
     set ts_s [qf_clock_scan $timestamp_any_tz $timestamp_format]
-    if { $tz eq "" } {
-        set tz_offset [clock format $ts_s -format "%z"]
+    if { $ts_s ne "" } {
+        if { $tz eq "" } {
+            set tz_offset [clock format $ts_s -format "%z"]
+        }
+        set ts_new_tz [clock format $ts_s -format $timestamp_format -timezone $tz]
     }
-    set ts_new_tz [clock format $ts_s -format $timestamp_format -timezone $tz]
     return $ts_new_tz
 }
 
