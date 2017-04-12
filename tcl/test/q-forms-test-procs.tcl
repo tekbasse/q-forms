@@ -71,12 +71,13 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             aa_equals "N. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
             # nowts_w_tz example format: 2017-04-11 20:12:41+0000
             set nowts_w_tz_in_ts_w_tz [qf_timestamp_w_tz_to_tz $nowts_w_tz]
-            if { $timestamp_w_tz eq $nowts_w_tz_in_ts_w_tz } {
+            aa_log "'${nowts_w_tz_in_ts_w_tz}' nowts_w_tz_in_ts_w_tz = qf_timestamp_w_tz_to_tz nowts_w_tz"
+            if { $timestamp_w_tz eq [string range $nowts_w_tz_in_ts_w_tz 0 [string length $timestamp_w_tz]-1] } {
                 set equiv_p 1
             } else {
                 set equiv_p 0
             }
-            aa_true "O. qf_clock_format nowts_w_tz equivalent to timestamp_w_tz" $equiv_p
+            aa_true "O. qf_clock_format nowts_w_tz_in_ts_w_tz equivalent to timestamp_w_tz" $equiv_p
 
         } 
     # -teardown_code {
