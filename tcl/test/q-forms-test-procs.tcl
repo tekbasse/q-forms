@@ -50,7 +50,9 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
                 (ref,timestamp_wo_tz,timestamp_w_tz,bigint_val)
                 values (:ref0,:nowts,:nowts_w_tz,:nowts_utc_s)
             }
-
+            aa_log "  to db: timestamp_wo_tz '${nowts}' timestamp_w_tz '${nowts_w_tz}' bigint_val '${nowts_utc_s}'"
+            aa_log " NOTE: timestamp_w_tz changes timezone, so postgresql 'timestamp with time zone' is not recommended to keep time records from tcl"
+            aa_log " NOTE: Recommend saving all timestamps to database in UTC regardless of with/without time zone."
             db_1row qf_test_types_r1 {
                 select timestamp_wo_tz,timestamp_w_tz,bigint_val from qf_test_types where ref=:ref0
             }
