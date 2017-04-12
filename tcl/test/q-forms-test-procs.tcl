@@ -57,7 +57,7 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             set timestamp_wo_tz_s [qf_clock_scan_from_db $timestamp_wo_tz]
             set ts_wo_tz_s [qf_clock_scan $timestamp_wo_tz]
             set timestamp_w_tz_s [qf_clock_scan_from_db $timestamp_w_tz]
-            ns_log Notice "q-forms-test-procs.tcl.68 part m"
+            ns_log Notice "q-forms-test-procs.tcl.68 part M"
             set ts_w_tz_s [qf_clock_scan $timestamp_w_tz]
             #compare nowts with read from database
             aa_log "from db: timestamp_wo_tz '${timestamp_wo_tz}' timestamp_w_tz '${timestamp_w_tz}' bigint_val '${bigint_val}'"

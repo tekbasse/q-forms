@@ -1328,37 +1328,47 @@ ad_proc -public qf_clock_scan {
     if { $ts ne "" } {
         if { ![string match -nocase "*z*" $scan_format] } { 
             # timezone offset ignored? Maybe accounted for in timestamp
+
+            # get local tcl default offset at timestamp
+            # z% Produces the current time zone, 
+            # expressed in hours and minutes east (+hhmm) or west (-hhmm) of Greenwich
+            # from http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M78
+
             set timestamp_test $timestamp
             append timestamp_test "  "
-            if { [regexp {[\-\+][0][0][0\ ][0\ ]} $timestamp_test match ts_os] } {
-                # ts_os = timestamp offset
-                ns_log Notice "qf_clock_scan.1335. Found timestamp offset '${ts_os}'. Not making localization adjustments"
-
-            } else {
-                #adjust for localization adjustments
-
-                # get local tcl default offset at timestamp
-                # z% Produces the current time zone, 
-                # expressed in hours and minutes east (+hhmm) or west (-hhmm) of Greenwich
-                # from http://www.tcl.tk/man/tcl/TclCmd/clock.htm#M78
-                if { ![regexp {[\-\+][0-9][0-9][0-9\ ][0-9\ ]$} $timestamp_test tz_offset] } {
-                    set tz_offset [clock format $ts -format "%z"]
-                    ns_log Notice "qf_clock_scan.1346: using localized offset "
+            if { [regexp {[\-\+][0-9][0-9][0-9\ ][0-9\ ]$} $timestamp_test tz_offset] } {
+                if { $scan_format eq "" } {
+                    # chances are, tcl interprets an appended timeoffset as decimal minutes
+                    # and adjusts timestamp accordingly.
+                    set tzo1 [qf_trimleft_zeros [string trim $tz_offset]]
+                    ns_log Notice "qf_clock_scan.1344: assuming timezone offset '${tz_offset}' was interpreted as '${tzo1}' minutes difference from timestamp"
+                    set ts [expr { $ts + ( $tzo1 * 60 ) } ]
                 }
-                ns_log Notice "qf_clock_scan.1348: tz_offset '${tz_offset}'"
-                if { ![string match "?0000" $tz_offset ] } {
-                    # adjust seconds by negative of offset to get utc
-                    set hh [qf_first_number_in [string range $tz_offset 1 2]]
-                    # mm might be blank
-                    set mm [qf_first_number_in [string range $tz_offset 3 4]]
-                    set sign [string range $tz_offset 0 0]
-                    append sign 1
-                    set k [expr { $sign * ( ( $hh * 3600 ) + ( $mm * 60 ) ) } ]
-                    
+            } else {
+                set tz_offset_x [clock format $ts -format "%z"]
+                if { [string range $tz_offset_x 0 0] eq "-" } {
+                    set tz_offset "+"
+                } else {
+                    set tz_offset "-"
+                }
+                append tz_offset [string range $tz_offset_x 1 4]
+                ns_log Notice "qf_clock_scan.1346: using localized offset "
+            } 
+            ns_log Notice "qf_clock_scan.1348: tz_offset '${tz_offset}'"
+
+            #adjust for localization adjustments
+            if { ![string match "?0000" $tz_offset ] } {
+                # adjust seconds by negative of offset to get utc
+                set hh [qf_first_number_in [string range $tz_offset 1 2]]
+                # mm might be blank
+                set mm [qf_first_number_in [string range $tz_offset 3 4]]
+                set sign [string range $tz_offset 0 0]
+                append sign 1
+                if { $mm != 0 || $hh != 0 } {
+                    set k [expr { -1 * $sign * ( ( $hh * 3600 ) + ( $mm * 60 ) ) } ]
                     # adjust by offset
                     set ts [expr { $ts + $k } ]
                     ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset}' +k '${k}' ts '${ts}'"
-
                 }
             }
         }
