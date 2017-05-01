@@ -6,7 +6,7 @@ ad_library {
     @Copyright (c) 2014 Benjamin Brink
     @license GNU General Public License 2, see project home or http://www.gnu.org/licenses/gpl-2.0.html
     @project home: http://github.com/tekbasse/q-forms
-    @address: po box 20, Marylhurst, OR 97036-0020 usa
+    @address: po box 193, Marylhurst, OR 97036-0193 usa
     @email: tekbasse@yahoo.com
 
 }

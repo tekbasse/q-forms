@@ -19,7 +19,7 @@ builder, ad_form or acs-templating.
 license
 -------
 Copyright (c) 2013 Benjamin Brink
-po box 20, Marylhurst, OR 97036-0020 usa
+po box 193, Marylhurst, OR 97036-0193 usa
 email: tekbasse@yahoo.com
 
 Q-Forms is open source and published under the GNU General Public License, 
