@@ -719,7 +719,7 @@ ns_log Notice "qf_remove_tag_contents(465): tag_contents '$tag_contents'"
     }
     # append any trailing portion
     lappend tag_contents_list [string range $page $start_index end]
-#    set remaining_contents \[join $tag_contents_list " "\]
+
     return $tag_contents_list
 }
 
@@ -1074,25 +1074,9 @@ ad_proc -public qf_is_decimal {
 } {
    checks if value is a decimal number that can be used in tcl decimal math. Returns 1 if true, otherwise 0.
 } {
-    # following regexp from acs-tcl/tcl/json-procs.tcl which references json.org, ietf.org, Thomas Maeder, Glue Software Engineering AG and Don Baccus
+    # For inspiration, see regexp from acs-tcl/tcl/json-procs.tcl 
+    # which references json.org, ietf.org, Thomas Maeder, Glue Software Engineering AG and Don Baccus
     
-    # tokens consisting of a single character
-    #variable singleCharTokens { "{" "}" ":" "\\[" "\\]" "," }
-    #variable singleCharTokenRE "\[[join $singleCharTokens {}]\]"
-    
-    # quoted string tokens
-    #variable escapableREs { "[\\\"\\\\/bfnrt]" "u[[:xdigit:]]{4}" }
-    #variable escapedCharRE "\\\\(?:[join $escapableREs |])"
-    #variable unescapedCharRE {[^\\\"]}
-    #variable stringRE "\"(?:$escapedCharRE|$unescapedCharRE)*\""
-    
-    # (unquoted) words
-    #variable wordTokens { "true" "false" "null" }
-    #variable wordTokenRE [join $wordTokens "|"]
-    
-    # number tokens
-    # negative lookahead (?!0)[[:digit:]]+ might be more elegant, but
-    # would slow down tokenizing by a factor of up to 3!
     set positiveRE {[1-9][[:digit:]]+[.]?|[[:digit:]][.]?}
     set cardinalRE "-?(?:$positiveRE)?"
     set fractionRE {[.][[:digit:]]+}

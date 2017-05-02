@@ -50,8 +50,7 @@ ad_proc -private qf_form_key_create {
         # set instance_id package_id
         set instance_id [ad_conn package_id]
     }
-    #    set time_sec \[ns_time\]
-    # need more time separation
+    #   ns_time doesn't have enough time separation
     if { $key_id eq "" } {
         set key_id [expr { int( [clock clicks] * [ns_rand] ) } ]
     }
@@ -59,11 +58,11 @@ ad_proc -private qf_form_key_create {
     set start_clicks [ad_conn start_clicks]
     if { [ad_conn -connected_p] } {
         set client_ip [ns_conn peeraddr]
-        #        set request \[ad_conn request\]
+
         set secure_p [security::secure_conn_p]
         set session_id [ad_conn session_id]
         set action_url [ns_conn url]
-        #       set render_timestamp $time_sec
+
     } else {
         set server_ip [ns_config ns/server/[ns_info server]/module/nssock Address]
         if { $server_ip eq "" } {
@@ -71,7 +70,7 @@ ad_proc -private qf_form_key_create {
         }
         set client_ip $server_ip
         # time_sec s/b circa clock seconds
-        #set request \[string range $time_sec \[expr { floor( ( \[ns_rand\] * \[string length $time_sec\] ) ) }\] end\]
+
         set secure_p [expr { floor( [ns_rand] + 0.5 ) } ]
 
         set session_id [expr { floor( $time_sec / 4 ) } ]
@@ -164,7 +163,7 @@ ad_proc -public qf_get_inputs_as_array {
     set arg_arr(multiple_key_as_list) 0
     set arg_arr(hash_check) 0
     set arg_full_list [list duplicate_key_check multiple_key_as_list hash_check]
-    #set arg_list \[list $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 \]
+
     set instance_id [ad_conn package_id]
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -850,7 +849,8 @@ ad_proc -private qf_options {
     To indicate "SELECTED" attribute, include the attribute "selected" with the paired value of 1.
 } {
     # options_list is expected to be a list like this:
-    # \[list \[list attribute1 value attribute2 value attribute3 value attribute4 value attribute5 value...\] \[list {second option tag attribute-value pairs} etc\] \]
+    # list list attribute1 value attribute2 value attribute3 value attribute4 value attribute5 value... 
+    #      list {second option tag attribute-value pairs} etc
 
     # for this proc, we need to check the individual options for each OPTION tag, to provide the most flexibility.
     set list_length [llength $options_list_of_lists]
