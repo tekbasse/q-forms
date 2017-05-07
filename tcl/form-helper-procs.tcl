@@ -1587,3 +1587,20 @@ ad_proc -public qf_timestamp_w_tz_to_tz {
     return $ts_new_tz
 }
 
+ad_proc -public qf_vars_to_array {
+    vars_list
+    array_name
+} {
+    Converts a list of variable names into an array name_arr where array indexes are identical to variable names in list.
+    If variable doesn't exist, variable is set to empty string.
+} {
+    upvar 1 $array_name n_arr
+    foreach var $vars_list {
+        if { [info exists $var ] } {
+            set n_arr(${var}) [set $var]
+        } else {
+            set n_arr(${var}) ""
+        }
+    }
+    return 1
+}
