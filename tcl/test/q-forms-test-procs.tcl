@@ -80,6 +80,27 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
                 set equiv_p 0
             }
             aa_true "O. qf_clock_format nowts_w_tz_in_ts_w_tz equivalent to timestamp_w_tz" $equiv_p
+            aa_log "Test symmetry between default qf_clock_format and qf_clock_scan"
+            set created1 ""
+            set created_s1 [qf_clock_scan $created1]
+
+            set created2 [qf_clock_format $created_s1 ]
+
+
+            set created_s2 [qf_clock_scan $created2]
+
+            set created3 [qf_clock_format $created_s2 ]
+            aa_equals "timestamp created3 '${created3}' equals created2 '${created2}'" $created3 $created2
+            aa_equals "epochtime created_s1 '${created_s1}' equals created_s2 '${created_s2}'" $created_s1 $created_s2
+            set created_s4 ""
+            set created4 [qf_clock_format $created_s4 ]
+            set created_s5 [qf_clock_scan $created4]
+            set created5 [qf_clock_format $created_s5]
+            set created_s6 [qf_clock_scan $created4]
+            aa_equals "timestamp created5 '${created5}' equals created4 '${created4}'" $created4 $created5
+            aa_equals "epochtime created_s6 '${created_s6}' equals created_s5 '${created_s5}'" $created_s6 $created_s5
+
+
 
         } 
     # -teardown_code {
