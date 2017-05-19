@@ -1297,20 +1297,28 @@ ad_proc -public qf_clock_scan {
     If no timezone or timezone-offset is provided, assumes utc instead of clock scan's localized preference.
 } {
     if { $scan_format ne "" } {
-        if {[catch { set ts [clock scan $timestamp -format $scan_format]  }]} {
-            set ts ""
-            ns_log Notice "qf_clock_scan.1 unable to scan timestamp '${timestamp}' ts '${ts}'"
-        } 
+        if { $timestamp ne "" } {
+            if {[catch { set ts [clock scan $timestamp -format $scan_format]  }]} {
+                set ts ""
+                ns_log Notice "qf_clock_scan.1 unable to scan timestamp '${timestamp}' ts '${ts}'"
+            } 
+        } else {
+            set ts [clock seconds]
+        }
         #ns_log Notice "qf_clock_scan.1: timestamp '${timestamp}' ts ${ts}"
     } else {
-        if {[catch { set ts [clock scan $timestamp ] }]} {
-            set ts ""
-            ns_log Notice "qf_clock_scan.2 unable to scan timestamp '${timestamp}' ts '${ts}'"
-        } 
+        if { $timestamp ne "" } {
+            if {[catch { set ts [clock scan $timestamp ] }]} {
+                set ts ""
+                ns_log Notice "qf_clock_scan.2 unable to scan timestamp '${timestamp}' ts '${ts}'"
+            } 
+        } else {
+            set ts [clock seconds]
+        }
         #ns_log Notice "qf_clock_scan.2: timestamp '${timestamp}' ts ${ts}"
     }
     if { $ts ne "" } {
-        if { ![string match -nocase "*z*" $scan_format] } { 
+        if { ![string match -nocase "*z*" $scan_format] && $timestamp ne "" } { 
             # timezone offset ignored? Maybe accounted for in timestamp
 
             # get local tcl default offset at timestamp
