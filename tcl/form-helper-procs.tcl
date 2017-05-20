@@ -1307,16 +1307,12 @@ ad_proc -public qf_clock_scan {
         if { $scan_format ne "" } {
             if {[catch { set ts [clock scan $timestamp -format $scan_format]  }]} {
                 set ts ""
-                ns_log Notice "qf_clock_scan.1310: Unable to scan timestamp '${timestamp}' ts '${ts}'"
             } 
-            #ns_log Notice "qf_clock_scan.1: timestamp '${timestamp}' ts ${ts}"
         } else {
 
             if {[catch { set ts [clock scan $timestamp ] }]} {
-                set ts ""
-                ns_log Notice "qf_clock_scan.1317: Unable to scan timestamp '${timestamp}' ts '${ts}'"
+                set ts ""                
             } 
-            #ns_log Notice "qf_clock_scan.2: timestamp '${timestamp}' ts ${ts}"
         }
         if { $ts ne "" } {
             if { ![string match -nocase "*z*" $scan_format] && $timestamp ne "" } { 
@@ -1367,8 +1363,7 @@ ad_proc -public qf_clock_scan {
             }
         } else {
             # ts eq ""
-            
-            ns_log Notice "qf_clock_scan.1367: First scan failed. Trying qf_clock_scan_from_db technique."
+            ns_log Notice "qf_clock_scan.1369: '${timestamp}' -format '${scan_format}' caught. Trying qf_clock_scan_from_db way."
             set ts [qf_clock_scan_from_db $timestamp]
             
             # Try again in case timestamp is from db and supplied and default scan_format are not standard.
