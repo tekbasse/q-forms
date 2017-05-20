@@ -70,7 +70,7 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             aa_equals "L. qf_clock_scan_from_db timestamp_w_tz equals nowts_utc_s" $timestamp_w_tz_s $nowts_utc_s
 
             aa_equals "M. qf_clock_scan timestamp_w_tz equals nowts_utc_s" $ts_w_tz_s $nowts_utc_s
-            aa_equals "N. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz $nowts 
+            aa_equals "N. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz [string range $nowts 0 18]
             # nowts_w_tz example format: 2017-04-11 20:12:41+0000
             set nowts_w_tz_in_ts_w_tz [qf_timestamp_w_tz_to_tz $nowts_w_tz]
             aa_log "'${nowts_w_tz_in_ts_w_tz}' nowts_w_tz_in_ts_w_tz = qf_timestamp_w_tz_to_tz nowts_w_tz"
@@ -92,7 +92,7 @@ aa_register_case -cats {api smoke} qf_timestamp_checks {
             set created3 [qf_clock_format $created_s2 ]
             aa_equals "timestamp created3 '${created3}' equals created2 '${created2}'" $created3 $created2
             aa_equals "epochtime created_s1 '${created_s1}' equals created_s2 '${created_s2}'" $created_s1 $created_s2
-            set created_s4 ""
+            set created_s4 [clock seconds]
             set created4 [qf_clock_format $created_s4 ]
             set created_s5 [qf_clock_scan $created4]
             set created5 [qf_clock_format $created_s5]
