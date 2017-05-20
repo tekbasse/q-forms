@@ -1307,14 +1307,14 @@ ad_proc -public qf_clock_scan {
         if { $scan_format ne "" } {
             if {[catch { set ts [clock scan $timestamp -format $scan_format]  }]} {
                 set ts ""
-                ns_log Notice "qf_clock_scan.1 unable to scan timestamp '${timestamp}' ts '${ts}'"
+                ns_log Notice "qf_clock_scan.1310: Unable to scan timestamp '${timestamp}' ts '${ts}'"
             } 
             #ns_log Notice "qf_clock_scan.1: timestamp '${timestamp}' ts ${ts}"
         } else {
 
             if {[catch { set ts [clock scan $timestamp ] }]} {
                 set ts ""
-                ns_log Notice "qf_clock_scan.2 unable to scan timestamp '${timestamp}' ts '${ts}'"
+                ns_log Notice "qf_clock_scan.1317: Unable to scan timestamp '${timestamp}' ts '${ts}'"
             } 
             #ns_log Notice "qf_clock_scan.2: timestamp '${timestamp}' ts ${ts}"
         }
@@ -1334,7 +1334,7 @@ ad_proc -public qf_clock_scan {
                         # chances are, tcl interprets an appended timeoffset as decimal minutes
                         # and adjusts timestamp accordingly.
                         set tzo1 [qf_trimleft_zeros [string trim $tz_offset]]
-                        ns_log Notice "qf_clock_scan.1344: assuming timezone offset '${tz_offset}' was interpreted as '${tzo1}' minutes difference from timestamp"
+                        ns_log Notice "qf_clock_scan.1344: Assuming timezone offset '${tz_offset}' was interpreted as '${tzo1}' minutes difference from timestamp."
                         set ts [expr { $ts + ( $tzo1 * 60 ) } ]
                     }
                 } else {
@@ -1345,7 +1345,7 @@ ad_proc -public qf_clock_scan {
                         set tz_offset "-"
                     }
                     append tz_offset [string range $tz_offset_x 1 4]
-                    ns_log Notice "qf_clock_scan.1346: using localized offset "
+                    ns_log Notice "qf_clock_scan.1346: Using localized offset. "
                 } 
                 ns_log Notice "qf_clock_scan.1348: tz_offset '${tz_offset}'"
 
@@ -1361,14 +1361,14 @@ ad_proc -public qf_clock_scan {
                         set k [expr { -1 * $sign * ( ( $hh * 3600 ) + ( $mm * 60 ) ) } ]
                         # adjust by offset
                         set ts [expr { $ts + $k } ]
-                        ns_log Notice "qf_clock_scan.3 tz_offset '${tz_offset}' +k '${k}' ts '${ts}'"
+                        ns_log Notice "qf_clock_scan.1364 tz_offset '${tz_offset}' +k '${k}' ts '${ts}'"
                     }
                 }
             }
         } else {
             # ts eq ""
             
-            ns_log Notice "qf_clock_scan.1367: failed. Trying qf_clock_scan_from_db technique"
+            ns_log Notice "qf_clock_scan.1367: First scan failed. Trying qf_clock_scan_from_db technique."
             set ts [qf_clock_scan_from_db $timestamp]
             
             # Try again in case timestamp is from db and supplied and default scan_format are not standard.
@@ -1384,9 +1384,8 @@ ad_proc -public qf_clock_scan {
             set scan_format_alt "%Y-%m-%d %H:%M:%S%z"
             if {[catch { set ts [clock scan $timestamp -format $scan_format_alt] }]} {
                 set ts ""
-            } else {
-                ns_log Notice "qf_uniques_of: supplied scan_format '${scan_format}' didn't work for '${timestamp}'. Used '${scan_format_alt}' on '${timestamp_alt}'"
-            }
+                
+            } 
         }
     }
     return $ts
