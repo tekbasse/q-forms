@@ -1292,10 +1292,17 @@ ad_proc -public qf_clock_scan {
 } {
     Returns time_since_epoch in seconds, or empty string if there is an error. 
     Useful for converting a useful timestamp from user input.
+    <br/>
     If format string is provided, scans according to format string's specifications:
     @url https://www.tcl.tk/man/tcl/TclCmd/clock.htm#M26
+    <br/>
+    If attempt fails, it will trying using same formatting as qf_clock_format:
+    "%Y-%m-%d %H:%M:%S%z"   <br/>
     If no timezone or timezone-offset is provided, assumes utc instead of clock scan's localized preference.
     An empty timestamp returns an empty string.
+    
+
+    @see qf_clock_format
 } {
     if { $timestamp eq "" } {
 
