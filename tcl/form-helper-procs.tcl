@@ -1616,12 +1616,18 @@ ad_proc -public qf_vars_to_array {
     If variable doesn't exist, variable is set to empty string.
 } {
     upvar 1 $array_name n_arr
-    foreach var $vars_list {
-        if { [info exists $var ] } {
-            set n_arr(${var}) [set $var]
-        } else {
-            set n_arr(${var}) ""
+    if { [llength $array_name ] == 1 } {
+        foreach var $vars_list {
+            if { [info exists $var ] } {
+                set n_arr(${var}) [set $var]
+            } else {
+                set n_arr(${var}) ""
+            }
         }
+        set success_p 1
+    } else {
+        ns_log Warning "qf_vars_to_array.1628: Unexpected array_name '${array_name}'"
+        set success_p 0
     }
-    return 1
+    return $success_p
 }
