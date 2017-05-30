@@ -1618,6 +1618,7 @@ ad_proc -public qf_vars_to_array {
     upvar 1 $array_name n_arr
     if { [llength $array_name ] == 1 } {
         foreach var $vars_list {
+            upvar 1 $var $var
             if { [info exists $var ] } {
                 set n_arr(${var}) [set $var]
             } else {
