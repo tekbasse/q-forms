@@ -1632,3 +1632,20 @@ ad_proc -public qf_vars_to_array {
     }
     return $success_p
 }
+
+ad_proc qf_email_valid_p { query_email } {
+    Returns 1 if an email address has more or less the correct form.
+    The regexp is taken from Jeff Friedls book "Mastering Regular Expressions"
+    and modified to flag more spam cases.
+
+    @author Philip Greenspun (philg@mit.edu)
+    @author Jeff Friedl (jfriedl@oreilly.com)
+    @author Lars Pind (lars@arsdigita.com)
+
+    @see util_email_valid_p
+} {
+    # This regexp was very kindly contributed by Jeff Friedl, author of 
+    # _Mastering Regular Expressions_ (O'Reilly 1997).
+
+    return [regexp "^\[^@<>\"\t ]+@\[^@<>\".\t \-]\[^@<>\".\t ]*(\\d.\[^@<>\".\n ]+)+$" $query_email]
+}
