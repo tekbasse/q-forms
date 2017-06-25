@@ -93,3 +93,19 @@ CREATE TABLE qf_test_types (
        -- accepts '1','0', true, false, y, n etc.. prefers 'TRUE' 'FALSE' returns 't' or 'f'
        boolean_val boolean
 );
+
+-- Create a database for managing table fields 
+-- ie form field input and presentation or publishing info for consistency.
+-- Procs should be able to reference by 
+-- 1. tablename field_name_list  
+-- 2. tablename.field_name tablename2.fieldname etc.
+-- 3. Pre-grouped uses of case 1 and 2
+-- 4. exceptions by package-key, instance_id, or id (ie form_id, table_id etc)
+--    with most specific case taking precedence.
+-- For autobuilding forms, input attributes should include conventions from autocomplete/autofill
+-- if possible.
+-- qf_form needs to be responsive to html version. 
+-- doc(type) is passed to www/blank-master 
+-- or set a default html 4.01 strict.. in blank-master.
+-- qf_form should check for existence of doc(type), default to same as in blank-master
+-- or set to html5 if using autocomplete or detecting html5 in use.. (and set doc(type) if it isn't set).
