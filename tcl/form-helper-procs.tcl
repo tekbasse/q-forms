@@ -1633,19 +1633,96 @@ ad_proc -public qf_vars_to_array {
     return $success_p
 }
 
-ad_proc qf_email_valid_p { query_email } {
+ad_proc qf_email_valid_q { query_email } {
     Returns 1 if an email address has more or less the correct form.
-    The regexp is taken from Jeff Friedls book "Mastering Regular Expressions"
-    and modified to flag more spam cases.
-
-    @author Philip Greenspun (philg@mit.edu)
-    @author Jeff Friedl (jfriedl@oreilly.com)
-    @author Lars Pind (lars@arsdigita.com)
+    Works like util_email_valid_p only more tolerant of valid addresses etc.
 
     @see util_email_valid_p
 } {
-    # This regexp was very kindly contributed by Jeff Friedl, author of 
-    # _Mastering Regular Expressions_ (O'Reilly 1997).
-
-    return [regexp "^\[^@<>\"\t ]+@\[^@<>\".\t \-]\[^@<>\".\t ]*(\\d.\[^@<>\".\n ]+)+$" $query_email]
+    # Forget using common regexp with this. See https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
+    set parts_list [split $query_email "@"]
+    set is_email_p 0
+    if { [llength $parts_list] eq 2 } {
+        set account [lindex $parts_list 0]
+        set domain [lindex $parts_list 1]
+        if { [hf_are_safe_and_visible_characters_q $account] } {
+            if { [qf_domain_name_valid_q $domain ] } {
+                set is_email_p 1
+            } else {
+                ns_log Notice "qf_email_valid_q.1652: domain '${domain}'"
+            }
+        } else {
+                ns_log Notice "qf_email_valid_q.1655: account '${account}'"
+        }
+    } else {
+        ns_log Notice "qf_email_valid_q.1658: different than two parts. parts_list '${parts_list}'"
+    }
+    return $is_email_p
 }
+
+ad_proc qf_domain_name_valid_q {
+    domain_name
+    {ends_with_dot_p "0"}
+} {
+    Returns 1 if is a domain name, otherwise returns 0.
+    Default does not test if last character is a dot "." Change ends_with_dot_p to 1 to require dot at end.
+} {
+
+    # "..any binary string whatever can be used as the label of any
+    #   resource record.. In particular, DNS servers must not
+    #   refuse to serve a zone because it contains labels that might not be
+    #   acceptable to some DNS client programs."
+    #  RFC-2181, section 11 https://tools.ietf.org/html/rfc2181#section-11
+
+    # At the same time, the domain *could* be required to qualify under traditional
+    # practices by using PUNYCODE
+    # See also https://tools.ietf.org/html/rfc3490#ref-PUNYCODE 
+
+    #  "Host software MUST handle host names of up to 63 characters and
+    #  SHOULD handle host names of up to 255 characters.
+    #  Whenever a user inputs the identity of an Internet host, it SHOULD
+    #  be possible to enter either (1) a host domain name or (2) an IP
+    #  address in dotted-decimal ("#.#.#.#") form.  The host SHOULD check
+    #  the string syntactically for a dotted-decimal number before
+    #  looking it up in the Domain Name System."
+    # from RFC-1123 section 2.1
+    set is_name_valid_p 0
+    
+    # must not be all numbers, unless is an ipv4 address.
+    
+    if { ( $ends_with_dot_p && [string range $domain_name end end] eq "." ) || ( !$ends_with_dot_p ) } {
+        if { [string length $domain_name] < 64 } {
+            set parts_list [split $domain_name {.}]
+            set parts_list_len [llength $parts_list]
+            set all_valid_p 1
+            set all_is_num_p 1
+            foreach part $parts_list {
+                # can begin with number or letter
+                # can have any number of dashes
+                set this_is_num_p [qf_is_natural_number $part]
+                set part_len [string length $part]
+                ns_log Notice "qf_domian_name_valid_q part_len ${part_len}"
+                if { $part_len > 0 } {
+                    set this_valid_p [regexp -nocase -- {^[a-z0-9\-]+$} $part scratch ]
+                    if { $this_valid_p && ( [string match "-*" $part] || [string match "*-" $part] ) } {
+                        set this_valid_p 0
+                    }
+                } else {
+                    set this_valid_p 0
+                }
+                set all_valid_p [expr { $all_valid_p && $this_valid_p } ]
+                set all_is_num_p [expr { $all_is_num_p && $this_is_num_p } ]
+                ns_log Notice "qf_domain_name_valid_q domain_name '${domain_name}' part '${part}' this_valid_p $this_valid_p all_valid_p $all_valid_p all_is_num_p $all_is_num_p"
+            }
+
+            if { ( ( $parts_list_len == 3 && $all_is_num_p ) || !$all_is_num_p ) && $all_valid_p && $parts_list_len > 0 } {
+                set is_name_valid_p 1
+            } 
+        } 
+           
+    }
+    return $is_name_valid_p
+}
+
+# per https://tools.ietf.org/html/rfc3490#page-10  Make a proc ToASCII and ToUnicode
+# to handle translation of internationalized domains
