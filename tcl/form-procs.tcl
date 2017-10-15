@@ -938,7 +938,7 @@ ad_proc -public qf_close {
     {arg1 ""}
     {arg2 ""}
 } {
-    closes a form by appending a close form tag (and fieldset tag if any are open). if id supplied, only closes that referenced form and any fieldsets associated with it.  
+    closes a form by appending a close form tag (and fieldset tag if any are open). if form_id supplied, only closes that referenced form and any fieldsets associated with it.  
 } {
     # use upvar to set form content, set/change defaults
     upvar 1 __form_ids_list __form_ids_list
