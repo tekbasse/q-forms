@@ -40,7 +40,9 @@ ad_proc -private qf_form_key_create {
     {action_url "/"}
     {instance_id ""}
 } {
-    creates the form key for a more secure form transaction. Returns the security hash. See also qf_submit_key_accepted_p
+    creates the form key for a more secure form transaction. Returns the security hash.
+
+    @see qf_submit_key_accepted_p
 } {
     upvar 1 __qf_hc_arr __qf_hc_arr
     upvar 1 attributes_arr attributes_arr
