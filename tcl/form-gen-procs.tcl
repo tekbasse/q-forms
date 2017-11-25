@@ -12,7 +12,17 @@ ad_library {
 
 #agenda:
 # qf_form_prepare form_id
-#      Prepares a list_of_lists definition of a form
+#      Prepares an lists_array definition of a form
 #      This way, can check if a package_id has a parameter enableFormGenP
 #      If enableFormGenP and apm_package_enabled_p spreadsheet
 #      Then do integration business logic
+
+#qf_form_generate_html4 form_id
+# converts prepared list_array to html
+
+#qf_form_generate_html5 form_id
+# converts prepared list_array to html
+
+#qf_form_generate_xml_v001 form_id
+# converts prepared list_array to xml (mainly for saas)
+
