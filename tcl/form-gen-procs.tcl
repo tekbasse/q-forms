@@ -12,7 +12,9 @@ ad_library {
 }
 
 #agenda:
-# qf_form_prepare form_id form_fields_arr
+# qfo = q-form object
+
+# qfo_prepare form_id form_fields_arr
 #      Prepares an lists_array definition of a form
 #      Grabs custom definitions
 #      Grabs/overwrites customs with package defaults
@@ -21,22 +23,20 @@ ad_library {
 #      If enableFormGenP and apm_package_enabled_p spreadsheet
 #      Then do integration business logic
 
-# qf_form_fields 
+# qfo_fields 
 #      returns list of default form fields + plus any custom ones
 
-# qf_form_array_read (as name/val list pairs)
+# qfo_array_read (as name/val list pairs)
 #      reads data from tips_ database that match form_array's unique_key
 
-#qf_form_generate_html4 form_id
+#qfo_generate_html4 form_id
 # converts prepared list_array to html
 
-#qf_form_generate_html5 form_id
+#qfo_generate_html5 form_id
 # converts prepared list_array to html
 
-#qf_form_generate_xml_v001 form_id
+#qfo_generate_xml_v001 form_id
 # converts prepared list_array to xml (mainly for saas)
 
-# object?? what other word works instead of 'form' that doesn't conflict with
-# existing openacs-isms
-#qf_object_generate_html4 arrayname
-#qf_object_generate_html5 arrayname
+#qfo_view_html4 arrayname
+#qfo_view_html5 arrayname
