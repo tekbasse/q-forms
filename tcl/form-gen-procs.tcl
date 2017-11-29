@@ -34,8 +34,9 @@ ad_library {
 #           q-forms.. so, create package qfo that requires spreadsheet and q-forms?
 #           qfo shouldn't require spreadsheet. Solution is to have
 #           qfo package require q-forms and a q-data-types package, and
+#           qfo package = q-tables (was q-tips).
 #           spreadsheet requires q-data-types package.
-#           spreadsheet is only required if extended qfo package features.
+#           q-tables is only required if extended qfo custom form features.
 #           default values (set in context of qf_input_as_array)
 #      This way, can check if a package_id has a parameter enableFormGenP
 #      If enableFormGenP and apm_package_enabled_p spreadsheet
