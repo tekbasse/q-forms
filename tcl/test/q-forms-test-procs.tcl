@@ -3,106 +3,29 @@ ad_library {
     @creation-date 2017-04-09
 }
 
-aa_register_case -cats {api smoke} qf_timestamp_checks {
-    Test encoding decoding api of timestamps
+aa_register_case -cats {api smoke} qf_form_checks {
+    Test multiple concurrent form generation and tag making features
 } {
     aa_run_with_teardown \
         -test_code {
             #         -rollback \
-            ns_log Notice "qf_timestamp_checks.12: Begin test"
-            set format_str "%Y-%m-%d %H:%M:%S%z"
+            ns_log Notice "qf_form_tests.12: Begin test"
 
-            set nowts_utc_s [clock seconds]
-            ns_log Notice "qf_ts_checks.1   nowts_utc_s $nowts_utc_s"
-            aa_log "A. nowts_utc_s $nowts_utc_s"
-
-            set nowts [qf_clock_format $nowts_utc_s]
-            aa_log "B. nowts $nowts"
-            set nowts_w_tz [qf_clock_format $nowts_utc_s $format_str]
-            aa_log "C. nowts_w_tz $nowts_w_tz"
-            #compare nowts with pre-write timestamp_wo_tz timestamp_w_tz and
-
-            set nowts_s [qf_clock_scan $nowts]
-            ns_log Notice "qf_ts_checks.25  nowts_s ${nowts_s}"
-            aa_log "D. nowts_s = 'qf_clock_scan ${nowts}' = ${nowts_s}"
-            set diff1 [expr { $nowts_utc_s - $nowts_s } ]
-            ns_log Notice "qf_ts_checks.28 diff1 ${diff1}"
-            aa_log "E. Diff1: nowts_utc_s - nowts_s = ${diff1}"
-            aa_equals "F. qf_clock_scan nowts equals nowts_utc_s" $nowts_s $nowts_utc_s
-
-            set nowts_w_tz_s [qf_clock_scan $nowts_w_tz $format_str]
-            set diff2 [expr { $nowts_utc_s - $nowts_w_tz_s } ]
-            aa_log "G. Diff2: nowts_utc_s - nowts_w_tz_s = ${diff2}"
-            aa_equals "H. qf_clock_scan nowts_w_tz_s equals nowts_utc_s" $nowts_w_tz_s $nowts_utc_s
-
-            set ref0 [randomRange 10241024]
-            # make sure ref0 hasn't been used before
-            set ck $ref0
-            while { $ck == $ref0 } {
-                set ref0 [randomRange 10241024]
-                db_0or1row qf_test_types_r1v {
-                    select ref as ck from qf_test_types where ref=:ref0
-                }
-            }
-
-            db_dml qf_test_types_w {
-                insert into qf_test_types 
-                (ref,timestamp_wo_tz,timestamp_w_tz,bigint_val)
-                values (:ref0,:nowts,:nowts_w_tz,:nowts_utc_s)
-            }
-            aa_log "  to db: timestamp_wo_tz '${nowts}' timestamp_w_tz '${nowts_w_tz}' bigint_val '${nowts_utc_s}'"
-            aa_log " NOTE: timestamp_w_tz changes timezone, so postgresql 'timestamp with time zone' is not recommended to keep time records from tcl"
-            aa_log " NOTE: Recommend saving all timestamps to database in UTC regardless of with/without time zone."
-            db_1row qf_test_types_r1 {
-                select timestamp_wo_tz,timestamp_w_tz,bigint_val from qf_test_types where ref=:ref0
-            }
-            set timestamp_wo_tz_s [qf_clock_scan_from_db $timestamp_wo_tz]
-            set ts_wo_tz_s [qf_clock_scan $timestamp_wo_tz]
-            set timestamp_w_tz_s [qf_clock_scan_from_db $timestamp_w_tz]
-            ns_log Notice "q-forms-test-procs.tcl.68 part M"
-            set ts_w_tz_s [qf_clock_scan $timestamp_w_tz]
-            #compare nowts with read from database
-            aa_log "from db: timestamp_wo_tz '${timestamp_wo_tz}' timestamp_w_tz '${timestamp_w_tz}' bigint_val '${bigint_val}'"
-            aa_equals "I. ref equals nowts_utc_s" $bigint_val $nowts_utc_s
-  
-            aa_equals "J. qf_clock_scan_from_db timestamp_wo_tz equals nowts_utc_s" $timestamp_wo_tz_s $nowts_utc_s
-            aa_equals "K. qf_clock_scan timestamp_wo_tz equals nowts_utc_s" $ts_wo_tz_s $nowts_utc_s
-            aa_equals "L. qf_clock_scan_from_db timestamp_w_tz equals nowts_utc_s" $timestamp_w_tz_s $nowts_utc_s
-
-            aa_equals "M. qf_clock_scan timestamp_w_tz equals nowts_utc_s" $ts_w_tz_s $nowts_utc_s
-            aa_equals "N. qf_clock_format nowts equals timestamp_wo_tz" $timestamp_wo_tz [string range $nowts 0 18]
-            # nowts_w_tz example format: 2017-04-11 20:12:41+0000
-            set nowts_w_tz_in_ts_w_tz [qf_timestamp_w_tz_to_tz $nowts_w_tz]
-            aa_log "'${nowts_w_tz_in_ts_w_tz}' nowts_w_tz_in_ts_w_tz = qf_timestamp_w_tz_to_tz nowts_w_tz"
-            if { $timestamp_w_tz eq [string range $nowts_w_tz_in_ts_w_tz 0 [string length $timestamp_w_tz]-1] } {
-                set equiv_p 1
-            } else {
-                set equiv_p 0
-            }
-            aa_true "O. qf_clock_format nowts_w_tz_in_ts_w_tz equivalent to timestamp_w_tz" $equiv_p
-            aa_log "Test symmetry between default qf_clock_format and qf_clock_scan"
-            set created1 ""
-            set created_s1 [qf_clock_scan $created1]
-
-            set created2 [qf_clock_format $created_s1 ]
-
-
-            set created_s2 [qf_clock_scan $created2]
-
-            set created3 [qf_clock_format $created_s2 ]
-            aa_equals "timestamp created3 '${created3}' equals created2 '${created2}'" $created3 $created2
-            aa_equals "epochtime created_s1 '${created_s1}' equals created_s2 '${created_s2}'" $created_s1 $created_s2
-            set created_s4 [clock seconds]
-            set created4 [qf_clock_format $created_s4 ]
-            set created_s5 [qf_clock_scan $created4]
-            set created5 [qf_clock_format $created_s5]
-            set created_s6 [qf_clock_scan $created4]
-            aa_equals "timestamp created5 '${created5}' equals created4 '${created4}'" $created4 $created5
-            aa_equals "epochtime created_s6 '${created_s6}' equals created_s5 '${created_s5}'" $created_s6 $created_s5
-
-
+            aa_log "create three forms with default id"
+            set f1_id [qf_form ]
+            set f2_id [qf_form ]
+            set f3_id [qf_form ]
+            set f1_ne_f2 [expr { $f1_id ne $f2_id } ]
+            set f2_ne_f3 [expr { $f2_id ne $f3_id } ]
+            aa_true "id form1 ${f1_id} does not equal form2 ${f2_id}" $f1_ne_f2
+            aa_true "id form2 ${f2_id} does not equal form3 ${f3_id}" $f2_ne_f3
+            set f4_id [qf_form form_id test4 id test5]
+            set f5_id [qf_form id test5]
+            set f4_ne_f5 [expr { $f4_id ne $f5_id } ]
+            aa_true "id form4 ${f4_id} does not equal form5 ${f5_id}" $f4_ne_f5
 
         } 
+    # example code
     # -teardown_code {
     # 
     #acs_user::delete -user_id $user1_arr(user_id) -permanent
