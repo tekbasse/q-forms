@@ -14,10 +14,18 @@ ad_library {
 #agenda:
 # qfo = q-form object
 
+# Wrap the following procs with
+# a proc that takes essentially a form declaration
+# and manages everything, returning 1 if validated
+# otherwise returns 0 as not validated or no input.
+# Pass inputs via dashed parameters
+# Pass outputs: form , input values via upvar.
+
+
 # qfo_prepare form_id form_fields_larr
 #      Prepares a lists_array definition of a form
 
-#      Grabs custom definitions in context of tips_ api
+#      Grabs data type definitions in context of q-data-types
 
 #      Grabs/overwrites customs with package defaults
 #         to force package specific requirements.
@@ -36,7 +44,9 @@ ad_library {
 #           qfo package require q-forms and a q-data-types package, and
 #           qfo package = q-tables (was q-tips).
 #           spreadsheet requires q-data-types package.
+#             (package remapping is DONE).
 #           q-tables is only required if extended qfo custom form features.
+
 #           default values (set in context of qf_input_as_array)
 #      This way, can check if a package_id has a parameter enableFormGenP
 #      If enableFormGenP and apm_package_enabled_p spreadsheet
@@ -45,17 +55,21 @@ ad_library {
 # qfo_fields 
 #      returns list of default form fields + plus any custom ones
 
-# qfo_array_read (as name/val list pairs)
-#      reads data from tips_ database that match form_array's unique_key
+# qfo_input_as_array ??
+# qfo_row_array_read (as name/val list pairs)
+#      reads data into tcl space from connection input
+#which should be idential to data from 
+# tips_ database that was written to table and matching form_array's unique_key
+# except that there is no extra trips to db.
 
 #qfo_generate_html4 form_id
-# converts prepared list_array to html
+# converts prepared list_array to html4
 
 #qfo_generate_html5 form_id
-# converts prepared list_array to html
+# converts prepared list_array to html5
 
 #qfo_generate_xml_v001 form_id
 # converts prepared list_array to xml (mainly for saas)
 
-#qfo_view_html4 arrayname
-#qfo_view_html5 arrayname
+#qfo_view arrayname returns form definition as text in generated format
+
