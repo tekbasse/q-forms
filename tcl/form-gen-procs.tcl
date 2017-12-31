@@ -21,6 +21,9 @@ ad_library {
 # Pass inputs via dashed parameters
 # Pass outputs: form , input values via upvar.
 
+## FIRST verify negative numbers pass as values in ad_proc that uses
+# parameters passed starting with dash.. -for_example.
+
 
 # qfo_prepare form_id form_fields_larr
 #      Prepares a lists_array definition of a form
