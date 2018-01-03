@@ -76,3 +76,11 @@ ad_library {
 
 #qfo_view arrayname returns form definition as text in generated format
 
+ad_proc -public qfo_gen {
+    {-test_param ""}
+    {-test_p2 ""}
+} {
+    test param capabilities
+} {
+    return $test_param
+}

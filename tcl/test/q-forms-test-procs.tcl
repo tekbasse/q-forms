@@ -4,7 +4,7 @@ ad_library {
 }
 
 aa_register_case -cats {api smoke} qf_form_checks {
-    Test multiple concurrent form generation and tag making features
+    Test multiple concurrent form and tag making features
 } {
     aa_run_with_teardown \
         -test_code {
