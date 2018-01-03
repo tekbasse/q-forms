@@ -995,9 +995,9 @@ ad_proc -public qf_close {
     set a_fieldset_exists [info exists __form_ids_fieldset_open_list]
     foreach form_id $attributes_arr(form_id) {
         # check if form_id is valid
-        set form_id_position [lsearch -exact $__form_ids_open_list $attributes_arr(form_id)]
+        set form_id_position [lsearch -exact $__form_ids_open_list $form_id]
         if { $form_id_position == -1 } {
-            ns_log Warning "qf_close.887: unknown form_id $attributes_arr(form_id)"
+            ns_log Warning "qf_close.887: unknown form_id '${form_id}' in __form_ids_open_list '${__form_ids_open_list}' of '$attributes_arr(form_id)'"
         } else {
             if { $a_fieldset_exists } {
                 # close fieldset tag if form has an open one.
@@ -1334,7 +1334,7 @@ ad_proc -public qf_input {
             append tag_html [qf_insert_attributes $tag_attributes_list] "></label>"
         }
     } else {
-        if { $attributes_arr(type) eq "hidden" } {
+        if { [info exists attributes_arr(type)] && $attributes_arr(type) eq "hidden" } {
             if { [info exists __qf_hc_arr($attributes_arr(form_id))] && $__qf_hc_arr($attributes_arr(form_id)) > 0 } {
                 # pass via db for integrity of internal references
                 set instance_id [ad_conn package_id]
