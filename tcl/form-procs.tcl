@@ -459,7 +459,7 @@ ad_proc -public qf_form {
     if { $form_id_exists == 0 || ( $form_id_exists == 1 && $attributes_arr(form_id) eq "" ) } { 
         set id_exists [info exists attributes_arr(id) ]
         if { $id_exists == 0 || ( $id_exists == 1 && $attributes_arr(id) eq "" ) } { 
-            regsub {/} [ad_conn url] {-} form_key
+            regsub -all -- {/} [ad_conn url] {_} form_key
             append form_key "-[llength ${__form_ids_list}]"
         } else {
             # since a FORM id has to be unique, lets use it
