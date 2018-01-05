@@ -81,11 +81,14 @@ ad_library {
 
 #qfo_view arrayname returns form definition as text in generated format
 
-ad_proc -public qfo_gen {
-    {-test_param ""}
-    {-test_p2 ""}
+ad_proc -public qfo_2g {
+    -fields:required
+    -inputs_as_array
+    {-form_id ""}
+    {-doc_type "html4"}
+    {-field_types_array ""}
 } {
-    test param capabilities
+    Returns 1 if input is validated. If there are no fields, input is automatically validated.
 } {
-    return $test_param
+    return $validated
 }
