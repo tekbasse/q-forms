@@ -18,10 +18,10 @@ ad_library {
 ad_proc qfo_qtable_label {
     form_id
 } {
-    Gets most specific q-tables' table_label and instance_id in an ordered list. table_label is a reference based on package-key and form_id.
-    Returns empty string if none found.
+    Gets most specific q-tables' table_label,  instance_id and table_id in an ordered list. table_label is a reference based on package-key and form_id.
+    Returns empty list if none found.
 } {
-    set return_list [list "" ""]
+    set return_list [list ]
     # Is q-tables installed?
     if { [apm_package_enabled_p q-tables] } {
         set package_id [ad_conn package_id]
@@ -31,21 +31,17 @@ ad_proc qfo_qtable_label {
         # Cannot use qt_table_def_read, because that paradigm
         # requires instance_id to be defined
 
-        set tables_ul [db_list_of_lists {
+        # Select the one most specific to this package_id
+        set found_p [db_0or1row {
             select id,label,instance_id from qt_table_defs
-            where (( label=:table_label  and instance_id is null ) or
-                    ( label=:tabel_label and instance_id=:package_id ))
-            and trashed_p!='1'} ]
-        if { [llength $tables_ul] > 0 }  {
-            # Select the one most specific to this package_id
-
-       ##code
-
-
-
+            where label=:table_label 
+            and ( instance_id is null or instance_id=:package_id )
+            and trashed_p!='1' order by instance_id asc limit 1} ]
+        if { $found_p } {
+            set return_list [list $label $instance_id $id]
         }
     }
-    return $q_tables_defined_p
+    return $return_list
 }
 
 
