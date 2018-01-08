@@ -11,25 +11,47 @@ ad_library {
     @email: tekbasse@yahoo.com
 }
 
-#agenda:
 # qfo = q-form object
-
-# Wrap the following procs with
-# a proc that takes essentially a form declaration
-# and manages everything, returning 1 if validated
-# otherwise returns 0 as not validated or no input.
-# Pass inputs via dashed parameters
-# Pass outputs: form , input values via upvar.
-
-# Verify negative numbers pass as values in ad_proc that uses
-# parameters passed starting with dash.. -for_example.
-# PASSED. If a non-decimal number begins with dash, flags warning in log.
-
-# Nomenclature. qfo_<some_name> refers to a qfo_ paradigm.
-# This permits creating variations as needed.
-
 # qfo_2g for a declarative form builder without writing code.
+# qfo_<some_name> refers to a qfo_ paradigm.
+# This permits creating variations of qfo_2g as needed.
+ad_proc qfo_qtable_label {
+    form_id
+} {
+    Gets most specific q-tables' table_label and instance_id in an ordered list. table_label is a reference based on package-key and form_id.
+    Returns empty string if none found.
+} {
+    set return_list [list "" ""]
+    # Is q-tables installed?
+    if { [apm_package_enabled_p q-tables] } {
+        set package_id [ad_conn package_id]
+        set package_key [ad_conn package_key]
+        set table_label $package_key
+        append table_label ":" ${form_id}
+        # Cannot use qt_table_def_read, because that paradigm
+        # requires instance_id to be defined
 
+        set tables_ul [db_list_of_lists {
+            select id,label,instance_id from qt_table_defs
+            where (( label=:table_label  and instance_id is null ) or
+                    ( label=:tabel_label and instance_id=:package_id ))
+            and trashed_p!='1'} ]
+        if { [llength $tables_ul] > 0 }  {
+            # Select the one most specific to this package_id
+
+       ##code
+
+
+
+        }
+    }
+    return $q_tables_defined_p
+}
+
+
+ad_proc qfo_form_fields_prepare {
+    form_fields_larr
+}
 # qfo_prepare form_id form_fields_larr
 #      Prepares a lists_array definition of a form
 
@@ -60,7 +82,7 @@ ad_library {
 #      If enableFormGenP and apm_package_enabled_p spreadsheet
 #      Then do integration business logic
 
-# qfo_fields 
+# qfo_fields form_id
 #      returns list of default form fields + plus any custom ones
 
 # qfo_input_as_array ??
@@ -83,12 +105,32 @@ ad_library {
 
 ad_proc -public qfo_2g {
     -fields:required
-    -inputs_as_array
+    {-inputs_as_array "qfi"}
     {-form_id ""}
-    {-doc_type "html4"}
+    {-doc_type ""}
     {-field_types_array ""}
+    {-form_var_name "form_m"}
 } {
+    Inputs essentially declare properties of a form and manages field type validation.
+
     Returns 1 if input is validated. If there are no fields, input is automatically validated.
+
+    Validation may occur outside of this validation by outputing a user message and redisplaying form_var_name instead of processing further.
 } {
+    # Verify negative numbers pass as values in ad_proc that uses
+    # parameters passed starting with dash.. -for_example.
+    # PASSED. If a non-decimal number begins with dash, flags warning in log.
+    # Since default form_id may begin with dash, a warning is possible.
+
+    # qfi = qf input
+    # form_ml = form markup (usually in html starting with FORM tag)
+    upvar 1 $inputs_as_array qfi
+    upvar 1 $form_var_name form_m
+    if { $field_types_array ne "" } {
+        upvar 1 $field_types_array field_types_arr
+    }
+
+
+
     return $validated
 }
