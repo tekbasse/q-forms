@@ -23,7 +23,7 @@
         <callbacks>
         </callbacks>
         <parameters>
-        <!-- No version parameters -->
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="enableQFormGenP"  default="0" description="Set this parameter to 1 in package using qfo_ procs to enable q-tables features with form generation features."/>
         </parameters>
 
     </version>

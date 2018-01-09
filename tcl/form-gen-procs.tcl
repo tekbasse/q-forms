@@ -18,27 +18,33 @@ ad_library {
 ad_proc qfo_qtable_label {
     form_id
 } {
-    Gets most specific q-tables' table_label,  instance_id and table_id in an ordered list. table_label is a reference based on package-key and form_id.
+    Gets most specific q-tables' table_label, instance_id and table_id in an ordered list. table_label is a reference based on package-key and form_id.
     Returns empty list if none found.
 } {
     set return_list [list ]
-    # Is q-tables installed?
-    if { [apm_package_enabled_p q-tables] } {
-        set package_id [ad_conn package_id]
-        set package_key [ad_conn package_key]
-        set table_label $package_key
-        append table_label ":" ${form_id}
-        # Cannot use qt_table_def_read, because that paradigm
-        # requires instance_id to be defined
-
-        # Select the one most specific to this package_id
-        set found_p [db_0or1row {
-            select id,label,instance_id from qt_table_defs
-            where label=:table_label 
-            and ( instance_id is null or instance_id=:package_id )
-            and trashed_p!='1' order by instance_id asc limit 1} ]
-        if { $found_p } {
-            set return_list [list $label $instance_id $id]
+    set package_id [ad_conn package_id]
+    set enable_p [parameter::get -parameter enableQFormGenP \
+                      -package_id $package_id \
+                      -default "0"
+                      -boolean ]
+    if { $enable_p } {
+        # Is q-tables installed?
+        if { [apm_package_enabled_p q-tables] } {
+            set package_key [ad_conn package_key]
+            set table_label $package_key
+            append table_label ":" ${form_id}
+            # Cannot use qt_table_def_read, because that paradigm
+            # requires instance_id to be defined
+            
+            # Select the one most specific to this package_id
+            set found_p [db_0or1row {
+                select id,label,instance_id from qt_table_defs
+                where label=:table_label 
+                and ( instance_id is null or instance_id=:package_id )
+                and trashed_p!='1' order by instance_id asc limit 1} ]
+            if { $found_p } {
+                set return_list [list $label $instance_id $id]
+            }
         }
     }
     return $return_list
@@ -47,7 +53,7 @@ ad_proc qfo_qtable_label {
 
 ad_proc qfo_form_fields_prepare {
     form_fields_larr
-}
+} {
 # qfo_prepare form_id form_fields_larr
 #      Prepares a lists_array definition of a form
 

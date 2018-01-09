@@ -73,5 +73,7 @@ html can be inserted in any form at any point during the build.
 No UI javascript is used. Technologies with limited UI, cpu power, or low QOS connection can use it.
 </li><li>
 Integrates with acs-templating features.
+</li><li>
+Integrates with q-tables for customizing forms, mainly adding ability to add extra fields and store info in a q-tables table. To activate feature, package implementing q-forms qfo_* procs requires a package parameter "enableQFormGenP" with value set to "1".
 </li></ul>
 
