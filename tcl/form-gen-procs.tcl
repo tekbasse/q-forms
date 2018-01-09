@@ -15,7 +15,7 @@ ad_library {
 # qfo_2g for a declarative form builder without writing code.
 # qfo_<some_name> refers to a qfo_ paradigm.
 # This permits creating variations of qfo_2g as needed.
-ad_proc qfo_qtable_label {
+ad_proc -private qfo_qtable_label_package_id {
     form_id
 } {
     Gets most specific q-tables' table_label, instance_id and table_id in an ordered list. table_label is a reference based on package-key and form_id.
@@ -69,6 +69,8 @@ ad_proc qfo_form_fields_prepare {
 #           Attributes could default to ones provided by datatype.
 #           datatype refers to qss_tips_data_types.. except that doesn't work
 #           for defaults provided by q-forms only. 
+
+
 #           So, q-forms must have its own qfo datatypes, yet a UI is 
 #           needed to dynamically change this, and spreadsheet shouldn't require
 #           q-forms.. so, create package qfo that requires spreadsheet and q-forms?
@@ -83,6 +85,14 @@ ad_proc qfo_form_fields_prepare {
 #      This way, can check if a package_id has a parameter enableFormGenP
 #      If enableFormGenP and apm_package_enabled_p spreadsheet
 #      Then do integration business logic
+    set qtable_enabled_p 1
+    set qtable_list [qfo_qtable_label_package_id $form_id]
+    if { [llength $qtable_list ] ne 0 } {
+        # do business logic for integration with q-tables
+        set qtable_enabled_p 1
+
+    }
+
 
 # qfo_fields form_id
 #      returns list of default form fields + plus any custom ones
