@@ -13,8 +13,9 @@ ad_library {
 
 # qfo = q-form object
 # qfo_2g for a declarative form builder without writing code.
-# qfo_<some_name> refers to a qfo_ paradigm.
+# qfo_<some_name> refers to a qfo_ paradigm or sub-api
 # This permits creating variations of qfo_2g as needed.
+
 ad_proc -private qfo_qtable_label_package_id {
     form_id
 } {
@@ -51,47 +52,21 @@ ad_proc -private qfo_qtable_label_package_id {
 }
 
 
-ad_proc qfo_form_fields_prepare {
-    form_fields_larr
-} {
-# qfo_prepare form_id form_fields_larr
+#ad_proc qfo_form_fields_prepare {
+#    {-form_fields_larr_name}
+#} {
+
+#}
+
+
 #      Prepares a lists_array definition of a form
 
 #      Grabs data type definitions in context of q-data-types
 
-#      Grabs/overwrites customs with package defaults
-#         to force package specific requirements.
-#         Customization adds fields, doesn't change supplied ones.
-#         Package defaults need to be defined using simple,
-#         largely self-explanatory code
-#         What is needed?  field attributes for qf_input or qf_textarea
-#           additional fields: data type for validation and view.
-#           Attributes could default to ones provided by datatype.
-#           datatype refers to qss_tips_data_types.. except that doesn't work
-#           for defaults provided by q-forms only. 
-
-
-#           So, q-forms must have its own qfo datatypes, yet a UI is 
-#           needed to dynamically change this, and spreadsheet shouldn't require
-#           q-forms.. so, create package qfo that requires spreadsheet and q-forms?
-#           qfo shouldn't require spreadsheet. Solution is to have
-#           qfo package require q-forms and a q-data-types package, and
-#           qfo package = q-tables (was q-tips).
-#           spreadsheet requires q-data-types package.
-#             (package remapping is DONE).
-#           q-tables is only required if extended qfo custom form features.
 
 #           default values (set in context of qf_input_as_array)
-#      This way, can check if a package_id has a parameter enableFormGenP
-#      If enableFormGenP and apm_package_enabled_p spreadsheet
-#      Then do integration business logic
-    set qtable_enabled_p 1
-    set qtable_list [qfo_qtable_label_package_id $form_id]
-    if { [llength $qtable_list ] ne 0 } {
-        # do business logic for integration with q-tables
-        set qtable_enabled_p 1
 
-    }
+
 
 
 # qfo_fields form_id
@@ -116,20 +91,44 @@ ad_proc qfo_form_fields_prepare {
 #qfo_view arrayname returns form definition as text in generated format
 
 ad_proc -public qfo_2g {
-    -fields:required
+    -fields_array:required
+    {-field_types_array ""}
     {-inputs_as_array "qfi"}
     {-form_id ""}
     {-doc_type ""}
-    {-field_types_array ""}
-    {-form_var_name "form_m"}
+    {-form_varname "form_m"}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
-
-    Returns 1 if input is validated. If there are no fields, input is automatically validated.
-
-    Validation may occur outside of this validation by outputing a user message and redisplaying form_var_name instead of processing further.
+    <br><br>
+    <code>fields_array</code> is an <strong>array name</strong>. 
+    Indexes are 'name' attributes for form elements. 
+    Each indexed value is a list containing attribute/value pairs of form element. 
+    <br><br>
+    Each form element is expected to have a 'datatype' in the list. 
+    'text' datatype is default.
+    <br><br>
+    Form elements are displayed in order of any attribute 'tabindex' values.
+    Order may be overridden by an array index 'element_order' containing an ordered list of array indexes.
+    <br><br>
+    <code>field_types_array</code> is an <strong>array name</strong>. 
+    Indexes are field 'datatype'. 
+    Each indexed value is a list containing name/value pairs that match q-data-types or a datatype provided in <code>field_types_array</code>. 
+    See <code>qdt_data_types</code> for names used.
+    <br><br>
+    <code>inputs_as_array</code> is an <strong>array name</strong>. Array values follow convention of qf_get_inputs_as_array
+    <br><br>
+    <code>form_id</code> should be unique at least within the package in order to reduce name collision implementation.
+    <br><br>
+    Returns 1 if input is validated. 
+    If there are no fields, input is validated by default.
+    <br><br>
+    Note: Validation may be accomplished external to this proc by outputing a user message such as via <code>util_user_message</code> and redisplaying form instead of processing further.
+    
+    @see qdt_data_types
+    @see util_user_message
+    @see qf_get_inputs_as_array
 } {
-    # Verify negative numbers pass as values in ad_proc that uses
+    # Done: Verify negative numbers pass as values in ad_proc that uses
     # parameters passed starting with dash.. -for_example.
     # PASSED. If a non-decimal number begins with dash, flags warning in log.
     # Since default form_id may begin with dash, a warning is possible.
@@ -142,6 +141,22 @@ ad_proc -public qfo_2g {
         upvar 1 $field_types_array field_types_arr
     }
 
+
+
+
+    set qtable_enabled_p 0
+    set qtable_list [qfo_qtable_label_package_id $form_id]
+    if { [llength $qtable_list ] ne 0 } {
+        # customize using q-tables paradigm
+        set qtable_enabled_p 1
+
+    }
+    if { $qtable_enabled_p } {
+        
+
+    }
+
+    # 
 
 
     return $validated

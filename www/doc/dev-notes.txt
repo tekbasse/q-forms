@@ -1,0 +1,59 @@
+Customization is enabled of a package if package:
+1. has a parameter enableFormGenP
+2. enableFormGenP is set to '1' 
+3. q-tables is installed (enabled)
+@see qfo_qtable_label_package_id
+
+
+
+-----
+Some logic behind the creation of separate packages: q-data-types and q-tables:
+While designing a paradigm for customization of forms 
+that expand on package/app form defaults
+while forcing package/app specific requirements,
+some axioms are noted.
+
+1. Customization adds fields, doesn't change supplied ones.
+
+2. Customization code should not be available by default to
+ensure that default app/form behavior is not burdened with
+complexity of customization features
+or related bugs and performance degredation.
+Customization adds complexity and therefore burdens app developer 
+that must consider unknown possibilities during app design.
+This burden/responsibility for implementing customizations should
+be on the onus of customizers.
+
+3. Package defaults need to be defined using simple,
+     largely self-explanatory code to simplify declarations.
+
+What is needed?  
+
+field attributes for qf_input or qf_textarea
+additional fields: data type for validation and view.
+
+Tag attributes could default to ones provided by datatype.
+
+Modified data types could provide customizations.
+And yet, axiom 3 customization features should not be inherent.
+Subsequently, q-data-types holds fixed data types.
+
+
+Customizations are provided via q-tables (if installed).
+
+Datatype refers to qss_tips_data_types (now q-data-types) 
+except that doesn't work for defaults provided by q-forms only.
+
+So, q-forms must have its own customizable qfo datatypes, 
+yet a UI is needed to dynamically change this for web admins.
+
+Furthermore, the spreadsheet package shouldn't require the customizations
+per axiom 3.
+
+Solution:
+
+A qfo api that requires q-forms and q-data-types package.
+Spreadsheet package requires q-data-types package.
+Customizations of extending forms features require installing q-tables package.
+
+

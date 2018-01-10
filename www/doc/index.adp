@@ -77,3 +77,4 @@ Integrates with acs-templating features.
 Integrates with q-tables for customizing forms, mainly adding ability to add extra fields and store info in a q-tables table. To activate feature, package implementing q-forms qfo_* procs requires a package parameter "enableQFormGenP" with value set to "1".
 </li></ul>
 
+<p><a href="dev-notes.txt">Development notes</a></p>
