@@ -117,7 +117,9 @@ ad_proc -public qfo_2g {
     <br><br>
     <code>inputs_as_array</code> is an <strong>array name</strong>. Array values follow convention of qf_get_inputs_as_array
     <br><br>
-    <code>form_id</code> should be unique at least within the package in order to reduce name collision implementation.
+    <code>form_id</code> should be unique at least within the package in order to reduce name collision implementation. For customization, a form_id is prefixed with the package_key to create the table name linked to the form. See <code>qfo_qtable_label_package_id</code>
+    <br><br>
+    <code>doc_type</code> is the XML DOCTYPE used to generate a form. Examples: html4, html5, and xml. Default uses a previously defined doc(type) if it exists in the namespace called by this proc. Otherwise the default is the one supplied by q-forms parameter defaultDocType.
     <br><br>
     Returns 1 if input is validated. 
     If there are no fields, input is validated by default.
@@ -127,6 +129,7 @@ ad_proc -public qfo_2g {
     @see qdt_data_types
     @see util_user_message
     @see qf_get_inputs_as_array
+    @see qfo_qtable_label_package_id
 } {
     # Done: Verify negative numbers pass as values in ad_proc that uses
     # parameters passed starting with dash.. -for_example.

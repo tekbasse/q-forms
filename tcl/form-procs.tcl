@@ -1763,3 +1763,41 @@ ad_proc -public qf_choices {
     return $args_html
 }    
 
+ad_proc -private qf_doctype {
+    {doctype ""}
+} {
+    Returns the root DOCTYPE from doc(type) if it exists, otherwise from doctype. If doctype is empty string, uses value from q-forms parameter defaultDocType.
+} {
+    upvar 1 doc doc
+    set doc_type ""
+    if { [info exists doc(type)] } {
+        set doctype $doc(type)
+    }
+    if { $doctype ne "" } {
+        if { [string match -nocase "doctype" $doctype] } {
+            # parse 
+            switch -glob -nocase -- $doctype {
+                "*html*4*" {
+                    set doc_type "html4"
+                }
+                "*html*5*" {
+                    set doc_type "html5"
+                }
+                "*xml*" {
+                    set doc_type "xml"
+                }
+                default {
+                    ns_log Warning "qf_doctype. \
+ Unable to parse doctype '${doctype}'."
+                }
+            }
+        }
+    }
+    if { $doc_type eq "" } {
+        set doc_type [parameter::get_from_package_key \
+                          -parameter defaultDocType \
+                          -package_key q-forms \
+                          -default "html4"]
+    }
+    return $doc_type
+}
