@@ -1794,10 +1794,19 @@ ad_proc -private qf_doctype {
         }
     }
     if { $doc_type eq "" } {
-        set doc_type [parameter::get_from_package_key \
+        # Is parameter defined locally in package?
+        set doc_type [parameter::get \
                           -parameter defaultDocType \
-                          -package_key q-forms \
-                          -default "html4"]
+                          -package_id [ad_conn package_id] \
+                          -default ""]
+        
+        if { $doc_type eq "" } {
+            # Use the q-forms package parameter.
+            set doc_type [parameter::get_from_package_key \
+                              -parameter defaultDocType \
+                              -package_key q-forms \
+                              -default "html4"]
+        }
     }
     return $doc_type
 }
