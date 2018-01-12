@@ -97,6 +97,10 @@ ad_proc -public qfo_2g {
     {-form_id ""}
     {-doc_type ""}
     {-form_varname "form_m"}
+    {-duplicate_key_check "0"}
+    {-multiple_key_as_list "0"}
+    {-hash_check "0"}
+    {-post_only "0"}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -121,11 +125,18 @@ ad_proc -public qfo_2g {
     <br><br>
     <code>doc_type</code> is the XML DOCTYPE used to generate a form. Examples: html4, html5, and xml. Default uses a previously defined doc(type) if it exists in the namespace called by this proc. Otherwise the default is the one supplied by q-forms parameter defaultDocType.
     <br><br>
+    <code>form_varname</code> is the variable name used to assign the generated form to. The generated form is a text value containing markup language tags.
+    <br><br>
     Returns 1 if input is validated. 
     If there are no fields, input is validated by default.
     <br><br>
     Note: Validation may be accomplished external to this proc by outputing a user message such as via <code>util_user_message</code> and redisplaying form instead of processing further.
-    
+    <br><br>
+    <code>duplicate_key_check</code> see <code>qf_get_inputs_as_array</code>.
+    <code>multiple_key_as_list</code> see <code>qf_get_inputs_as_array</code>.
+    <code>hash_check</code> see <code>qf_get_inputs_as_array</code>.
+    <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
+    <br><br>
     @see qdt_data_types
     @see util_user_message
     @see qf_get_inputs_as_array
@@ -138,15 +149,33 @@ ad_proc -public qfo_2g {
 
     # qfi = qf input
     # form_ml = form markup (usually in html starting with FORM tag)
-    upvar 1 $inputs_as_array qfi
+    upvar 1 $fields_array fields_arr
+    upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_var_name form_m
     if { $field_types_array ne "" } {
         upvar 1 $field_types_array field_types_arr
     }
 
+    submitted_p [qf_get_inputs_as_array qfi_arr \
+                     duplicate_key_check $duplicate_key_check \
+                     multiple_key_as_list $multiple_key_as_list \
+                     hash_check $hash_check \
+                     post_only $post_only ]
 
+    set qfi_fields_list [array names fields_arr]    
+    # fatts = field attributes
+    foreach f $qfi_fields_list {
+        foreach {attr val} $fields_arr(${f}) {
+            set fatts_arr(${f},${attr}) $val
+        }
+    }
 
-
+    ##code Add the customization code
+    # where a q-tables table of same name overrides form definition
+    # per form element.
+    # That is, any element defined in a q-table overrides existing
+    # form element with all existing attributes.
+    # This way, customization may remove certain attributes.
     set qtable_enabled_p 0
     set qtable_list [qfo_qtable_label_package_id $form_id]
     if { [llength $qtable_list ] ne 0 } {
@@ -155,12 +184,37 @@ ad_proc -public qfo_2g {
 
     }
     if { $qtable_enabled_p } {
-        
+        # apply the customizations from table defined in q-tables
+
+        #for each field in customization, '$f'
+        array unset fatts_arr "${f},"
+        # then add new fatts_arr(${f},...)
 
     }
 
-    # 
 
+    
+    set validated_p 0
+    if { $submitted_p } {
+        # validate inputs
+        foreach f $qfi_fields_list {
+            
 
-    return $validated
+        }
+    }
+
+    if { $validated_p } {
+        set form_m ""
+        if { $qtable_enabled_p } {
+            ##code
+            # save a new row in customized q-tables table
+
+        }
+    } else {
+        # generate form
+
+        
+    }
+    
+    return $validated_p
 }
