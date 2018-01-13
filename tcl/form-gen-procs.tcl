@@ -132,9 +132,9 @@ ad_proc -public qfo_2g {
     <br><br>
     Note: Validation may be accomplished external to this proc by outputing a user message such as via <code>util_user_message</code> and redisplaying form instead of processing further.
     <br><br>
-    <code>duplicate_key_check</code> see <code>qf_get_inputs_as_array</code>.
-    <code>multiple_key_as_list</code> see <code>qf_get_inputs_as_array</code>.
-    <code>hash_check</code> see <code>qf_get_inputs_as_array</code>.
+    <code>duplicate_key_check</code>,<br>
+    <code>multiple_key_as_list</code>,<br>
+    <code>hash_check</code>, and <br>
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
     <br><br>
     @see qdt_data_types
