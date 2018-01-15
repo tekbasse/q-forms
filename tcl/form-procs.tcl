@@ -1217,6 +1217,7 @@ ad_proc -public qf_input {
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_fieldset_open_list __form_ids_fieldset_open_list
     upvar 1 __qf_hc_arr __qf_hc_arr
+    upvar 1 __qf_forwardslash_p __forwardslash_p
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
         set arg_list $arg1
@@ -1229,6 +1230,42 @@ ad_proc -public qf_input {
     } else {
         set arg_list [list ]
     }
+
+    # If mime type contains 'xml' self-closing tags are required.
+    # The purpose of checking mime type is for helping to differentiate 
+    # when to use the forwardslash before end angle-bracket 
+    # in a markup language.  
+    #  Only xhtml and xml require a forwardslash before end angle-bracket 
+    # in tags without end tags.. and only for INPUT tag in FORMs paradigm.
+    # Adding a forwardslash may break markup language validation
+    # in some html4 and is optional in html5. 
+    # Subsequently, only xml needs to be differentiated.
+    # For more discussion, see:
+    # https://stackoverflow.com/questions/3558119/are-non-void-self-closing-tags-valid-in-html5#5047150
+    #  This code based on template::get_mime_type
+
+    if { ![info exists __forwardslash_p ] } {
+        set mime_type [ns_set iget [ns_conn outputheaders] "content-type"]
+        if { $mime_type ne "" } {
+            # check for xml and xhtml
+            set forwardslash_p [string match "*x*ml" $mime_type]
+        } else {
+            # Guess mime based on doctype
+            # check for xml and xhtml
+            set forwardslash_p [string match "*x*ml*" [qf_doctype]]
+        }
+        if { $forwardslash_p } {
+            set __forwardslash "/"
+        } else {
+            set __forwardslash ""
+        }
+    } else {
+        set __forwardslash ""
+        if { $forwardslash_p } {
+            set __forwardslash "/"
+        }
+    }
+
 
     set attributes_tag_list [list type accesskey align alt border checked class id maxlength name readonly size src tabindex value]
     set attributes_full_list $attributes_tag_list
@@ -1323,7 +1360,8 @@ ad_proc -public qf_input {
                 append tag_html " title=\"" $label_title "\""
             }
             append tag_html "><input" [qf_insert_attributes ${tag_attributes_list}]
-            append tag_html $tag_suffix ">" $attributes_arr(label) "</label>"
+            append tag_html $tag_suffix $forwardslash ">"
+            append tag_html $attributes_arr(label) "</label>"
         } else {
             set tag_html "<label for=\""
             append tag_html $attributes_arr(id) "\""
@@ -1331,7 +1369,8 @@ ad_proc -public qf_input {
                 append tag_html " title=\"" $label_title "\""
             }
             append tag_html ">" $attributes_arr(label) "<input"
-            append tag_html [qf_insert_attributes $tag_attributes_list] "></label>"
+            append tag_html [qf_insert_attributes $tag_attributes_list] 
+            append tag_html $forwardslash "></label>"
         }
     } else {
         if { [info exists attributes_arr(type)] && $attributes_arr(type) eq "hidden" } {
@@ -1350,7 +1389,8 @@ ad_proc -public qf_input {
             # and create some honey for sweet tooths regardless.
         }
         set tag_html "<input"
-        append tag_html [qf_insert_attributes $tag_attributes_list] $tag_suffix ">"
+        append tag_html [qf_insert_attributes $tag_attributes_list] 
+        append tag_html $tag_suffix $forwardslash ">"
 
     }
 
@@ -1766,47 +1806,76 @@ ad_proc -public qf_choices {
 ad_proc -private qf_doctype {
     {doctype ""}
 } {
-    Returns the root DOCTYPE from doc(type) if it exists, otherwise from doctype. If doctype is empty string, uses value from q-forms parameter defaultDocType.
-} {
+    Returns the root DOCTYPE from doc(type) if it exists, otherwise from doctype. If doctype is empty string, uses value from q-forms parameter defaultDocType. If doctype is html, also returns version of html if inferable in reference.
+    <br><br>
+    The purpose of this proc is for helping to determine if a form attribute is valid or not for the doc type.
+}  {
     upvar 1 doc doc
-    set doc_type ""
-    if { [info exists doc(type)] } {
-        set doctype $doc(type)
+    upvar 1 __qf_forwardslash_p __forwardslash_p
+    upvar 1 __qf_doctype __doctype
+
+
+    # This proc should validate doctype against mime type to be consistent.
+    if { ![info exists __forwardslash_p ] } {
+        # Following line is based on template::get_mime_type
+        set mime_type [ns_set iget [ns_conn outputheaders] "content-type"]
+        if { $mime_type ne "" } {
+            # check for xml and xhtml
+            set __forwardslash_p [string match "*x*ml" $mime_type]
+        } else {
+            set __forwardslash_p 0
+        }
     }
-    if { $doctype ne "" } {
-        if { [string match -nocase "doctype" $doctype] } {
-            # parse 
-            switch -glob -nocase -- $doctype {
-                "*html*4*" {
-                    set doc_type "html4"
-                }
-                "*html*5*" {
-                    set doc_type "html5"
-                }
-                "*xml*" {
-                    set doc_type "xml"
-                }
-                default {
-                    ns_log Warning "qf_doctype. \
+
+    if { ![info exists __doctype] } {
+        set doc_type ""
+        if { [info exists doc(type)] } {
+            set doctype $doc(type)
+        }
+        if { $doctype ne "" } {
+            if { [string match -nocase "doctype" $doctype] } {
+                # parse 
+                switch -glob -nocase -- $doctype {
+                    "*html*4*" {
+                        set doc_type "html4"
+                    }
+                    "*html*5*" {
+                        set doc_type "html5"
+                    }
+                    "*x*ml*" {
+                        # pattern works for xhtml or xml
+                        set doc_type "xml"
+                    }
+                    default {
+                        ns_log Warning "qf_doctype. \
  Unable to parse doctype '${doctype}'."
+                    }
                 }
             }
         }
-    }
-    if { $doc_type eq "" } {
-        # Is parameter defined locally in package?
-        set doc_type [parameter::get \
-                          -parameter defaultDocType \
-                          -package_id [ad_conn package_id] \
-                          -default ""]
-        
         if { $doc_type eq "" } {
-            # Use the q-forms package parameter.
-            set doc_type [parameter::get_from_package_key \
+            # Is parameter defined locally in package?
+            set doc_type [parameter::get \
                               -parameter defaultDocType \
-                              -package_key q-forms \
-                              -default "html4"]
+                              -package_id [ad_conn package_id] \
+                              -default ""]
+            
+            if { $doc_type eq "" } {
+                # Use the q-forms package parameter.
+                set doc_type [parameter::get_from_package_key \
+                                  -parameter defaultDocType \
+                                  -package_key q-forms \
+                                  -default "html4"]
+            }
+            
         }
+        set xml_doctype_p [string match -nocase "x*" $doc_type]
+        if { $__forwardslash_p != $xml_doctype_p } {
+            ns_log Warning "qf_doctype.1873: mime type does not match doctype.\
+ __forwardslash_p '${__forwardslash_p} xml_doctype_p '${xml_doctype_p}'"
+        }
+    } else {
+        set doc_type $__doctype
     }
     return $doc_type
 }
