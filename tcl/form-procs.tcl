@@ -1801,14 +1801,160 @@ ad_proc -public qf_choices {
         set args_html [qf_select $select_list]
     }
     return $args_html
-}    
+}
 
-ad_proc -private qf_doctype {
+ad_proc -private qf_doctype_tag_attributes {
+    doctype
+    tag
+} {
+    Returns a list of valid attributes for a specific markup tag. 
+    For example, if doctype is 'html4', and markup_tag is INPUT, returns a list including 'name' 'value' and like.
+} {
+    switch -- $doctype {
+        html4 {
+            set attrs_list [qf_html4_tag_attributes $tag]
+        }
+        html5 {
+            set attrs_list [qf_html5_tag_attributes $tag]
+        }
+        xml {
+            set attrs_list [qf_xml_tag_attributes $tag]
+        }
+        default {
+            set attrs_list [list ]
+        }
+    }
+    return $attrs_list
+}
+
+ad_proc -private qf_html4_tag_attributes {
+    tag
+} {
+    Returns a list of valid attributes for a generic strict html4.
+    For example, if tag is INPUT, returns a list including 'name' 'value' and like.  
+    Does not include event attributes such as 'onsubmit' or 'onreset'.
+} {
+    # This could parse the DTD spec if full DOCTYPE available..
+    # Does not include event attributes
+    switch -- $tag {
+        form {
+            set attr_list [list action method enctype accept name ]
+        }
+        fieldset {
+            set attr_list [list accesskey]
+        }
+        textarea {
+            set attr_list [list rows cols disabled readonly tabindex accesskey]
+        }
+        select {
+            set attr_list [list name size multiple disabled tabindex id class lang title style disabled tabindex]
+        }
+        input {
+            set attr_list [list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class lang title style alt align accept]
+        }
+        optgroup {
+            set attr_list [list selected disabled label id class lang title style ]
+        }
+        option {
+            set attr_list [list selected value label id class lang title style disabled]
+        }
+        default {
+            set attr_list [list ]
+        }
+    }
+    return $attr_list
+}
+
+ad_proc -private qf_html5_tag_attributes {
+    tag
+} {
+    Returns a list of valid attributes for a generic strict html5.
+    For example, if tag is INPUT, returns a list including 'name' 'value' and like.  
+    Does not include event attributes such as 'onsubmit' or 'onreset'.
+} {
+    # This could parse the DTD spec if full DOCTYPE available..
+    # Does not include event attributes
+
+    # global attributes
+    set attr_list [list title lang translate dir style]
+    switch -- $tag {
+        form {
+            lappend attr_list action method enctype accept name 
+        }
+        fieldset {
+            lappend attr_list accesskey
+        }
+        textarea {
+            lappend attr_list rows cols disabled readonly tabindex accesskey
+        }
+        select {
+            lappend attr_list name size multiple disabled tabindex id class lang title style disabled tabindex
+        }
+        input {
+            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class alt align
+        }
+        optgroup {
+            lappend attr_list selected disabled label id class
+        }
+        option {
+            lappend attr_list selected value label id class disabled
+        }
+        default {
+            set attr_list [list ]
+        }
+    }
+    return $attr_list
+}
+
+
+ad_proc -private qf_xml_tag_attributes {
+    tag
+} {
+    Returns a list of valid attributes for generic strict xml.
+    For example, if doctype is 'html4', and markup_tag is INPUT, returns a list including 'name' 'value' and like.
+    Does not include Event Attributes, such as onmouseup, onkeypress, onmouseover and the like.
+} {
+    # not included: xml:lang and other xml:* attributes
+    # See: https://www.w3.org/2010/04/xhtml10-strict.html
+    # This could parse the DTD spec if full DOCTYPE available..
+    switch -- $tag {
+        form {
+            set attr_list [list style onreset accept accept-charset id title method onsubmit class enctype lang action dir]
+        }
+        fieldset {
+            set attr_list [list style lang title id class dir]
+        }
+        textarea {
+            set attr_list [list style cols disabled onchange rows readonly onselect onfocus accesskey onblur name inputmode tabindex]
+        }
+        select {
+            set attr_list [list style disabled onchange id size title onfocus onblur multiple class lang name dir tabindex]
+        }
+        input {
+            set attr_list [list style accesskey accept disabled usemap alt onchange id size checked title readonly onselect onfocus type onblur class lang src name value maxlength dir tabindex]
+        }
+        optgroup {
+            set attr_list [list style disabled id class lang title label dir]
+        }
+        option {
+            set attr_list [list style disabled id class lang title selected value label dir]
+        }
+        default {
+            set attr_list [list ]
+        }
+    }
+    return $attr_list
+}
+
+
+ad_proc -public qf_doctype {
     {doctype ""}
 } {
     Returns the root DOCTYPE from doc(type) if it exists, otherwise from doctype. If doctype is empty string, uses value from q-forms parameter defaultDocType. If doctype is html, also returns version of html if inferable in reference.
     <br><br>
-    The purpose of this proc is for helping to determine if a form attribute is valid or not for the doc type.
+    The purpose of this proc is for helping to determine the standard validation doctype used to assist in generating valid markup. For example, to see if a form attribute is valid or not for the doc type.
+    <br><br>
+    For faster repeat processing, make sure any namespace relying on this proc repeats the set of <code>upvar</code> delcared in this proc's source.
 }  {
     upvar 1 doc doc
     upvar 1 __qf_forwardslash_p __forwardslash_p
@@ -1874,6 +2020,7 @@ ad_proc -private qf_doctype {
             ns_log Warning "qf_doctype.1873: mime type does not match doctype.\
  __forwardslash_p '${__forwardslash_p} xml_doctype_p '${xml_doctype_p}'"
         }
+        set __doc_type $doc_type
     } else {
         set doc_type $__doctype
     }
