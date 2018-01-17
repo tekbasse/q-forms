@@ -1879,7 +1879,7 @@ ad_proc -private qf_html5_tag_attributes {
     set attr_list [list title lang translate dir style]
     switch -- $tag {
         form {
-            lappend attr_list action method enctype accept name 
+            lappend attr_list action method enctype accept name autocomplete novalidate
         }
         fieldset {
             lappend attr_list accesskey
@@ -1891,7 +1891,7 @@ ad_proc -private qf_html5_tag_attributes {
             lappend attr_list name size multiple disabled tabindex id class lang title style disabled tabindex
         }
         input {
-            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class alt align
+            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class alt align autocomplete autofocus height width list min max multiple pattern placeholder required step
         }
         optgroup {
             lappend attr_list selected disabled label id class
