@@ -123,7 +123,7 @@ ad_proc -public qfo_2g {
     <br><br>
     <code>form_id</code> should be unique at least within the package in order to reduce name collision implementation. For customization, a form_id is prefixed with the package_key to create the table name linked to the form. See <code>qfo_qtable_label_package_id</code>
     <br><br>
-    <code>doc_type</code> is the XML DOCTYPE used to generate a form. Examples: html4, html5, and xml. Default uses a previously defined doc(type) if it exists in the namespace called by this proc. Otherwise the default is the one supplied by q-forms parameter defaultDocType.
+    <code>doc_type</code> is the XML DOCTYPE used to generate a form. Examples: html4, html5, and xml. Default uses a previously defined doc(type) if it exists in the namespace called by this proc. Otherwise the default is the one supplied by q-forms qf_doctype.
     <br><br>
     <code>form_varname</code> is the variable name used to assign the generated form to. The generated form is a text value containing markup language tags.
     <br><br>
@@ -152,6 +152,7 @@ ad_proc -public qfo_2g {
     upvar 1 $fields_array fields_arr
     upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_var_name form_m
+    upvar 1 doc doc
     if { $field_types_array ne "" } {
         upvar 1 $field_types_array field_types_arr
     }
@@ -170,7 +171,7 @@ ad_proc -public qfo_2g {
         }
     }
 
-    ##code Add the customization code
+    # Add the customization code
     # where a q-tables table of same name overrides form definition
     # per form element.
     # That is, any element defined in a q-table overrides existing
@@ -189,7 +190,7 @@ ad_proc -public qfo_2g {
         #for each field in customization, '$f'
         array unset fatts_arr "${f},"
         # then add new fatts_arr(${f},...)
-
+        ##code
     }
 
 
@@ -198,7 +199,7 @@ ad_proc -public qfo_2g {
     if { $submitted_p } {
         # validate inputs
         foreach f $qfi_fields_list {
-            
+            ##code  
 
         }
     }
@@ -212,7 +213,12 @@ ad_proc -public qfo_2g {
         }
     } else {
         # generate form
+        ##code
+        set doctype [qf_doctype $doc_type]
+        set form_id [qf_form form_id $form_id]
 
+        qf_close $form_id
+        set form_m [qf_read $form_id]
         
     }
     
