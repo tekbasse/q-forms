@@ -396,6 +396,10 @@ ad_proc -public qf_form {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __qf_hc_arr __qf_hc_arr
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -410,7 +414,11 @@ ad_proc -public qf_form {
         set arg_list [list ]
     }
 
-    set attributes_tag_list [list action class id method name style target title encytype]
+    # was
+    #set attributes_tag_list /list action class id method name style target title encytype/
+    set doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $doctype form]
+
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list form_id hash_check key_id
 
@@ -527,6 +535,10 @@ ad_proc -public qf_fieldset {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_fieldset_open_list __form_ids_fieldset_open_list
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -541,7 +553,11 @@ ad_proc -public qf_fieldset {
         set arg_list [list ]
     }
 
-    set attributes_tag_list  [list align class id style title valign]
+    # was
+    #set attributes_tag_list  /list align class id style title valign/
+    set doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $doctype fieldset]
+
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list form_id
 
@@ -637,6 +653,10 @@ ad_proc -public qf_textarea {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_fieldset_open_list __form_ids_fieldset_open_list
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -651,7 +671,11 @@ ad_proc -public qf_textarea {
         set arg_list [list ]
     }
 
-    set attributes_tag_list [list accesskey align class cols id name readonly rows style tabindex title wrap]
+    #was
+    #set attributes_tag_list list accesskey align class cols id name readonly rows style tabindex title wrap
+    set doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $doctype textarea]
+
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list value label form_id
 
@@ -748,6 +772,10 @@ ad_proc -public qf_select {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_select_open_list __form_ids_select_open_list
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -762,7 +790,11 @@ ad_proc -public qf_select {
         set arg_list [list ]
     }
 
-    set attributes_tag_list [list accesskey align class cols id name readonly rows style tabindex title wrap]
+    #was
+    #set attributes_tag_list /list accesskey align class cols id name readonly rows style tabindex title wrap/
+    set doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $doctype select]
+
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list value form_id value_html multiple
 
@@ -865,6 +897,11 @@ ad_proc -private qf_options {
     The option tag will wrap an attribute called "name".  
     To indicate "SELECTED" attribute, include the attribute "selected" with the paired value of 1.
 } {
+    # following three upvars are for qf_doctype embedded in qf_option
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
+
     # options_list is expected to be a list like this:
     # list list attribute1 value attribute2 value attribute3 value attribute4 value attribute5 value... 
     #      list {second option tag attribute-value pairs} etc
@@ -895,7 +932,15 @@ ad_proc -private qf_option {
     The option tag will wrap an attribute called "name".  
     To indicate "SELECTED" or "DISABLED" attribute, include the attribute ("selected" or "disabled") with the paired value of 1.
 } {
-    set attributes_tag_list [list class dir disabled id label lang language selected style title value]
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
+
+    #was set attributes_tag_list /list class dir disabled id label lang language selected style title value/
+    set doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $doctype option]
+
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list label name
     set arg_list $option_attributes_list
@@ -1217,7 +1262,12 @@ ad_proc -public qf_input {
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_fieldset_open_list __form_ids_fieldset_open_list
     upvar 1 __qf_hc_arr __qf_hc_arr
-    upvar 1 __qf_forwardslash_p __forwardslash_p
+    # following two upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
+
+
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
         set arg_list $arg1
@@ -1244,30 +1294,17 @@ ad_proc -public qf_input {
     # https://stackoverflow.com/questions/3558119/are-non-void-self-closing-tags-valid-in-html5#5047150
     #  This code based on template::get_mime_type
 
-    if { ![info exists __forwardslash_p ] } {
-        set mime_type [ns_set iget [ns_conn outputheaders] "content-type"]
-        if { $mime_type ne "" } {
-            # check for xml and xhtml
-            set forwardslash_p [string match "*x*ml" $mime_type]
-        } else {
-            # Guess mime based on doctype
-            # check for xml and xhtml
-            set forwardslash_p [string match "*x*ml*" [qf_doctype]]
-        }
-        if { $forwardslash_p } {
-            set __forwardslash "/"
-        } else {
-            set __forwardslash ""
-        }
-    } else {
-        set __forwardslash ""
-        if { $forwardslash_p } {
-            set __forwardslash "/"
-        }
+    set doctype [qf_doctype]
+    set __forwardslash ""
+    if { $__qf_forwardslash_p } {
+        set __forwardslash "/"
     }
 
+    
+    #was
+    #set attributes_tag_list /list type accesskey align alt border checked class id maxlength name readonly size src tabindex value/
+    set attributes_tag_list [qf_doctype_tag_attributes $doctype input]
 
-    set attributes_tag_list [list type accesskey align alt border checked class id maxlength name readonly size src tabindex value]
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list form_id label selected title
 
@@ -1533,6 +1570,10 @@ ad_proc -public qf_choice {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_select_open_list __form_ids_select_open_list
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -1547,7 +1588,10 @@ ad_proc -public qf_choice {
         set arg_list [list ]
     }
 
-    set attributes_select_list [list value accesskey align class cols name readonly rows style tabindex title wrap]
+    #was set attributes_select_list /list value accesskey align class cols name readonly rows style tabindex title wrap/
+    set doctype [qf_doctype]
+    set attributes_select_list [qf_doctype_tag_attributes $doctype input]
+
     set attributes_full_list $attributes_select_list
     lappend attributes_full_list type form_id id
 
@@ -1694,6 +1738,10 @@ ad_proc -public qf_choices {
     upvar 1 __qf_remember_attributes __qf_remember_attributes
     upvar 1 __qf_arr __qf_arr
     upvar 1 __form_ids_select_open_list __form_ids_select_open_list
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
 
     # collect args
     if { [llength $arg1] > 1 && $value1 eq "" } {
@@ -1708,7 +1756,11 @@ ad_proc -public qf_choices {
         set arg_list [list ]
     }
 
-    set attributes_select_list [list value accesskey align class cols name readonly rows style tabindex title wrap]
+    #was
+    #set attributes_select_list /list value accesskey align class cols name readonly rows style tabindex title wrap/
+    set doctype [qf_doctype]
+    set attributes_select_list [qf_doctype_tag_attributes $doctype input]
+
     set attributes_full_list $attributes_select_list
     lappend attributes_full_list type form_id id
 
