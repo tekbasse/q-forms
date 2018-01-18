@@ -1295,9 +1295,9 @@ ad_proc -public qf_input {
     #  This code based on template::get_mime_type
 
     set doctype [qf_doctype]
-    set __forwardslash ""
+    set forwardslash ""
     if { $__qf_forwardslash_p } {
-        set __forwardslash "/"
+        set forwardslash "/"
     }
 
     
@@ -1888,27 +1888,28 @@ ad_proc -private qf_html4_tag_attributes {
 } {
     # This could parse the DTD spec if full DOCTYPE available..
     # Does not include event attributes
+    set attr_list [list id class style title lang dir]
     switch -- $tag {
         form {
-            set attr_list [list action method enctype accept name ]
+            lappend attr_list action method enctype accept name
         }
         fieldset {
-            set attr_list [list accesskey]
+            lappend attr_list accesskey]
         }
         textarea {
-            set attr_list [list rows cols disabled readonly tabindex accesskey]
+            lappend attr_list name rows cols disabled readonly tabindex accesskey
         }
         select {
-            set attr_list [list name size multiple disabled tabindex id class lang title style disabled tabindex]
+            lappend attr_list name size multiple disabled tabindex disabled tabindex
         }
         input {
-            set attr_list [list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class lang title style alt align accept]
+            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept alt align accept
         }
         optgroup {
-            set attr_list [list selected disabled label id class lang title style ]
+            lappend attr_list selected disabled label
         }
         option {
-            set attr_list [list selected value label id class lang title style disabled]
+            lappend attr_list selected value label disabled
         }
         default {
             set attr_list [list ]
