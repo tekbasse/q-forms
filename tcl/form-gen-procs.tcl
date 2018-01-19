@@ -206,10 +206,7 @@ ad_proc -public qfo_2g {
         ##code add custom fields that are in $datatypes_used_list
     }
 
-    # Now that all the fields are known,
-    # put datatypes used in datatypes_arr where value is list of
-    # fields using it.
-    # This has to be done after any additional fields
+    # Add any additional fields
     # have been defined by a qtables customization
     set qfi_fields_list [array names fields_arr]    
     # fatts = field attributes
@@ -221,22 +218,28 @@ ad_proc -public qfo_2g {
             }
         }
     }
+    # Now that all the fields are known,
     set datatypes_used_list [array names datatypes_arr]
+
+##code
+    # Put datatypes used in datatypes_arr where value is list of
+    # fields using it.
+    # Blend the field types according to significance:
+    # qtables field types overrides
+    # fields_arr which overrides
+    # qdt_data_types defaults
+
 
     # Now, collect only the field_types that are used..
     # field_types_arr might not exist yet
-    # If it exists, the value takes precedence over defaults from qdt_datatypes
+
     qdt_data_types -array_name qdt_types_arr
+
     # Handle custom fields by writing directly to field_types_arr
     set custom_fields_list [array names field_types_arr]
     foreach cfl $custom_fields_list {
         array unset orig_field_types_arr "${cfl},"
     }
-
-    # Blend the field types according to significance:
-    # qtables field types overrides
-    # fields_arr which overrides
-    # qdt_data_types defaults
 
     # if field_types_arr is modified, it is settled by this point.
 
