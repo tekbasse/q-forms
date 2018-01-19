@@ -35,8 +35,7 @@ ad_proc -private qfo_qtable_label_package_id {
             set table_label $package_key
             append table_label ":" ${form_id}
             # Cannot use qt_table_def_read, because that paradigm
-            # requires instance_id to be defined
-            
+            # requires instance_id to be defined            
             # Select the one most specific to this package_id
             set found_p [db_0or1row {
                 select id,label,instance_id from qt_table_defs
@@ -116,21 +115,36 @@ ad_proc -public qfo_2g {
     <br><br>
     <code>field_types_array</code> is an <strong>array name</strong>. 
     Indexes are field 'datatype'. 
-    Each indexed value is a list containing name/value pairs that match q-data-types or a datatype provided in <code>field_types_array</code>. 
+    Each indexed value is a list containing name/value pairs 
+    that match q-data-types or a datatype provided in 
+    <code>field_types_array</code>. 
     See <code>qdt_data_types</code> for names used.
     <br><br>
-    <code>inputs_as_array</code> is an <strong>array name</strong>. Array values follow convention of qf_get_inputs_as_array
+    <code>inputs_as_array</code> is an <strong>array name</strong>. 
+    Array values follow convention of qf_get_inputs_as_array
     <br><br>
-    <code>form_id</code> should be unique at least within the package in order to reduce name collision implementation. For customization, a form_id is prefixed with the package_key to create the table name linked to the form. See <code>qfo_qtable_label_package_id</code>
+    <code>form_id</code> should be unique at least within 
+    the package in order to reduce name collision implementation. 
+    For customization, a form_id is prefixed with the package_key 
+    to create the table name linked to the form. 
+    See <code>qfo_qtable_label_package_id</code>
     <br><br>
-    <code>doc_type</code> is the XML DOCTYPE used to generate a form. Examples: html4, html5, and xml. Default uses a previously defined doc(type) if it exists in the namespace called by this proc. Otherwise the default is the one supplied by q-forms qf_doctype.
+    <code>doc_type</code> is the XML DOCTYPE used to generate a form. 
+    Examples: html4, html5, xhtml and xml. 
+    Default uses a previously defined doc(type) 
+    if it exists in the namespace called by this proc. 
+    Otherwise the default is the one supplied by q-forms qf_doctype.
     <br><br>
-    <code>form_varname</code> is the variable name used to assign the generated form to. The generated form is a text value containing markup language tags.
+    <code>form_varname</code> is the variable name used to assign 
+    the generated form to. 
+    The generated form is a text value containing markup language tags.
     <br><br>
     Returns 1 if input is validated. 
     If there are no fields, input is validated by default.
     <br><br>
-    Note: Validation may be accomplished external to this proc by outputing a user message such as via <code>util_user_message</code> and redisplaying form instead of processing further.
+    Note: Validation may be accomplished external to this proc 
+    by outputing a user message such as via <code>util_user_message</code> 
+    and redisplaying form instead of processing further.
     <br><br>
     <code>duplicate_key_check</code>,<br>
     <code>multiple_key_as_list</code>,<br>
@@ -157,19 +171,43 @@ ad_proc -public qfo_2g {
         upvar 1 $field_types_array field_types_arr
     }
 
+    # Blend the field types according to significance:
+    # qtables field types overrides
+    # fields_arr which overrides
+    # qdt_data_types defaults
+    # First, put datatypes used in datatypes_arr where value is list of
+    # fields using it.
+    set qfi_fields_list [array names fields_arr]    
+    # fatts = field attributes
+    foreach f $qfi_fields_list {
+        foreach {attr val} $fields_arr(${f}) {
+            set fatts_arr(${f},${attr}) $val
+            if { $attr eq "datatype" } {
+                lappend datatypes_arr(${val}) $f
+            }
+        }
+    }
+    set datatypes_used_list [array names datatypes_arr]
+
+    if { ![array exists field_types_arr] } {
+        qdt_data_types -array_name field_types_arr
+    }
+##code add custom fields that are in $datatypes_used_list
+        qdt_data_types -array_name orig_field_types_arr
+        # custom fields
+        set custom_fields_list [array names field_types_arr]
+        foreach cfl $custom_fields_list {
+            array unset orig_field_types_arr "${cfl},"
+        }
+        # combine defaults that are not 
+
+
     submitted_p [qf_get_inputs_as_array qfi_arr \
                      duplicate_key_check $duplicate_key_check \
                      multiple_key_as_list $multiple_key_as_list \
                      hash_check $hash_check \
                      post_only $post_only ]
 
-    set qfi_fields_list [array names fields_arr]    
-    # fatts = field attributes
-    foreach f $qfi_fields_list {
-        foreach {attr val} $fields_arr(${f}) {
-            set fatts_arr(${f},${attr}) $val
-        }
-    }
 
     # Add the customization code
     # where a q-tables table of same name overrides form definition
@@ -184,6 +222,7 @@ ad_proc -public qfo_2g {
         set qtable_enabled_p 1
 
     }
+
     if { $qtable_enabled_p } {
         # apply the customizations from table defined in q-tables
 
@@ -192,13 +231,15 @@ ad_proc -public qfo_2g {
         # then add new fatts_arr(${f},...)
         ##code
     }
-
+    # if field_types_arr is modified, it is settled by this point.
 
     
     set validated_p 0
     if { $submitted_p } {
         # validate inputs
         foreach f $qfi_fields_list {
+            set f_value $qfi_arr(${f})
+            switch -- $fatts_arr(${f},
             ##code  
 
         }
