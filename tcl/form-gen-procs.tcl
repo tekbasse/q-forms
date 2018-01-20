@@ -114,11 +114,12 @@ ad_proc -public qfo_2g {
     Order may be overridden by an array index 'element_order' containing an ordered list of array indexes.
     <br><br>
     <code>field_types_array</code> is an <strong>array name</strong>. 
-    Indexes are field 'datatype'. 
+    Indexes are a field 'datatype' as pre-defined in 
+    <code>qdt_data_types</code> or a new datatype.
     Each indexed value is a list containing name/value pairs 
-    that match q-data-types or a datatype provided in 
-    <code>field_types_array</code>. 
+    that match q-data-types' fields.
     See <code>qdt_data_types</code> for names used.
+    Default datatypes are those provided in qdt_data_types.
     <br><br>
     <code>inputs_as_array</code> is an <strong>array name</strong>. 
     Array values follow convention of qf_get_inputs_as_array
@@ -198,23 +199,21 @@ ad_proc -public qfo_2g {
     if { $qtable_enabled_p } {
         # apply the customizations from table defined in q-tables
 
-        #for each field in customization, '$f'
-        array unset fatts_arr "${f},"
-        # then add new fatts_arr(${f},...)
+        # That is, grab new field definitions
+        # 
+
         ##code
 
-        ##code add custom fields that are in $datatypes_used_list
     }
 
-    # Add any additional fields
-    # have been defined by a qtables customization
     set qfi_fields_list [array names fields_arr]    
+    # Create a field attributes array
     # fatts = field attributes
     foreach f $qfi_fields_list {
         foreach {attr val} $fields_arr(${f}) {
             set fatts_arr(${f},${attr}) $val
             if { $attr eq "datatype" } {
-                lappend datatypes_arr(${val}) $f
+                lappend fields_w_datatype_arr(${val}) $f
             }
         }
     }
@@ -222,18 +221,32 @@ ad_proc -public qfo_2g {
     set datatypes_used_list [array names datatypes_arr]
 
 ##code
+
     # Put datatypes used in datatypes_arr where value is list of
     # fields using it.
     # Blend the field types according to significance:
-    # qtables field types overrides
+    # qtables field types declaration overrides
     # fields_arr which overrides
-    # qdt_data_types defaults
+    # qdt_data_types defaults in qdt_types_arr
 
-
-    # Now, collect only the field_types that are used..
-    # field_types_arr might not exist yet
+    # Collect only the field_types that are used, because
+    # each set of datatypes could grow in number, slowing performance
+    # as system grows
 
     qdt_data_types -array_name qdt_types_arr
+    set qdt_datatypes_arr_list [array names qdt_types_arr]
+    # field_types_arr might not exist yet. Following returns empty list then.
+    set field_types_names_list [array names field_types_arr]
+    foreach f in $datatypes_used_list {
+        if { $f in $field_types_names_list } {
+            set datatypes_arr(${f}) $field_types_arr(${f})
+        } elseif { $f in $qdt_datatypes_arr_list } {
+            set datatypes_arr(${f}) $qdt_types_arr
+        }
+    }
+
+    
+
 
     # Handle custom fields by writing directly to field_types_arr
     set custom_fields_list [array names field_types_arr]
