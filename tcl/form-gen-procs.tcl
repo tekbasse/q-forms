@@ -16,7 +16,9 @@ ad_library {
 # qfo_<some_name> refers to a qfo_ paradigm or sub-api
 # This permits creating variations of qfo_2g as needed.
 
-ad_proc -private qfo_qtable_label_package_id {
+namespace eval ::qfo {}
+
+ad_proc -private ::qfo::qtable_label_package_id {
     form_id
 } {
     Gets most specific q-tables' table_label, instance_id and table_id in an ordered list. table_label is a reference based on package-key and form_id.
@@ -155,7 +157,7 @@ ad_proc -public qfo_2g {
     @see qdt_data_types
     @see util_user_message
     @see qf_get_inputs_as_array
-    @see qfo_qtable_label_package_id
+    @see qfo::qtable_label_package_id
 } {
     # Done: Verify negative numbers pass as values in ad_proc that uses
     # parameters passed starting with dash.. -for_example.
@@ -189,7 +191,7 @@ ad_proc -public qfo_2g {
     # form element with all existing attributes.
     # This way, customization may remove certain attributes.
     set qtable_enabled_p 0
-    set qtable_list [qfo_qtable_label_package_id $form_id]
+    set qtable_list [qfo::qtable_label_package_id $form_id]
     if { [llength $qtable_list ] ne 0 } {
         # customize using q-tables paradigm
         set qtable_enabled_p 1
@@ -201,7 +203,8 @@ ad_proc -public qfo_2g {
 
         # That is, grab new field definitions
         # 
-
+        # Field definitions may point to different qdt_datatypes,
+        # but cannot define new qdt_datatypes.
         ##code
 
     }
@@ -225,15 +228,15 @@ ad_proc -public qfo_2g {
     # Put datatypes used in datatypes_arr where value is list of
     # fields using it.
     # Blend the field types according to significance:
-    # qtables field types declaration overrides
-    # fields_arr which overrides
+    # qtables field types declarations may point to different qdt_data_types
+    # fields_arr overrides qdt_data_types
     # qdt_data_types defaults in qdt_types_arr
 
     # Collect only the field_types that are used, because
     # each set of datatypes could grow in number, slowing performance
     # as system grows
 
-    qdt_data_types -array_name qdt_types_arr
+    qdt::data_types -array_name qdt_types_arr
     set qdt_datatypes_arr_list [array names qdt_types_arr]
     # field_types_arr might not exist yet. Following returns empty list then.
     set field_types_names_list [array names field_types_arr]
