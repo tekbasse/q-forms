@@ -1,3 +1,4 @@
+
 ad_library {
 
     routines for creating, managing customizable forms
@@ -198,6 +199,8 @@ ad_proc -public qfo_2g {
 
     }
 
+    ::qdt::data_types -array_name qdt_types_arr
+    # qdt_types_arr(label,qdt_data_types.fieldname)
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
         # That is, grab new field definitions
@@ -210,9 +213,9 @@ ad_proc -public qfo_2g {
         # field_id label name def_val tdt_type field_type
 
         # Covnert tdt_types to qt_data_type references
-        # qdt_
+        qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
 
-        # Overwrite indexes from fields_arr
+        # and overwrite indexes from fields_arr
 
         # Field definitions may point to different qdt_datatypes,
         # but cannot define new qdt_datatypes.
@@ -247,7 +250,6 @@ ad_proc -public qfo_2g {
     # each set of datatypes could grow in number, slowing performance
     # as system grows
 
-    ::qdt::data_types -array_name qdt_types_arr
     set qdt_datatypes_arr_list [array names qdt_types_arr]
     # field_types_arr might not exist yet. Following returns empty list then.
     set field_types_names_list [array names field_types_arr]
