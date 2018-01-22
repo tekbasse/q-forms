@@ -117,11 +117,11 @@ ad_proc -public qfo_2g {
     <br><br>
     <code>field_types_array</code> is an <strong>array name</strong>. 
     Indexes are a field 'datatype' as pre-defined in 
-    <code>qdt_data_types</code> or a new datatype.
+    <code>::qdt::data_types</code> or a new datatype.
     Each indexed value is a list containing name/value pairs 
     that match q-data-types' fields.
-    See <code>qdt_data_types</code> for names used.
-    Default datatypes are those provided in qdt_data_types.
+    See <code>::qdt::data_types</code> for names used.
+    Default datatypes are those provided in ::qdt::data_types.
     <br><br>
     <code>inputs_as_array</code> is an <strong>array name</strong>. 
     Array values follow convention of qf_get_inputs_as_array
@@ -130,7 +130,7 @@ ad_proc -public qfo_2g {
     the package in order to reduce name collision implementation. 
     For customization, a form_id is prefixed with the package_key 
     to create the table name linked to the form. 
-    See <code>qfo_qtable_label_package_id</code>
+    See <code>qfo::qtable_label_package_id</code>
     <br><br>
     <code>doc_type</code> is the XML DOCTYPE used to generate a form. 
     Examples: html4, html5, xhtml and xml. 
@@ -154,7 +154,7 @@ ad_proc -public qfo_2g {
     <code>hash_check</code>, and <br>
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
     <br><br>
-    @see qdt_data_types
+    @see ::qdt::data_types
     @see util_user_message
     @see qf_get_inputs_as_array
     @see qfo::qtable_label_package_id
@@ -199,10 +199,21 @@ ad_proc -public qfo_2g {
     }
 
     if { $qtable_enabled_p } {
-        # apply the customizations from table defined in q-tables
-
+        # Apply customizations from table defined in q-tables
         # That is, grab new field definitions
         # 
+        set qtable_id [lindex $qtable_list 2]
+        set instance_id [lindex $qtable_list 1]
+        qt_field_defs_maps_set $qtable_id \
+            -field_type_of_label_array_name qt_fields_arr
+        # each qt_fields_arr(index) contains an ordered list:
+        # field_id label name def_val tdt_type field_type
+
+        # Covnert tdt_types to qt_data_type references
+        # qdt_
+
+        # Overwrite indexes from fields_arr
+
         # Field definitions may point to different qdt_datatypes,
         # but cannot define new qdt_datatypes.
         ##code
@@ -228,15 +239,15 @@ ad_proc -public qfo_2g {
     # Put datatypes used in datatypes_arr where value is list of
     # fields using it.
     # Blend the field types according to significance:
-    # qtables field types declarations may point to different qdt_data_types
-    # fields_arr overrides qdt_data_types
-    # qdt_data_types defaults in qdt_types_arr
+    # qtables field types declarations may point to different ::qdt::data_types
+    # fields_arr overrides ::qdt::data_types
+    # ::qdt::data_types defaults in qdt_types_arr
 
     # Collect only the field_types that are used, because
     # each set of datatypes could grow in number, slowing performance
     # as system grows
 
-    qdt::data_types -array_name qdt_types_arr
+    ::qdt::data_types -array_name qdt_types_arr
     set qdt_datatypes_arr_list [array names qdt_types_arr]
     # field_types_arr might not exist yet. Following returns empty list then.
     set field_types_names_list [array names field_types_arr]
