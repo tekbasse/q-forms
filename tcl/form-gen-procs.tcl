@@ -199,25 +199,44 @@ ad_proc -public qfo_2g {
     }
 
     ::qdt::data_types -array_name qdt_types_arr
-    # qdt_types_arr(label,qdt_data_types.fieldname)
+    # qdt_types_arr(qdt_data_types.label) /ordered list of parameters/
+
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
         # That is, grab new field definitions
-        # 
+
         set qtable_id [lindex $qtable_list 2]
         set instance_id [lindex $qtable_list 1]
+
         qt_field_defs_maps_set $qtable_id \
             -field_type_of_label_array_name qt_fields_arr
-        # each qt_fields_arr(index) contains an ordered list:
+        # Each qt_fields_arr(index) contains an ordered list:
+        #
         # field_id label name def_val tdt_type field_type
-
-        # Covnert tdt_types to qt_data_type references
-        qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
-
-        # and overwrite indexes from fields_arr
-
+        #
+        # These allow dynamic mapping of fields to different data_types.
+        # New data_types are defined in q-data-types like 
+        # defaults, only with custom labels likely to not collide
+        # with evolving q-data-types defaults.
+        # That is:
         # Field definitions may point to different qdt_datatypes,
         # but cannot define new qdt_datatypes.
+
+
+
+
+
+
+        # Remaps overwrite all associated attributes from fields_arr
+
+        # which means, data_type assignments are also handled.
+
+        # Also, dynamic data_types are introduced via tdt_data_types reference
+        # which must be re-referenced to qdt_type_arr style for
+        # compatibility with defaults. Subsequently:
+        qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
+        
+
         ##code
 
     }
@@ -225,6 +244,7 @@ ad_proc -public qfo_2g {
     set qfi_fields_list [array names fields_arr]    
     # Create a field attributes array
     # fatts = field attributes
+    # fatts_arr(label,qdt_data_types.fieldname)
     foreach f $qfi_fields_list {
         foreach {attr val} $fields_arr(${f}) {
             set fatts_arr(${f},${attr}) $val
