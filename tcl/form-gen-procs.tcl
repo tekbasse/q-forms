@@ -1,4 +1,3 @@
-
 ad_library {
 
     routines for creating, managing customizable forms
@@ -155,7 +154,7 @@ ad_proc -public qfo_2g {
     <code>hash_check</code>, and <br>
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
     <br><br>
-    @see ::qdt::data_types
+    @see qdt::data_types
     @see util_user_message
     @see qf_get_inputs_as_array
     @see qfo::qtable_label_package_id
