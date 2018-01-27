@@ -222,22 +222,20 @@ ad_proc -public qfo_2g {
         # Field definitions may point to different qdt_datatypes,
         # but cannot define new qdt_datatypes.
 
-
-
-
-
-
+        # Superimpose dynamic fields over default
         # Remaps overwrite all associated attributes from fields_arr
-
-        # which means, data_type assignments are also handled.
-
-        # Also, dynamic data_types are introduced via tdt_data_types reference
-        # which must be re-referenced to qdt_type_arr style for
-        # compatibility with defaults. Subsequently:
-        qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
-        
-
-        ##code
+        # which means, datatype assignments are also handled.
+        set qt_field_names_list [array names qt_fields_arr]
+        foreach label qt_fields_arr {
+            set f_list $qt_fields_arr(${label})
+            set datatype [lindex $f_list 4]
+            set default [lindex $f_list 3]
+            set label_nvl [list name ${label} datatype $datatype]
+            if { "value" not in $f_list } {
+                lappend laben_nvl value $default
+            }
+            set fields_arr(${label}) $label_nvl
+        }
 
     }
 
