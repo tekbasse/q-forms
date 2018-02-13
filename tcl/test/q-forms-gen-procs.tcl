@@ -11,7 +11,7 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
             #         -rollback \
             ns_log Notice "qf_form_gen_checks.12: Begin test"
             set t "_[ad_generate_random_string 1]"
-            set x [qfo_gen -test_p2 -5 -test_param $t]
+            set x [qfo_2g -test_p2 -5 -test_param $t]
             aa_log "qfo_gen x = '${x}'"
         } 
     # example code

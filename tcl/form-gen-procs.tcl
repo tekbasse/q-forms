@@ -203,7 +203,11 @@ ad_proc -public qfo_2g {
 
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
-        # That is, grab new field definitions
+
+        # Add custom datatypes
+        qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
+
+        # Grab new field definitions
 
         set qtable_id [lindex $qtable_list 2]
         set instance_id [lindex $qtable_list 1]
