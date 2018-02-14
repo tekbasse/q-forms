@@ -93,7 +93,7 @@ ad_proc -private ::qfo::qtable_label_package_id {
 
 ad_proc -public qfo_2g {
     -fields_array:required
-    {-field_types_array ""}
+    {-field_types_lists ""}
     {-inputs_as_array "qfi"}
     {-form_id ""}
     {-doc_type ""}
@@ -115,13 +115,10 @@ ad_proc -public qfo_2g {
     Form elements are displayed in order of any attribute 'tabindex' values.
     Order may be overridden by an array index 'element_order' containing an ordered list of array indexes.
     <br><br>
-    <code>field_types_array</code> is an <strong>array name</strong>. 
-    Indexes are a field 'datatype' as pre-defined in 
-    <code>::qdt::data_types</code> or a new datatype.
-    Each indexed value is a list containing name/value pairs 
-    that match q-data-types' fields.
-    See <code>::qdt::data_types</code> for names used.
-    Default datatypes are those provided in ::qdt::data_types.
+    <code>field_types_lists</code> is a list of lists 
+    as defined by ::qdt::data_types parameter 
+    <code>-local_data_types_lists</code>.
+    See <code>::qdt::data_types</code> for usage.
     <br><br>
     <code>inputs_as_array</code> is an <strong>array name</strong>. 
     Array values follow convention of qf_get_inputs_as_array
@@ -172,12 +169,14 @@ ad_proc -public qfo_2g {
 
     # qfi = qf input
     # form_ml = form markup (usually in html starting with FORM tag)
+    set error_p 0
     upvar 1 $fields_array fields_arr
     upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_var_name form_m
     upvar 1 doc doc
     if { $field_types_array ne "" } {
         upvar 1 $field_types_array field_types_arr
+        foreach {n v} [array get $field_types_arr]
     }
 
   
@@ -204,7 +203,8 @@ ad_proc -public qfo_2g {
 
     }
 
-    ::qdt::data_types -array_name qdt_types_arr
+    ::qdt::data_types -array_name qdt_types_arr \
+        -local_data_types_lists $field_types_lists
 
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
@@ -262,38 +262,33 @@ ad_proc -public qfo_2g {
             if { $attr eq "datatype" } {
                 # Put datatypes in an array where value is list of
                 # fields using it.
-                lappend fields_w_datatype_arr(${val}) $f
+                lappend fields_w_datatypes_used_arr(${val}) $f
             }
         }
     }
-    # Now that all the fields are known,
-    set datatypes_used_list [array names datatypes_arr]
+    # All the fields and datatypes are known.
+    # Proceed with form building and UI stuff
 
-##code
 
     # Collect only the field_types that are used, because
     # each set of datatypes could grow in number, slowing performance
-    # as system grows
+    # as system grows in complexity etc.
+    set datatypes_used_list [array names fields_w_datatypes_used_arr]
 
-    set qdt_datatypes_arr_list [array names qdt_types_arr]
-    # field_types_arr might not exist yet. Following returns empty list then.
-    set field_types_names_list [array names field_types_arr]
-    foreach f in $datatypes_used_list {
-        if { $f in $field_types_names_list } {
-            set datatypes_arr(${f}) $field_types_arr(${f})
-        } elseif { $f in $qdt_datatypes_arr_list } {
-            set datatypes_arr(${f}) $qdt_types_arr
+    # Verify that used data types exist
+
+    set data_type_existing_list [list]
+    foreach n [array names qdt_types_arr "*,label"] {
+        lappend data_type_existing_list [string range $n 0 end-6]
+    }
+
+    foreach f $datatypes_used_list {
+        if { $f ni $data_type_existing_list } {
+            ns_log Warning "qfo_2g: datatype '${f}' not found."
+            set error_p 1
         }
     }
 
-    
-
-
-    # Handle custom fields by writing directly to field_types_arr
-    set custom_fields_list [array names field_types_arr]
-    foreach cfl $custom_fields_list {
-        array unset orig_field_types_arr "${cfl},"
-    }
 
     # if field_types_arr is modified, it is settled by this point.
 
