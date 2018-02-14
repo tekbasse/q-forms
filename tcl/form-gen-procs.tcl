@@ -164,6 +164,12 @@ ad_proc -public qfo_2g {
     # PASSED. If a non-decimal number begins with dash, flags warning in log.
     # Since default form_id may begin with dash, a warning is possible.
 
+    # Blend the field types according to significance:
+    # qtables field types declarations may point to different ::qdt::data_types
+    # fields_arr overrides ::qdt::data_types
+    # ::qdt::data_types defaults in qdt_types_arr
+    # This is largely done via feature of called procs.
+
     # qfi = qf input
     # form_ml = form markup (usually in html starting with FORM tag)
     upvar 1 $fields_array fields_arr
@@ -199,7 +205,6 @@ ad_proc -public qfo_2g {
     }
 
     ::qdt::data_types -array_name qdt_types_arr
-    # qdt_types_arr(qdt_data_types.label) /ordered list of parameters/
 
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
@@ -213,8 +218,8 @@ ad_proc -public qfo_2g {
         set instance_id [lindex $qtable_list 1]
 
         qt_field_defs_maps_set $qtable_id \
-            -field_type_of_label_array_name qt_fields_arr
-        # Each qt_fields_arr(index) contains an ordered list:
+            -field_type_of_label_array_name qt_fields_larr
+        # Each qt_fields_larr(index) contains an ordered list:
         #
         # field_id label name def_val tdt_type field_type
         #
@@ -226,20 +231,24 @@ ad_proc -public qfo_2g {
         # Field definitions may point to different qdt_datatypes,
         # but cannot define new qdt_datatypes.
 
-        # Superimpose dynamic fields over default
+        # Superimpose dynamic fields over default ones.
         # Remaps overwrite all associated attributes from fields_arr
         # which means, datatype assignments are also handled.
-        set qt_field_names_list [array names qt_fields_arr]
-        foreach label qt_fields_arr {
-            set f_list $qt_fields_arr(${label})
+        set qt_field_names_list [array names qt_fields_larr]
+        foreach n qt_field_names_list {
+            set f_list $qt_fields_larr(${n})
             set datatype [lindex $f_list 4]
             set default [lindex $f_list 3]
-            set label_nvl [list name ${label} datatype $datatype]
+            set label_nvl [list name ${n} datatype $datatype]
+            # Every custom case needs 
             if { "value" not in $f_list } {
-                lappend laben_nvl value $default
+                lappend label_nvl value $default
             }
+
+            # Apply customizations to fields_arr
             set fields_arr(${label}) $label_nvl
         }
+ 
 
     }
 
@@ -251,6 +260,8 @@ ad_proc -public qfo_2g {
         foreach {attr val} $fields_arr(${f}) {
             set fatts_arr(${f},${attr}) $val
             if { $attr eq "datatype" } {
+                # Put datatypes in an array where value is list of
+                # fields using it.
                 lappend fields_w_datatype_arr(${val}) $f
             }
         }
@@ -259,13 +270,6 @@ ad_proc -public qfo_2g {
     set datatypes_used_list [array names datatypes_arr]
 
 ##code
-
-    # Put datatypes used in datatypes_arr where value is list of
-    # fields using it.
-    # Blend the field types according to significance:
-    # qtables field types declarations may point to different ::qdt::data_types
-    # fields_arr overrides ::qdt::data_types
-    # ::qdt::data_types defaults in qdt_types_arr
 
     # Collect only the field_types that are used, because
     # each set of datatypes could grow in number, slowing performance
