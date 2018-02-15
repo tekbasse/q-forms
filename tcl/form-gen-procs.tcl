@@ -284,7 +284,7 @@ ad_proc -public qfo_2g {
 
     foreach f $datatypes_used_list {
         if { $f ni $data_type_existing_list } {
-            ns_log Warning "qfo_2g: datatype '${f}' not found."
+            ns_log Error "qfo_2g: datatype '${f}' not found."
             set error_p 1
         }
     }
@@ -298,7 +298,45 @@ ad_proc -public qfo_2g {
         # validate inputs
         foreach f $qfi_fields_list {
             set f_value $qfi_arr(${f})
-            switch -- $fatts_arr(${f},
+            set valida_proc $fatts_arr(${f},valida_proc)
+            switch -- $valida_proc {
+                qf_is_decimal {}
+                qf_is_integer {}
+                hf_are_safe_and_visibe_characters_q {}
+                hf_are_safe_and_printable_characters_q {}
+                util_url_valid_p {}
+                qf_email_valid_q {}
+                qf_clock_scan {}
+                qf_is_decimal {}
+                ad_var_type_check_safefilename_p {}
+                default {
+                    if { $qtable_enabled_p } {
+                        # Check for custom cases
+                        if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
+                            # more than one q-tables exist
+                            # Maybe change this to find the closest one.
+                            set default_val ""
+                        }
+                        set custom_procs [parameter::get \
+                                              -package_id $instance_id \
+                                              -parameter AllowedValidationProcs \
+                                              -default $default_val]
+                        set allowed_p 0
+                        foreach p $custom_procs {
+                            if { [string match $p $valida_proc] } {
+                                set allowed_p 1
+                            }
+                        }
+                        if { !$allowed_p } {
+                            ns_log Warning "qfo_g2: unknown validation proc \
+ '$fatts_arr(${f},valida_proc)' for datatype '$fatts_arr(${f},label)"
+                        } else {
+                            ns_log Notice "qfo_g2: safe_eval '${valida_proc}'"
+                            safe_eval [list $valida_proc ${f_value}]
+                        }
+                    }
+                }
+            }
             ##code  
 
         }
