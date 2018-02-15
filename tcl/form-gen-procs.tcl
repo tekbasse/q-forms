@@ -294,11 +294,14 @@ ad_proc -public qfo_2g {
 
     
     set validated_p 0
+    set invalid_field_val_list [list ]
     if { $submitted_p } {
         # validate inputs
+        
         foreach f $qfi_fields_list {
             set f_value $qfi_arr(${f})
             set valida_proc $fatts_arr(${f},valida_proc)
+            set valid_p 0
             switch -- $valida_proc {
                 qf_is_decimal {}
                 qf_is_integer {}
@@ -314,7 +317,8 @@ ad_proc -public qfo_2g {
                         # Check for custom cases
                         if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
                             # more than one q-tables exist
-                            # Maybe change this to find the closest one.
+                            # Maybe change this to find one in a subsite.
+                            # something like qc_set_instance_id from q-control
                             set default_val ""
                         }
                         set custom_procs [parameter::get \
@@ -328,15 +332,20 @@ ad_proc -public qfo_2g {
                             }
                         }
                         if { !$allowed_p } {
-                            ns_log Warning "qfo_g2: unknown validation proc \
- '$fatts_arr(${f},valida_proc)' for datatype '$fatts_arr(${f},label)"
+                            ns_log Warning "qfo_g2: Broken UI. \
+ Unknown validation proc '$fatts_arr(${f},valida_proc)' \
+ for datatype '$fatts_arr(${f},label)"
                         } else {
                             ns_log Notice "qfo_g2: safe_eval '${valida_proc}'"
-                            safe_eval [list $valida_proc ${f_value}]
+                            set valid_p [safe_eval [list $valida_proc ${f_value}]]
                         }
                     }
                 }
             }
+            set all_valid_p [expr { $all_valid_p && $valid_p } ]
+            # keep track of each invalid field.
+            lappend invalid_field_val_list $f
+
             ##code  
 
         }
