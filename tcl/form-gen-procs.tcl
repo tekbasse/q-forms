@@ -179,8 +179,6 @@ ad_proc -public qfo_2g {
         foreach {n v} [array get $field_types_arr]
     }
 
-  
-
 
     submitted_p [qf_get_inputs_as_array qfi_arr \
                      duplicate_key_check $duplicate_key_check \
@@ -200,6 +198,7 @@ ad_proc -public qfo_2g {
     if { [llength $qtable_list ] ne 0 } {
         # customize using q-tables paradigm
         set qtable_enabled_p 1
+        lassign $qtable_list qtable_label instance_id qtable_id
 
     }
 
@@ -214,8 +213,8 @@ ad_proc -public qfo_2g {
 
         # Grab new field definitions
 
-        set qtable_id [lindex $qtable_list 2]
-        set instance_id [lindex $qtable_list 1]
+       # set qtable_id /lindex $qtable_list 2/
+       # set instance_id /lindex $qtable_list 1/
 
         qt_field_defs_maps_set $qtable_id \
             -field_type_of_label_array_name qt_fields_larr
@@ -288,18 +287,19 @@ ad_proc -public qfo_2g {
             set error_p 1
         }
     }
-
-
-    # if field_types_arr is modified, it is settled by this point.
+    # If field_types_arr is modified, it is settled by this point.
 
     
     set validated_p 0
     set invalid_field_val_list [list ]
+    set row_list [list ]
     if { $submitted_p } {
         # validate inputs
         
         foreach f $qfi_fields_list {
             set f_value $qfi_arr(${f})
+            # Creating row_list here saves re-parsing later, outside of loop
+            lappend row_list $f $f_value
             set valida_proc $fatts_arr(${f},valida_proc)
             set valid_p 0
             switch -- $valida_proc {
@@ -335,8 +335,9 @@ ad_proc -public qfo_2g {
                             ns_log Warning "qfo_g2: Broken UI. \
  Unknown validation proc '$fatts_arr(${f},valida_proc)' \
  for datatype '$fatts_arr(${f},label)"
+                            lappend invalid_field_val_list $f
                         } else {
-                            ns_log Notice "qfo_g2: safe_eval '${valida_proc}'"
+                            ns_log Notice "qfo_g2: processing safe_eval '${valida_proc}'"
                             set valid_p [safe_eval [list $valida_proc ${f_value}]]
                         }
                     }
@@ -344,22 +345,20 @@ ad_proc -public qfo_2g {
             }
             set all_valid_p [expr { $all_valid_p && $valid_p } ]
             # keep track of each invalid field.
-            lappend invalid_field_val_list $f
-
-            ##code  
 
         }
+        set validated_p $all_valid_p
     }
 
     if { $validated_p } {
-        set form_m ""
-        if { $qtable_enabled_p } {
-            ##code
-            # save a new row in customized q-tables table
 
+        if { $qtable_enabled_p } {
+            # save a new row in customized q-tables table
+            qt_row_create $qtable_id $row_list
         }
     } else {
         # generate form
+        set form_m ""
         ##code
         set doctype [qf_doctype $doc_type]
         set form_id [qf_form form_id $form_id]
