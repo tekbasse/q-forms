@@ -246,6 +246,8 @@ ad_proc -public qfo_2g {
 
             # Apply customizations to fields_arr
             set fields_arr(${label}) $label_nvl
+            # Build this array here that gets used later.
+            set datatype_of_arr(${label}) $datatype
         }
  
 
@@ -333,12 +335,15 @@ ad_proc -public qfo_2g {
         # because we don't want any extraneous input inserted unexpectedly.
         if { [info exists qfi_arr(${f})] } {
             set qfv_arr(${f}) $qfi_arr(${f})
-        elseif { [info exists fatts_arr(${f},value) ] } {
+        else { [info exists fatts_arr(${f},value) ] } {
+            # This value already sets default as that from
+            # datatype, if one is not supplied:
             set qfv_arr(${f}) $fatts_arr(${f},value)
         } else {
-            # grab default from data_type
-            ##code
-            set qfv_arr(${f}) 
+            # Shouldn't happen
+            ns_log Warning "qfo_2g.344: value not found, should not happen. \
+ index '${f},value' for fatts_arr"
+ 
         }
     }
     
