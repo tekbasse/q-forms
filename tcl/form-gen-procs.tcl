@@ -102,7 +102,7 @@ ad_proc -public qfo_2g {
     {-multiple_key_as_list "0"}
     {-hash_check "0"}
     {-post_only "0"}
-    {-elements_ordered_list ""}
+    {-fields_ordered_list ""}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -111,10 +111,10 @@ ad_proc -public qfo_2g {
     Each indexed value is a list containing attribute/value pairs of form element. 
     <br><br>
     Each form element is expected to have a 'datatype' in the list. 
-    'text' datatype is default.
+    'text' datatype is default. For input tags, a 'value' element represents a default value for the form element.
     <br><br>
     Form elements are displayed in order of any attribute 'tabindex' values.
-    Order may be overridden by supplying <code>-elements_ordered_list</code>
+    Order may be overridden by supplying <code>-fields_ordered_list</code>
     with an ordered list of indexes from <code>fields_array</code>.
     Indexes omitted from list appear after ordered ones.
     Any element that is not an index in fields_array is ignored with warning.
@@ -257,7 +257,27 @@ ad_proc -public qfo_2g {
     set qfi_fields_list [array names fields_arr]    
     # Create a field attributes array
     # fatts = field attributes
-    # fatts_arr(label,qdt_data_types.fieldname)
+    # fatts_arr(label,qdt::data_types.fieldname)
+    # qd::data_types fieldnames:
+    #    label 
+    #    tcl_type 
+    #    max_length 
+    #    form_tag_type 
+    #    form_tag_attrs 
+    #    empty_allowed_p 
+    #    input_hint 
+    #    text_format_proc 
+    #    tcl_format_str 
+    #    tcl_clock_format_str 
+    #    valida_proc 
+    #    filter_proc 
+    #    default_proc 
+    #    css_span 
+    #    css_div 
+    #    html_style 
+    #    abbrev_proc 
+    #    css_abbrev 
+    #    xml_format
     foreach f $qfi_fields_list {
         foreach {attr val} $fields_arr(${f}) {
             set fatts_arr(${f},${attr}) $val
@@ -292,8 +312,23 @@ ad_proc -public qfo_2g {
     }
     # field types are settled by this point
 
-    ##code  Make sure every qfi_arr(x) exists for x member of qfi_fields_list
-    #This needs to supply defaults if value doesn't yet exist.
+    
+    # Make sure every qfi_arr(x) exists for each field
+    foreach f $qfi_fields_list {
+        # Supply default if value doesn't yet exist.
+        if { ![info exists qfi_arr(${f})] } {
+            ##code This assumes and INPUT element for now.
+            ## Other form elements may have different defaults
+            ## that require more complex values than scalars.
+            ## Make sure they work here as expected ie:
+            ## Be consistent with qf_* api in passing field values
+            if { [info exists fatts_arr(${f},value) ] } {
+                set qfi_arr(${f}) $fatts_arr(${f},value)
+            } else {
+                # grab default from data_type
+
+            }
+        }
     
     set validated_p 0
     set invalid_field_val_list [list ]

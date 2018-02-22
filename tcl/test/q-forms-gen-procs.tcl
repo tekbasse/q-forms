@@ -12,7 +12,10 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
             ns_log Notice "qf_form_gen_checks.12: Begin test"
 
             array set fields_arr [list \
-                                      test1 [list datatype text name Test1]\
+                                      test1 [list \
+                                                 datatype text \
+                                                 name Test1 \
+                                                 default "okay!"]\
                                   ]
             set validated_p [qfo_2g -fields_array fields_arr]
             aa_log "qfo_gen x = '${x}'"
