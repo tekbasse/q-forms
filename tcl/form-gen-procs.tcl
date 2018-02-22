@@ -93,8 +93,10 @@ ad_proc -private ::qfo::qtable_label_package_id {
 
 ad_proc -public qfo_2g {
     -fields_array:required
+    {-fields_ordered_list ""}
     {-field_types_lists ""}
     {-inputs_as_array "qfi"}
+    {-submitted_p ""}
     {-form_id ""}
     {-doc_type ""}
     {-form_varname "form_m"}
@@ -102,7 +104,7 @@ ad_proc -public qfo_2g {
     {-multiple_key_as_list "0"}
     {-hash_check "0"}
     {-post_only "0"}
-    {-fields_ordered_list ""}
+
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -125,7 +127,12 @@ ad_proc -public qfo_2g {
     See <code>::qdt::data_types</code> for usage.
     <br><br>
     <code>inputs_as_array</code> is an <strong>array name</strong>. 
-    Array values follow convention of qf_get_inputs_as_array
+    Array values follow convention of <code>qf_get_inputs_as_array</code>.
+    If passing the array, and <code>hash_check</code> is '1', be sure
+    to pass <code>submitted_p</code> as well, where submitted_p is
+    value returned by the proc <code>qf_get_inputs_as_array</code>
+    Duplicate invoking of qf_get_inputs_as_array results in
+    ignoring of input after first invocation.
     <br><br>
     <code>form_id</code> should be unique at least within 
     the package in order to reduce name collision implementation. 
@@ -178,18 +185,8 @@ ad_proc -public qfo_2g {
     upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_varname form_m
     upvar 1 doc doc
-
     
-    set submitted_p [qf_get_inputs_as_array qfi_arr \
-                         duplicate_key_check $duplicate_key_check \
-                         multiple_key_as_list $multiple_key_as_list \
-                         hash_check $hash_check \
-                         post_only $post_only ]
-    # qfi_arr may contain custom fields,
-    # so it doesn't make sense to preload defaults here.
-    # Only load defaults when an index doesn't exist,
-    # when it is first used.
-
+    
     # Add the customization code
     # where a q-tables table of same name overrides form definition
     # per form element.
@@ -312,23 +309,39 @@ ad_proc -public qfo_2g {
     }
     # field types are settled by this point
 
+    if { $submitted_p eq "" } {
+        set submitted_p [qf_get_inputs_as_array qfi_arr \
+                             duplicate_key_check $duplicate_key_check \
+                             multiple_key_as_list $multiple_key_as_list \
+                             hash_check $hash_check \
+                             post_only $post_only ]
+    }
     
     # Make sure every qfi_arr(x) exists for each field
+    # Fastest to just collect the most fine grained defaults of each field
+    # into an array and then overwrite the array with qfi_arr
+    # qfv = field value
     foreach f $qfi_fields_list {
-        # Supply default if value doesn't yet exist.
-        if { ![info exists qfi_arr(${f})] } {
-            ##code This assumes and INPUT element for now.
-            ## Other form elements may have different defaults
-            ## that require more complex values than scalars.
-            ## Make sure they work here as expected ie:
-            ## Be consistent with qf_* api in passing field values
-            if { [info exists fatts_arr(${f},value) ] } {
-                set qfi_arr(${f}) $fatts_arr(${f},value)
-            } else {
-                # grab default from data_type
+        ##code This assumes and INPUT element, single value style for now.
+        ## Other form elements may have different defaults
+        ## that require more complex values, such as checkboxes
+        ## Make sure they work here as expected ie:
+        ## Be consistent with qf_* api in passing field values
 
-            }
+        # Overwrite defaults with any inputs
+        # Don't optimize with: array set qfv_arr [array get qfi_arr]
+        # because we don't want any extraneous input inserted unexpectedly.
+        if { [info exists qfi_arr(${f})] } {
+            set qfv_arr(${f}) $qfi_arr(${f})
+        elseif { [info exists fatts_arr(${f},value) ] } {
+            set qfv_arr(${f}) $fatts_arr(${f},value)
+        } else {
+            # grab default from data_type
+            ##code
+            set qfv_arr(${f}) 
         }
+    }
+    
     
     set validated_p 0
     set invalid_field_val_list [list ]
