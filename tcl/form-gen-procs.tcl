@@ -28,7 +28,7 @@ ad_proc -private ::qfo::qtable_label_package_id {
     set package_id [ad_conn package_id]
     set enable_p [parameter::get -parameter enableQFormGenP \
                       -package_id $package_id \
-                      -default "0"
+                      -default "0" \
                       -boolean ]
     if { $enable_p } {
         # Is q-tables installed?
@@ -102,6 +102,7 @@ ad_proc -public qfo_2g {
     {-multiple_key_as_list "0"}
     {-hash_check "0"}
     {-post_only "0"}
+    {-elements_ordered_list ""}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -113,7 +114,10 @@ ad_proc -public qfo_2g {
     'text' datatype is default.
     <br><br>
     Form elements are displayed in order of any attribute 'tabindex' values.
-    Order may be overridden by an array index 'element_order' containing an ordered list of array indexes.
+    Order may be overridden by supplying <code>-elements_ordered_list</code>
+    with an ordered list of indexes from <code>fields_array</code>.
+    Indexes omitted from list appear after ordered ones.
+    Any element that is not an index in fields_array is ignored with warning.
     <br><br>
     <code>field_types_lists</code> is a list of lists 
     as defined by ::qdt::data_types parameter 
@@ -172,20 +176,19 @@ ad_proc -public qfo_2g {
     set error_p 0
     upvar 1 $fields_array fields_arr
     upvar 1 $inputs_as_array qfi_arr
-    upvar 1 $form_var_name form_m
+    upvar 1 $form_varname form_m
     upvar 1 doc doc
-    if { $field_types_array ne "" } {
-        upvar 1 $field_types_array field_types_arr
-        foreach {n v} [array get $field_types_arr]
-    }
 
-
-    submitted_p [qf_get_inputs_as_array qfi_arr \
-                     duplicate_key_check $duplicate_key_check \
-                     multiple_key_as_list $multiple_key_as_list \
-                     hash_check $hash_check \
-                     post_only $post_only ]
-
+    
+    set submitted_p [qf_get_inputs_as_array qfi_arr \
+                         duplicate_key_check $duplicate_key_check \
+                         multiple_key_as_list $multiple_key_as_list \
+                         hash_check $hash_check \
+                         post_only $post_only ]
+    # qfi_arr may contain custom fields,
+    # so it doesn't make sense to preload defaults here.
+    # Only load defaults when an index doesn't exist,
+    # when it is first used.
 
     # Add the customization code
     # where a q-tables table of same name overrides form definition
@@ -287,8 +290,10 @@ ad_proc -public qfo_2g {
             set error_p 1
         }
     }
-    # If field_types_arr is modified, it is settled by this point.
+    # field types are settled by this point
 
+    ##code  Make sure every qfi_arr(x) exists for x member of qfi_fields_list
+    #This needs to supply defaults if value doesn't yet exist.
     
     set validated_p 0
     set invalid_field_val_list [list ]
