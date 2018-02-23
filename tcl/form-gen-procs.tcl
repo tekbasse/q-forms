@@ -96,7 +96,7 @@ ad_proc -public qfo_2g {
     {-fields_ordered_list ""}
     {-field_types_lists ""}
     {-inputs_as_array "qfi"}
-    {-submitted_p ""}
+    {-form_submitted_p ""}
     {-form_id ""}
     {-doc_type ""}
     {-form_varname "form_m"}
@@ -129,7 +129,7 @@ ad_proc -public qfo_2g {
     <code>inputs_as_array</code> is an <strong>array name</strong>. 
     Array values follow convention of <code>qf_get_inputs_as_array</code>.
     If passing the array, and <code>hash_check</code> is '1', be sure
-    to pass <code>submitted_p</code> as well, where submitted_p is
+    to pass <code>form_submitted_p</code> as well, where form_submitted_p is
     value returned by the proc <code>qf_get_inputs_as_array</code>
     Duplicate invoking of qf_get_inputs_as_array results in
     ignoring of input after first invocation.
@@ -156,6 +156,8 @@ ad_proc -public qfo_2g {
     Note: Validation may be accomplished external to this proc 
     by outputing a user message such as via <code>util_user_message</code> 
     and redisplaying form instead of processing further.
+    <br><br>
+    Any field attribute, default value, or datatype assigned via q-tables to the form takes precedence.
     <br><br>
     <code>duplicate_key_check</code>,<br>
     <code>multiple_key_as_list</code>,<br>
@@ -184,6 +186,7 @@ ad_proc -public qfo_2g {
     upvar 1 $fields_array fields_arr
     upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_varname form_m
+    # To obtain doctype, if modified:
     upvar 1 doc doc
     
     
@@ -311,17 +314,33 @@ ad_proc -public qfo_2g {
     }
     # field types are settled by this point
 
-    if { $submitted_p eq "" } {
-        set submitted_p [qf_get_inputs_as_array qfi_arr \
-                             duplicate_key_check $duplicate_key_check \
-                             multiple_key_as_list $multiple_key_as_list \
-                             hash_check $hash_check \
-                             post_only $post_only ]
+    if { $form_submitted_p eq "" } {
+        set form_submitted_p [qf_get_inputs_as_array qfi_arr \
+                                  duplicate_key_check $duplicate_key_check \
+                                  multiple_key_as_list $multiple_key_as_list \
+                                  hash_check $hash_check \
+                                  post_only $post_only ]
     }
     
     # Make sure every qfi_arr(x) exists for each field
     # Fastest to just collect the most fine grained defaults of each field
     # into an array and then overwrite the array with qfi_arr
+    # Except, we don't want any extraneous input inserted unexpectedly in code.
+
+    ##code In a new proc, qfo_3g, 
+    # maybe allow dynamically generated fields to allow
+    # this following exception:
+    # Except, we don't want a filter process
+    #   to lose dynamically generated fields, such as used in
+    #   forms in spreadsheet apps.
+    # So, don't optimize with: array set qfv_arr /array get qfi_arr/
+    # Yet, provide a mechanism to allow it via a glob like so:
+    #  array set qfv_arr /array get qfi_arr "{glob1}"
+    #  array set qfv_arr /array get qfi_arr "glob2"
+    # 
+    # For now, dynamically generated fields need to be detected and filtered
+    # by calling qf_get_inputs_as_array *before* qfo_2g
+
     # qfv = field value
     foreach f $qfi_fields_list {
         ##code This assumes and INPUT element, single value style for now.
@@ -331,22 +350,19 @@ ad_proc -public qfo_2g {
         ## Be consistent with qf_* api in passing field values
 
         # Overwrite defaults with any inputs
-        # Don't optimize with: array set qfv_arr [array get qfi_arr]
-        # because we don't want any extraneous input inserted unexpectedly.
         if { [info exists qfi_arr(${f})] } {
             set qfv_arr(${f}) $qfi_arr(${f})
-        else { [info exists fatts_arr(${f},value) ] } {
-            # This value already sets default as that from
-            # datatype, if one is not supplied:
-            set qfv_arr(${f}) $fatts_arr(${f},value)
-        } else {
-            # Shouldn't happen
-            ns_log Warning "qfo_2g.344: value not found, should not happen. \
- index '${f},value' for fatts_arr"
- 
+            else { [info exists fatts_arr(${f},value) ] } {
+                # This value already sets default as that from
+                # datatype, if one is not supplied:
+                set qfv_arr(${f}) $fatts_arr(${f},value)
+            }
         }
-    }
-    
+    } 
+
+    # Don't use qfi_arr anymore, as it may contain extraneous input
+    # Use qfv_arr
+    array unset qfi_arr
     
     set validated_p 0
     set invalid_field_val_list [list ]
@@ -355,7 +371,7 @@ ad_proc -public qfo_2g {
         # validate inputs
         
         foreach f $qfi_fields_list {
-            set f_value $qfi_arr(${f})
+            set f_value $qfv_arr(${f})
             # Creating row_list here saves re-parsing later, outside of loop
             lappend row_list $f $f_value
             set valida_proc $fatts_arr(${f},valida_proc)
@@ -403,13 +419,13 @@ ad_proc -public qfo_2g {
             }
             set all_valid_p [expr { $all_valid_p && $valid_p } ]
             # keep track of each invalid field.
-
+            set qfv_valid_arr(${f}) $valid_p
         }
         set validated_p $all_valid_p
     }
 
     if { $validated_p } {
-
+       
         if { $qtable_enabled_p } {
             # save a new row in customized q-tables table
             qt_row_create $qtable_id $row_list
@@ -417,9 +433,15 @@ ad_proc -public qfo_2g {
     } else {
         # generate form
         set form_m ""
-        ##code
+
+        # doc array is used here.
         set doctype [qf_doctype $doc_type]
         set form_id [qf_form form_id $form_id]
+
+        foreach f $qfi_fields_list {
+        ##code
+
+        }
 
         qf_close $form_id
         set form_m [qf_read $form_id]
