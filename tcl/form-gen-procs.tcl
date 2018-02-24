@@ -116,9 +116,10 @@ ad_proc -public qfo_2g {
     'text' datatype is default. For input tags, a 'value' element represents a default value for the form element.
     <br><br>
     Form elements are displayed in order of any attribute 'tabindex' values.
-    Order may be overridden by supplying <code>-fields_ordered_list</code>
+    Order are overridden by supplying <code>-fields_ordered_list</code>
     with an ordered list of indexes from <code>fields_array</code>.
-    Indexes omitted from list appear after ordered ones.
+    Indexes omitted from list appear after ordered ones, 
+    in sequential order according to relative tabindex value.
     Any element that is not an index in fields_array is ignored with warning.
     <br><br>
     <code>field_types_lists</code> is a list of lists 
@@ -208,6 +209,13 @@ ad_proc -public qfo_2g {
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
 
+    # Priority is:
+    #  dynamic ordered, 
+    #  fields_ordered_list
+    #  tabindex attribute 
+    #     supplied in fields_arr($field) form_tag_attrs tabindex value
+    set tabindex_field_list [list ]
+
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
 
@@ -283,10 +291,14 @@ ad_proc -public qfo_2g {
     foreach f $qfi_fields_list {
         foreach {attr val} $fields_arr(${f}) {
             set fatts_arr(${f},${attr}) $val
-            if { $attr eq "datatype" } {
+            if { [string match -nocase "datatype" $attr] } {
                 # Put datatypes in an array where value is list of
                 # fields using it.
                 lappend fields_w_datatypes_used_arr(${val}) $f
+            } elseif { [string match -nocase "tabindex" $attr] } {
+                # This is first populating of tabindex_field_list
+                # so, no need to check for prior existence of field
+                lappend tabindex_field_list $f
             }
         }
     }
@@ -439,12 +451,14 @@ ad_proc -public qfo_2g {
         set form_id [qf_form form_id $form_id]
 
         ##code
-        # blend tabindex attributes, use to order html tags:
-        # input, select, textarea. 1 is first.
+        # blend tabindex attributes, used to order html tags:
+        # input, select, textarea. '1' is first tabindex value.
         # fields_ordered_list overrides original fatts,
         # dynamic fatts overrides both.
-        # use a tabindex_arr(${f}) to track and blend??? and
-        # then order into a list?
+        # use a field_tab_idx_larr($tabindex) to track and blend
+        # This way, duplicates are lappended, and we can
+        #step through to create a list, and subsequently 
+        # use foreach and a dynamic index.
         foreach f $qfi_fields_list {
 
 
