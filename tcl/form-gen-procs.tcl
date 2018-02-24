@@ -157,7 +157,7 @@ ad_proc -public qfo_2g {
     by outputing a user message such as via <code>util_user_message</code> 
     and redisplaying form instead of processing further.
     <br><br>
-    Any field attribute, default value, or datatype assigned via q-tables to the form takes precedence.
+    Any field attribute, default value, tabindex, or datatype assigned via q-tables to the form takes precedence.
     <br><br>
     <code>duplicate_key_check</code>,<br>
     <code>multiple_key_as_list</code>,<br>
@@ -438,8 +438,15 @@ ad_proc -public qfo_2g {
         set doctype [qf_doctype $doc_type]
         set form_id [qf_form form_id $form_id]
 
-        foreach f $qfi_fields_list {
         ##code
+        # blend tabindex attributes, use to order html tags:
+        # input, select, textarea. 1 is first.
+        # fields_ordered_list overrides original fatts,
+        # dynamic fatts overrides both.
+        # use a tabindex_arr(${f}) to track and blend??? and
+        # then order into a list?
+        foreach f $qfi_fields_list {
+
 
         }
 
