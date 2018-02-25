@@ -115,12 +115,18 @@ ad_proc -public qfo_2g {
     Each form element is expected to have a 'datatype' in the list. 
     'text' datatype is default. For input tags, a 'value' element represents a default value for the form element.
     <br><br>
-    Form elements are displayed in order of any attribute 'tabindex' values.
-    Order are overridden by supplying <code>-fields_ordered_list</code>
-    with an ordered list of indexes from <code>fields_array</code>.
-    Indexes omitted from list appear after ordered ones, 
+    Form elements are displayed in order of attribute 'tabindex' values.
+    Order defaults are supplied by <code>-fields_ordered_list</code> consisting
+    of an ordered list of indexes from <code>fields_array</code>.
+    Indexes omitted from list appear after ordered ones.
+    Any element in list that is not an index in fields_array 
+    is ignored with warning.
+    Yet, <code>fields_ordered_list</code> is optional.
+    When fields_ordered_list is empty, sequence is soley 
     in sequential order according to relative tabindex value.
-    Any element that is not an index in fields_array is ignored with warning.
+    Actual tabindex value is calculated, so that a sequence is contiguous
+    even if supplied values are not.
+   
     <br><br>
     <code>field_types_lists</code> is a list of lists 
     as defined by ::qdt::data_types parameter 
@@ -209,13 +215,6 @@ ad_proc -public qfo_2g {
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
 
-    # Priority is:
-    #  dynamic ordered, 
-    #  fields_ordered_list
-    #  tabindex attribute 
-    #     supplied in fields_arr($field) form_tag_attrs tabindex value
-    set tabindex_field_list [list ]
-
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
 
@@ -264,7 +263,8 @@ ad_proc -public qfo_2g {
 
     }
 
-    set qfi_fields_list [array names fields_arr]    
+    set qfi_fields_list [array names fields_arr]
+    set field_ct [llength $qfi_fields_list]
     # Create a field attributes array
     # fatts = field attributes
     # fatts_arr(label,qdt::data_types.fieldname)
@@ -288,18 +288,36 @@ ad_proc -public qfo_2g {
     #    abbrev_proc 
     #    css_abbrev 
     #    xml_format
+    set fields_ordered_list_len [llength $fields_ordered_list]
+    if { $qtable_enabled_p } {
+        set tabindex_adj [expr { 0 - $field_ct - $fields_ordered_list_len } ]
+    } else {
+        set tabindex_adj $fields_ordered_list_len
+    }
+    set tabindex_tail [expr { $fields_ordered_list_len + $field_ct } ]
     foreach f $qfi_fields_list {
         foreach {attr val} $fields_arr(${f}) {
-            set fatts_arr(${f},${attr}) $val
             if { [string match -nocase "datatype" $attr] } {
                 # Put datatypes in an array where value is list of
                 # fields using it.
                 lappend fields_w_datatypes_used_arr(${val}) $f
+                set fatts_arr(${f},${attr}) $val
             } elseif { [string match -nocase "tabindex" $attr] } {
-                # This is first populating of tabindex_field_list
-                # so, no need to check for prior existence of field
-                lappend tabindex_field_list $f
+                if { [qf_is_integer $val] } {
+                    set val [expr { $val + $tabindex_adj } ]
+                    set fatts_arr(${f},${attr}) $val
+                } else {
+                    ns_log Warning "qfo_2g.308: tabindex not integer for \
+ tabindex attribute of field '${f}'. Value is '${val}'"
+                }
+            } else {
+                set fatts_arr(${f},${attr}) $val
             }
+        }
+        if { ![info exists fatts_arr(${f},tabindex) ] } {
+            # add it to the end 
+            set fatts_arr(${f},tabindex) $tabindex_tail
+            incr tabindex_tail
         }
     }
     # All the fields and datatypes are known.
@@ -454,15 +472,28 @@ ad_proc -public qfo_2g {
         # blend tabindex attributes, used to order html tags:
         # input, select, textarea. '1' is first tabindex value.
         # fields_ordered_list overrides original fatts,
-        # dynamic fatts overrides both.
+        # orignal is in fields_arr(name) nvlist.. tabindex value
+        #  which converts to fatts_arr(name,tabindex) value (if exists).
+        # dynamic fatts overrides both, and is already handled.
         # use a field_tab_idx_larr($tabindex) to track and blend
         # This way, duplicates are lappended, and we can
         #step through to create a list, and subsequently 
         # use foreach and a dynamic index.
+
+        # create a new qfi_fields_list, sorted according to tabindex
+        set qfi_fields_tabindex_lists [list ]
         foreach f $qfi_fields_list {
-
-
+            set f_list [list $f $fatts_arr(${f},tabindex) ]
+            lappend qfi_fields_tabindex_lists $f_list
         }
+        set qfi_fields_tabindex_sorted_lists [lsort -integer -index 1 \
+                                                  $qfi_fields_tabindex_lists]
+        set qfi_fields_sorted_list [list]
+        foreach f $qfi_fields_tabindex_sorted_lists {
+            lappend qfi_fields_sorted_list [lindex $f 0]
+        }
+        # Use qfi_fields_sorted_list to generate an ordered list of inputs
+        ##code
 
         qf_close $form_id
         set form_m [qf_read $form_id]
