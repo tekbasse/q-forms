@@ -840,13 +840,25 @@ ad_proc -public qf_select {
 
     # prepare attributes to process
     set tag_attributes_list [list]
+    set tag_suffix_html ""
     foreach attribute $attributes_list {
         set __qf_arr(select_${attribute}) $attributes_arr(${attribute})
-        lappend tag_attributes_list $attribute $attributes_arr(${attribute})
+        if { [string match -nocase "multiple" $attribute] } {
+            if { $__qf_doctype eq "xml" } {
+                lappend tag_attributes_list $attribute $attribute
+            } else {
+                if { $attributes_arr(${attribute}) } {
+                    set tag_suffix_html " multiple"
+                }
+            }
+        } else {
+            lappend tag_attributes_list $attribute $attributes_arr(${attribute})
+        }
     }
 
     set tag_html ""
-    ## auto closing the select tag has been debrecated because qf_choice and qf_choicesexists.
+    ##code auto closing the select tag has been debrecated
+    # because qf_choice and qf_choices exist.
     # TO add this feature requires checking other input tags etc too.
     # This code will be ignored for now, but left in place for future expansion.
     set previous_select 0
@@ -881,6 +893,7 @@ ad_proc -public qf_select {
     }
 
     append tag_html "<select" [qf_insert_attributes ${tag_attributes_list}]
+    append tag_html $tag_suffix_html 
     append tag_html ">" $value_list_html "</select>"
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) $tag_html "\n"
@@ -1382,9 +1395,13 @@ ad_proc -public qf_input {
         if { $attribute ne "checked" && $attribute ne "disabled" } {
             lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         } else {
-            set tag_suffix " "
-            append tag_suffix $attribute
-            # set to checked or disabled
+            if { $__qf_doctype eq "xml" } {
+                lappend tag_attributes_list $attribute $attribute
+            } else {
+                set tag_suffix " "
+                append tag_suffix $attribute
+                # set to checked or disabled
+            }
         }
     }
 
