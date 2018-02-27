@@ -416,8 +416,8 @@ ad_proc -public qf_form {
 
     # was
     #set attributes_tag_list /list action class id method name style target title encytype/
-    set doctype [qf_doctype]
-    set attributes_tag_list [qf_doctype_tag_attributes $doctype form]
+    set __qf_doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype form]
 
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list form_id hash_check key_id
@@ -555,8 +555,8 @@ ad_proc -public qf_fieldset {
 
     # was
     #set attributes_tag_list  /list align class id style title valign/
-    set doctype [qf_doctype]
-    set attributes_tag_list [qf_doctype_tag_attributes $doctype fieldset]
+    set __qf_doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype fieldset]
 
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list form_id
@@ -673,8 +673,8 @@ ad_proc -public qf_textarea {
 
     #was
     #set attributes_tag_list list accesskey align class cols id name readonly rows style tabindex title wrap
-    set doctype [qf_doctype]
-    set attributes_tag_list [qf_doctype_tag_attributes $doctype textarea]
+    set __qf_doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype textarea]
 
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list value label form_id
@@ -792,8 +792,8 @@ ad_proc -public qf_select {
 
     #was
     #set attributes_tag_list /list accesskey align class cols id name readonly rows style tabindex title wrap/
-    set doctype [qf_doctype]
-    set attributes_tag_list [qf_doctype_tag_attributes $doctype select]
+    set __qf_doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype select]
 
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list value form_id value_html multiple
@@ -938,8 +938,8 @@ ad_proc -private qf_option {
     upvar 1 __qf_doctype __qf_doctype
 
     #was set attributes_tag_list /list class dir disabled id label lang language selected style title value/
-    set doctype [qf_doctype]
-    set attributes_tag_list [qf_doctype_tag_attributes $doctype option]
+    set __qf_doctype [qf_doctype]
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype option]
 
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list label name
@@ -1294,7 +1294,7 @@ ad_proc -public qf_input {
     # https://stackoverflow.com/questions/3558119/are-non-void-self-closing-tags-valid-in-html5#5047150
     #  This code based on template::get_mime_type
 
-    set doctype [qf_doctype]
+    set __qf_doctype [qf_doctype]
     set forwardslash ""
     if { $__qf_forwardslash_p } {
         set forwardslash "/"
@@ -1303,7 +1303,7 @@ ad_proc -public qf_input {
     
     #was
     #set attributes_tag_list /list type accesskey align alt border checked class id maxlength name readonly size src tabindex value/
-    set attributes_tag_list [qf_doctype_tag_attributes $doctype input]
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype input]
 
     set attributes_full_list $attributes_tag_list
     lappend attributes_full_list form_id label selected title
@@ -1589,8 +1589,8 @@ ad_proc -public qf_choice {
     }
 
     #was set attributes_select_list /list value accesskey align class cols name readonly rows style tabindex title wrap/
-    set doctype [qf_doctype]
-    set attributes_select_list [qf_doctype_tag_attributes $doctype input]
+    set __qf_doctype [qf_doctype]
+    set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype input]
 
     set attributes_full_list $attributes_select_list
     lappend attributes_full_list type form_id id
@@ -1758,8 +1758,8 @@ ad_proc -public qf_choices {
 
     #was
     #set attributes_select_list /list value accesskey align class cols name readonly rows style tabindex title wrap/
-    set doctype [qf_doctype]
-    set attributes_select_list [qf_doctype_tag_attributes $doctype input]
+    set __qf_doctype [qf_doctype]
+    set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype input]
 
     set attributes_full_list $attributes_select_list
     lappend attributes_full_list type form_id id
