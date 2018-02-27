@@ -465,7 +465,8 @@ ad_proc -public qfo_2g {
         # generate form
 
         # Blend tabindex attributes, used to order html tags:
-        # input, select, textarea. '1' is first tabindex value.
+        # input, select, textarea. 
+        # '1' is first tabindex value.
         # fields_ordered_list overrides original fields attributes.
         # Original is in fields_arr(name) nvlist.. element tabindex value,
         #  which converts to fatts_arr(name,tabindex) value (if exists).
