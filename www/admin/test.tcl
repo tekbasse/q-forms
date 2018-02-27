@@ -50,6 +50,6 @@ qf_choices type checkbox value $multi_choice_tag_attribute_list
 qf_input type submit name charlie value bravo
 
 qf_input type submit value "#acs-kernel.common_Save#"
-qf_append html " &nbsp; &nbsp; &nbsp; <a href=\"test\">"q
-f_close
+qf_append html " &nbsp; &nbsp; &nbsp; <a href=\"test\">"
+qf_close
 append content [qf_read]
