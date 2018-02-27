@@ -406,6 +406,7 @@ ad_proc -public qfo_2g {
             lappend row_list $f $f_value
             set valida_proc $fatts_arr(${f},valida_proc)
             set valid_p 0
+            ##code switch details
             switch -- $valida_proc {
                 qf_is_decimal {}
                 qf_is_integer {}
@@ -462,25 +463,19 @@ ad_proc -public qfo_2g {
         }
     } else {
         # generate form
-        set form_m ""
 
-        # doc array is used here.
-        set doctype [qf_doctype $doc_type]
-        set form_id [qf_form form_id $form_id]
-
-        ##code
-        # blend tabindex attributes, used to order html tags:
+        # Blend tabindex attributes, used to order html tags:
         # input, select, textarea. '1' is first tabindex value.
-        # fields_ordered_list overrides original fatts,
-        # orignal is in fields_arr(name) nvlist.. tabindex value
+        # fields_ordered_list overrides original fields attributes.
+        # Original is in fields_arr(name) nvlist.. element tabindex value,
         #  which converts to fatts_arr(name,tabindex) value (if exists).
-        # dynamic fatts overrides both, and is already handled.
-        # use a field_tab_idx_larr($tabindex) to track and blend
-        # This way, duplicates are lappended, and we can
-        #step through to create a list, and subsequently 
-        # use foreach and a dynamic index.
+        # Dynamic fatts (via q-tables)  overrides both, and is already handled.
+        # Blending occurs by assigning a lower range value to each case,
+        # then choosing the lowest value for each field.
 
-        # create a new qfi_fields_list, sorted according to tabindex
+        # Finally, a new sequence is generated to clean up any blending
+        # or ommissions in sequence etc.
+        # Create a new qfi_fields_list, sorted according to tabindex
         set qfi_fields_tabindex_lists [list ]
         foreach f $qfi_fields_list {
             set f_list [list $f $fatts_arr(${f},tabindex) ]
@@ -492,9 +487,20 @@ ad_proc -public qfo_2g {
         foreach f $qfi_fields_tabindex_sorted_lists {
             lappend qfi_fields_sorted_list [lindex $f 0]
         }
-        # Use qfi_fields_sorted_list to generate an ordered list of inputs
-        ##code
 
+        # build form using qf_* api
+        set form_m ""
+
+        # external doc array is used here.
+        set doctype [qf_doctype $doc_type]
+        set form_id [qf_form form_id $form_id]
+
+        # Use qfi_fields_sorted_list to generate an ordered list of inputs
+        foreach f $qfi_fields_sorted_list {
+            switch -- $fatts_arr(${f},form_tag_type) {
+##code
+            }
+        }
         qf_close $form_id
         set form_m [qf_read $form_id]
         
