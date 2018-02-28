@@ -85,7 +85,9 @@ ad_proc -private qf_form_key_create {
     db_dml qf_form_key_create {insert into qf_key_map
         (instance_id,sh_key_id,rendered_timestamp,sec_hash,key_id,session_id,action_url,secure_conn_p,client_ip)
         values (:instance_id,:sh_key_id,:time_sec,:sec_hash,:key_id,:session_id,:action_url,:secure_p,:client_ip) }
-    set __qf_hc_arr($attributes_arr(form_id)) $sh_key_id
+    if { [info exists attributes_arr(form_id) ] } {
+        set __qf_hc_arr($attributes_arr(form_id)) $sh_key_id
+    }
     return $sec_hash
 }
 
@@ -632,8 +634,10 @@ ad_proc -public qf_fieldset {
             set __form_ids_fieldset_open_list [list $attributes_arr(form_id)]
         }
     }
+    append tag_html "\n"
     # set results  __form_arr, we checked form_id above.
-    append __form_arr($attributes_arr(form_id)) ${tag_html} "\n"
+    append __form_arr($attributes_arr(form_id)) $tag_html
+    return $tag_html
 }
 
 ad_proc -public qf_textarea { 
@@ -754,8 +758,9 @@ ad_proc -public qf_textarea {
         append tag_html ">" $attributes_arr(value) "</textarea>"
     }
     # set results  __form_arr, we checked form_id above.
-    append __form_arr($attributes_arr(form_id)) $tag_html "\n"
-    
+    append tag_html "\n"
+    append __form_arr($attributes_arr(form_id)) $tag_html
+    return $tag_html
 }
 
 ad_proc -public qf_select { 

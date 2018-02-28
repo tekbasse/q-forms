@@ -10,6 +10,50 @@ aa_register_case -cats {api smoke} qf_form_checks {
         -test_code {
             #         -rollback \
             ns_log Notice "qf_form_tests.12: Begin test"
+            aa_log "test qf_ api"
+            set hash [qf_form_key_create ]
+            set hash_len [string length $hash]
+            aa_equals "qf_form_key_create returns hash 40 long" $hash_len 40
+            set hash_split [split $hash ""]
+            set is_hexadec_p 1
+            set bad_chars ""
+            foreach c $hash_split {
+                if { ![string match -nocase {[0-9A-F]} $c ] } {
+                    set is_hexadec_p 0
+                    append bad_chars $c
+                }
+            }
+
+            aa_true "qf_form_key_create returns hexadecimal characters. Hint '${bad_chars}'" $is_hexadec_p
+            set one_to_n [randomRange 60]
+            incr one_to_n
+            set not_hash [ad_generate_random_string $one_to_n]
+            set not_hash_p [qf_submit_key_accepted_p $not_hash]
+            aa_false "qf_submit_key_accepted_p with bad hash '${not_hash}'" $not_hash_p
+            set is_hash_p [qf_submit_key_accepted_p $hash]
+            aa_true  "qf_submit_key_accepted_p with issued hash '${hash}'" $is_hash_p
+
+            # Generate a form with components in context so 
+            # code is not expected to break.
+
+            set form_id [qf_form [ad_generate_random_string $one_to_n]]
+            set form_id_len [string length $form_id]
+            set form_id_not_empty_p [expr { $form_id_len > 0 } ]
+            aa_true "form_id has length greater than zero " $form_id_not_empty_p
+            set fieldset_out [qf_fieldset ]
+            set fieldset_expected "<fieldset>\n"
+            aa_equals "fieldset start " $fieldset_out $fieldset_expected
+
+##code add more tests here.
+            set textarea_out [qf_textarea ]
+            
+
+            set close_out [qf_close ]
+##code finishes here
+
+
+            aa_log "test doctype variants"
+
             set doctypes_list [util::randomize_list \
                                    [list html4 html5 html xhtml xml]]
             foreach doctype $doctypes_list {
