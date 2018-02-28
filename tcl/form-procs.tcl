@@ -692,7 +692,9 @@ ad_proc -public qf_textarea {
             ad_script_abort
         }
     }
-
+    if { [info exists attributes_arr(label)] } {
+        set attributes_arr(label) [string trim $attributes_arr(label)]
+    }
     if { ![info exists __qf_remember_attributes] } {
         ns_log Error "qf_textarea.574: invoked before qf_form or used in a different namespace than qf_form.."
         ad_script_abort
@@ -972,6 +974,9 @@ ad_proc -private qf_option {
             ad_script_abort
         }
     }
+    if { [info exists attributes_arr(label)] } {
+        set attributes_arr(label) [string trim $attributes_arr(label)]
+    }
 
     # prepare attributes to process
     set tag_attributes_list [list]
@@ -980,15 +985,15 @@ ad_proc -private qf_option {
             lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         } 
     }
+    set name_html " "
     if { [info exists attributes_arr(label)] } {
-        set name_html $attributes_arr(label)
+        append name_html $attributes_arr(label)
     } elseif { [info exists attributes_arr(name)] } {
-        set name_html $attributes_arr(name)
+        append name_html $attributes_arr(name)
     } elseif { [info exists attributes_arr(value)] } {
-        set name_html $attributes_arr(value)
-    } else {
-        set name_html ""
-    }
+        append name_html $attributes_arr(value)
+    } 
+    append name_html " "
     if { [info exists attributes_arr(checked)] && ![info exists attributes_arr(selected)] } {
         set attributes_arr(selected) "1"
     }
@@ -999,7 +1004,12 @@ ad_proc -private qf_option {
     } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) eq "1" } {
         set option_html "<option"
         append option_html [qf_insert_attributes $tag_attributes_list]
-        append option_html "disabled>" $name_html "</option>\n"
+        if { $__qf_doctype eq "xml" } {
+            append option_html "disabled=\"disabled\">"
+        } else {
+            append option_html "disabled>"
+        }
+        append option_html $name_html "</option>\n"
     } else {
         set option_html "<option"
         append option_html [qf_insert_attributes $tag_attributes_list]
@@ -1334,6 +1344,10 @@ ad_proc -public qf_input {
         } else {
             ns_log Error "qf_input.1027: '${attribute}' is not a valid attribute."
         }
+    }
+
+    if { [info exists attributes_arr(label)] } {
+        set attributes_arr(label) [string trim $attributes_arr(label)]
     }
 
     if { ![info exists __qf_remember_attributes] } {
