@@ -796,7 +796,7 @@ ad_proc -public qf_select {
     set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype select]
 
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list value form_id value_html multiple
+    lappend attributes_full_list value form_id value_html multiple type
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
