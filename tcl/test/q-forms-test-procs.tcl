@@ -35,8 +35,8 @@ aa_register_case -cats {api smoke} qf_form_checks {
 
             # Generate a form with components in context so 
             # code is not expected to break.
-
-            set form_id [qf_form [ad_generate_random_string $one_to_n]]
+            set form_id1 [ad_generate_random_string $one_to_n]
+            set form_id [qf_form $form_id1]
             set form_id_len [string length $form_id]
             set form_id_not_empty_p [expr { $form_id_len > 0 } ]
             aa_true "form_id has length greater than zero " $form_id_not_empty_p
@@ -45,8 +45,17 @@ aa_register_case -cats {api smoke} qf_form_checks {
             aa_equals "fieldset start " $fieldset_out $fieldset_expected
 
 ##code add more tests here.
-            set textarea_out [qf_textarea ]
-            
+            set eg_text [ad_generate_random_string 5]
+            set eg_name [ad_generate_random_string 15]
+            set textarea_out [qf_textarea name $eg_name value $eg_text]
+            set textarea_expected "<textarea name=\"${eg_name}\">${eg_text}</textarea>\n"
+            aa_equals "textarea, basic " $textarea_out $textarea_expected
+
+            set value_lists [list [list name name1 value val2] \
+                                 [list name name2 value val3] ]
+            set select_out [qf_select name $eg_text value $value_lists]
+            set select_expected "<select name=\"${eg_text}\"><option value=\"val2\"> name1 </option>\n<option value=\"val3\"> name2 </option>\n</select>\n"
+            aa_equals "select options,basic" $select_out $select_expected
 
             set close_out [qf_close ]
 ##code finishes here

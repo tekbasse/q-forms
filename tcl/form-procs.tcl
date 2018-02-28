@@ -901,10 +901,11 @@ ad_proc -public qf_select {
 
     append tag_html "<select" [qf_insert_attributes ${tag_attributes_list}]
     append tag_html $tag_suffix_html 
-    append tag_html ">" $value_list_html "</select>"
-    # set results  __form_arr, we checked form_id above.
-    append __form_arr($attributes_arr(form_id)) $tag_html "\n"
+    append tag_html ">" $value_list_html "</select>\n"
 
+    # set results  __form_arr, we checked form_id above.
+    append __form_arr($attributes_arr(form_id)) $tag_html
+    return $tag_html
 }
 
 ad_proc -private qf_options {
