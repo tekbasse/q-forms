@@ -360,6 +360,7 @@ ad_proc -public qf_remember_attributes {
     } else {
         set __qf_remember_attributes 1
     }
+    return $__qf_remember_atributes
 }
 
 ad_proc -public qf_form { 
@@ -1088,6 +1089,7 @@ ad_proc -public qf_close {
             set __form_ids_open_list [lreplace $__form_ids_open_list $form_id_position $form_id_position]
         }
     }
+    return 1
 }
 
 ad_proc -public qf_read { 
