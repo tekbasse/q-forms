@@ -2128,35 +2128,75 @@ ad_proc -public qf_doctype {
 
 
 ad_proc -public qf_element {
-    -tag
-    {-attribute_nv_list ""}
-    {-content ""}
+    {arg1 ""}
+    {value1 ""}
+    args
 } {
     Returns an html or xml element consisting of a consistent structure based on tag type and passed content and/or attributes (as a tcl name value list).
 <br><br>
-    No validation is performed.
+    Accepts name value pairs, where name is: tag, attribute_nv_list or content.
+<br><br>
+    tag is the tag of the element.
+    For example, if element is '&lt;hr />', tag is 'hr'.
+<br><br>
+    attribute_nv_list is the name value list to add to the element as attributes. 
+If list consists of 'class test', then continuing the hr example, attributes are added like so:
+    &lt;hr class="test" />
+<br><br>
+    content is the information wrapped by the element, if any.
+    For example, if tag is 'p', then content is: &lt;p>content&lt;/p>.
+<br><br>
+    No validation is performed on generated markup.
 } {
     upvar 1 doc doc
     upvar 1 __qf_forwardslash_p __forwardslash_p
     upvar 1 __qf_doctype __doctype
-    set empty_tag_list [list br hr img input link meta param base]
-    set __qf_doctype [qf_doctype]
-    set element "<"
-    append element $tag 
-    # append attributes. Some Empty tags may have attributes.
-    foreach {n v} $attribute_nv_list {
-        append element " \"" $n "\"=\"" $v "\""
-    }
-    if { $__qf_doctype ne "xml" \
-             && [lsearch -nocase -exact $empty_tag_list $tag] > -1 } {
-        # self closed tags are allowed and expected
-        append element " />"
+
+    # collect args
+    if { [llength $arg1] > 1 && $value1 eq "" } {
+        set arg_list $arg1
+        foreach arg $args {
+            lappend args_list $arg
+        }
+    } elseif { $arg1 ne "" } {
+        lappend args $arg1 $value1
+        set arg_list $args
     } else {
-        # Use a separate close tag, do not use single tag and />
-        append element ">" $content "</" $tag ">"
+        set arg_list [list ]
+    }
+    
+    set names_list [list tag attribute_nv_list content]
+    foreach n $names_list {
+        set n_idx [lsearch -exact -nocase $args_list $n] 
+        if { $n_idx > -1 } {
+            set $n [lindex $args_list $n_idx+1]
+        } else {
+            set $n ""
+        }
+    }
+    set element ""
+    if { $tag ne "" } {
+        set empty_tag_list [list br hr img input link meta param base]
+        set __qf_doctype [qf_doctype]
+        set element "<"
+        append element $tag 
+        # append attributes. Some Empty tags may have attributes.
+        foreach {n v} $attribute_nv_list {
+            append element " \"" $n "\"=\"" $v "\""
+        }
+        if { $__qf_doctype ne "xml" \
+                 && [lsearch -nocase -exact $empty_tag_list $tag] > -1 } {
+            # self closed tags are allowed and expected
+            append element " />"
+        } else {
+            # Use a separate close tag, do not use single tag and />
+            append element ">" $content "</" $tag ">"
+        }
+    } else {
+        ns_log Warning "qf_element: tag is empty. Ignoring. arg_list '${arg_list}'"
     }
     return $element
 }
 ##code add label to qf_choice and qf_choices for html5  see above.
 ## apparently html4 does not allow id, so wrap label for select and test
-## to see if validated.
+## to see if validated.  label may not have a useful for with select in html4..
