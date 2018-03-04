@@ -1639,7 +1639,7 @@ ad_proc -public qf_choice {
     set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype input]
 
     set attributes_full_list $attributes_select_list
-    lappend attributes_full_list type form_id id
+    lappend attributes_full_list type form_id id label
 
     set attributes_list [list]
     set select_list [list]
@@ -1808,7 +1808,7 @@ ad_proc -public qf_choices {
     set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype input]
 
     set attributes_full_list $attributes_select_list
-    lappend attributes_full_list type form_id id
+    lappend attributes_full_list type form_id id label
 
     set attributes_list [list]
     set select_list [list]
@@ -2125,3 +2125,38 @@ ad_proc -public qf_doctype {
     }
     return $doc_type
 }
+
+
+ad_proc -public qf_element {
+    -tag
+    {-attribute_nv_list ""}
+    {-content ""}
+} {
+    Returns an html or xml element consisting of a consistent structure based on tag type and passed content and/or attributes (as a tcl name value list).
+<br><br>
+    No validation is performed.
+} {
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __forwardslash_p
+    upvar 1 __qf_doctype __doctype
+    set empty_tag_list [list br hr img input link meta param base]
+    set __qf_doctype [qf_doctype]
+    set element "<"
+    append element $tag 
+    # append attributes. Some Empty tags may have attributes.
+    foreach {n v} $attribute_nv_list {
+        append element " \"" $n "\"=\"" $v "\""
+    }
+    if { $__qf_doctype ne "xml" \
+             && [lsearch -nocase -exact $empty_tag_list $tag] > -1 } {
+        # self closed tags are allowed and expected
+        append element " />"
+    } else {
+        # Use a separate close tag, do not use single tag and />
+        append element ">" $content "</" $tag ">"
+    }
+    return $element
+}
+##code add label to qf_choice and qf_choices for html5  see above.
+## apparently html4 does not allow id, so wrap label for select and test
+## to see if validated.
