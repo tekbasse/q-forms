@@ -360,6 +360,7 @@ ad_proc -public qf_remember_attributes {
     } else {
         set __qf_remember_attributes 1
     }
+    return $__qf_remember_atributes
 }
 
 ad_proc -public qf_form { 
