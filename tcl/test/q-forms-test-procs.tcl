@@ -44,7 +44,7 @@ aa_register_case -cats {api smoke} qf_form_checks {
             set fieldset_expected "<fieldset>\n"
             aa_equals "fieldset start " $fieldset_out $fieldset_expected
 
-##code add more tests here.
+
             set eg_text [ad_generate_random_string 5]
             set eg_name [ad_generate_random_string 15]
             set textarea_out [qf_textarea name $eg_name value $eg_text]
@@ -57,7 +57,19 @@ aa_register_case -cats {api smoke} qf_form_checks {
             set select_expected "<select name=\"${eg_text}\"><option value=\"val2\"> name1 </option>\n<option value=\"val3\"> name2 </option>\n</select>\n"
             aa_equals "select options,basic" $select_out $select_expected
 
+            set input_out [qf_input name $eg_name value $eg_text type submit]
+            set input_expected "<input value=\"${eg_text}\" type=\"submit\" name=\"${eg_name}\">\n"
+            aa_equals "qf_input basic" $input_out $input_expected
+
+            set append_out [qf_append html $eg_text ]
+            set append_expected $eg_text
+            aa_equals "qf_append basic" $append_out $append_expected
+
+##code add more tests here.
+
+
             set close_out [qf_close ]
+            aa_equals "forms closed" $close_out 1
 ##code finishes here
 
 

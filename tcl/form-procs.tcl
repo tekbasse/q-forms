@@ -1029,7 +1029,9 @@ ad_proc -public qf_close {
     {arg1 ""}
     {arg2 ""}
 } {
-    closes a form by appending a close form tag (and fieldset tag if any are open). if form_id supplied, only closes that referenced form and any fieldsets associated with it.  
+    Closes a form by appending a close form tag (and fieldset tag if any are open). if form_id supplied, only closes that referenced form and any fieldsets associated with it. 
+
+@return Number of forms that are closed.
 } {
     # use upvar to set form content, set/change defaults
     upvar 1 __form_ids_list __form_ids_list
@@ -1088,6 +1090,8 @@ ad_proc -public qf_close {
             set __form_ids_open_list [lreplace $__form_ids_open_list $form_id_position $form_id_position]
         }
     }
+    set forms_count [llength $attributes_arr(form_id) ]
+    return $forms_count
 }
 
 ad_proc -public qf_read { 
@@ -1278,10 +1282,13 @@ ad_proc -public qf_input {
     {value1 ""}
     args
 } {
-    creates a form input tag, supplying attributes where nonempty values are supplied. when using CHECKED, set the attribute to 1.
-    allowed attributes: type accesskey align alt border checked class id maxlength name readonly size src tabindex value title.
-    other allowed: form_id label. label is used to wrap the input tag with a label tag containing a label that is associated with the input.
-    checkbox and radio inputs present label after input tag, other inputs are preceeded by label. Omit label attribute to not use this feature. Attribute title is associated with label.
+    Creates a form input tag, supplying attributes where nonempty values are supplied. when using CHECKED, set the attribute to 1.
+    <br><br>
+    Allowed attributes: type accesskey align alt border checked class id maxlength name readonly size src tabindex value title.
+    <br><br>
+    Other allowed: form_id label. label is used to wrap the input tag with a label tag containing a label that is associated with the input.
+    <br><br>
+    checkbox and radio inputs present label after input tag, other inputs are preceeded by label. Omit label attribute to not use this feature. Attribute label defaults to value of title attribute.
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -1469,8 +1476,9 @@ ad_proc -public qf_input {
     }
 
     # set results  __form_arr, we checked form_id above.
-    append __form_arr($attributes_arr(form_id)) $tag_html "\n"
     append tag_html "\n"
+    append __form_arr($attributes_arr(form_id)) $tag_html
+
     #ns_log Notice "qf_input.1116: tag_html '${tag_html}'"
     return $tag_html
 }
