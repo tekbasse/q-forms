@@ -1572,6 +1572,7 @@ ad_proc -private qf_insert_attributes {
     return $args_html
 }
 
+
 ad_proc -public qf_choice {
     {arg1 ""}
     {value1 ""}
@@ -1671,11 +1672,25 @@ ad_proc -public qf_choice {
     }
     lappend select_list form_id $attributes_arr(form_id)
 
-    
+
+    set label_wrap_start_html ""
+    set label_wrap_end_html ""
+    if { [info exists attributes_arr(label)] } {
+        # wrap html with a LABEL tag. Wrap instead
+        # of referring by id attribute, because html4 does not validate
+        # when ID attribute is in a SELECT tag.
+        set label_wrap_start_html "<label>"
+        append label_wrap_start_html [string trim $attributes_arr(label)]
+        qf_append html $label_wrap_start_html form_id $attributes_arr(form_id)
+
+        set label_wrap_end_html "</label>"
+    }
+
 
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = radio, then items are input tags, wrapped in a list for now
     # if needing to paginate radio buttons, build the radio buttons using qf_input directly.
+
 
     if { $attributes_arr(type) ne "radio" } {
         set type "select"
@@ -1736,6 +1751,9 @@ ad_proc -public qf_choice {
 
         set args_html [qf_select $select_list]
 
+    }
+    if { [info exists attributes_arr(label)] } {
+        qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
     }
     return $args_html
 }
@@ -1839,6 +1857,21 @@ ad_proc -public qf_choices {
     }
     lappend select_list form_id $attributes_arr(form_id)
 
+
+    set label_wrap_start_html ""
+    set label_wrap_end_html ""
+    if { [info exists attributes_arr(label)] } {
+        # wrap html with a LABEL tag. Wrap instead
+        # of referring by id attribute, because html4 does not validate
+        # when ID attribute is in a SELECT tag.
+        set label_wrap_start_html "<label>"
+        append label_wrap_start_html [string trim $attributes_arr(label)]
+        qf_append html $label_wrap_start_html form_id $attributes_arr(form_id)
+
+        set label_wrap_end_html "</label>"
+    }
+
+
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = checkbox, then items are input tags, wrapped in a list for now
     # if needing to paginate checkboxes, build the checkboxes using qf_input directly.
@@ -1897,6 +1930,10 @@ ad_proc -public qf_choices {
         qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg
     } else {
         set args_html [qf_select $select_list]
+    }
+
+    if { [info exists attributes_arr(label)] } {
+        qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
     }
     return $args_html
 }
@@ -2197,6 +2234,4 @@ If list consists of 'class test', then continuing the hr example, attributes are
     }
     return $element
 }
-##code add label to qf_choice and qf_choices for html5  see above.
-## apparently html4 does not allow id, so wrap label for select and test
-## to see if validated.  label may not have a useful for with select in html4..
+
