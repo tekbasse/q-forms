@@ -54,7 +54,7 @@ aa_register_case -cats {api smoke} qf_form_checks {
             set value_lists [list [list name name1 value val2] \
                                  [list name name2 value val3] ]
             set select_out [qf_select name $eg_text value $value_lists]
-            set select_expected "<select name=\"${eg_text}\"><option value=\"val2\"> name1 </option>\n<option value=\"val3\"> name2 </option>\n</select>\n"
+            set select_expected "<select name=\"${eg_text}\"><option value=\"val2\"> name1 </option>\n<option value=\"val3\"> name2 </option>\n</select>"
             aa_equals "select options,basic" $select_out $select_expected
 
             set input_out [qf_input name $eg_name value $eg_text type submit]

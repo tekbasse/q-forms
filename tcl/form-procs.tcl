@@ -902,7 +902,7 @@ ad_proc -public qf_select {
 
     append tag_html "<select" [qf_insert_attributes ${tag_attributes_list}]
     append tag_html $tag_suffix_html 
-    append tag_html ">" $value_list_html "</select>\n"
+    append tag_html ">" $value_list_html "</select>"
 
     # set results  __form_arr, we checked form_id above.
     append __form_arr($attributes_arr(form_id)) $tag_html
@@ -1752,9 +1752,11 @@ ad_proc -public qf_choice {
         set args_html [qf_select $select_list]
 
     }
-    if { [info exists attributes_arr(label)] } {
-        qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
-    }
+    # \n is added here instead of after SELECT tag, in case a LABEL tag
+    # wraps $args_html.
+    append label_wrap_end_html "\n"
+    qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
+
     return $args_html
 }
 
@@ -1932,9 +1934,9 @@ ad_proc -public qf_choices {
         set args_html [qf_select $select_list]
     }
 
-    if { [info exists attributes_arr(label)] } {
-        qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
-    }
+    append label_wrap_end_html "\n"
+    qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
+    
     return $args_html
 }
 
