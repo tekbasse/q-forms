@@ -68,29 +68,51 @@ aa_register_case -cats {api smoke} qf_form_checks {
             set choices_ct [randomRange 10]
             # Testing for hexadecimal or octal miss-interpretations
             # and other boundary cases
-            set rand1_list [list "" 0xbad 0obad 0 1 .0 .1 -0 -.1 -- --test . "$t"]
+            set rand1_list [list "" 0xbad 0obad 0 1 .0 .1 -0 -.1 -- --test . {$t}]
             set rand1_list [util::randomize_list $rand1_list]
             set rand2_list [util::randomize_list $rand1_list]
             set rand3_list [util::randomize_list $rand1_list]
    
             for {set i 0} {$i < $choices_ct} {incr i} {
-                rand1 [randomRange 2]
-                rand2 [randomRange 2]
-                rand3 [randomRange 2]
+                set rand1 [randomRange 2]
+                set rand2 [randomRange 2]
+                set rand3 [randomRange 2]
                 incr rand2 [randomRange 10]
                 lappend rand1_list [ad_generate_random_string $rand1]
                 lappend rand2_list [ad_generate_random_string $rand2]
-                lappend rand2_list [ad_generate_random_string $rand3]
+                lappend rand3_list [ad_generate_random_string $rand3]
             }
-            set ii 0
-            foreach r1 $rand1_list {
-                set r2 [lindex $rand2_list $ii]
-                set r3 [lindex $rand2_list $ii]
-                # create name label value lists for qf_choices
-                incr ii
+
+            foreach label $rand1_list {
+                aa_log "Following tests using label '${label}'"
+                foreach name $rand2_list {
+                    aa_log "Following tests using name '${name}'"
+                    set qfc_tag_attribute_list [list ]
+                    foreach {la_bel value} $rand3_list {
+                        aa_log "Following test includes choice label '${la_bel}' value '${value}'"
+                        set choice_list [list label $la_bel value $value]
+                        lappend qfc_tag_attribute_list $choice_list
+                    }
+                    # type is select
+                    set type "select"
+                    set choice_out [qf_choice label $label type $type \
+                                        name $name \
+                                        value $qfc_tag_attribute_list ]
+                    set choice_expected "<label>"
+                    append choice_expected [string trim $label] \
+                        "<select name=\"" $name "\">"
+                    foreach label_value_list $qfc_tag_attribute_list {
+                        lassign $label_value_list l1 l2 v1 v2
+                        append choice_expected "<option ${l1}=\"" $l2
+                        append choice_expected "\" ${v1}=\"" $v2 "\"> "
+                        append choice_expected $l2 " </option>\n"
+                    }
+                    append choice_expected "</select></label>\n"
+                    aa_equals "qf_choice basic" $choice_out $choice_expected
+                }
             }
-            set choice_out [qf_choice label 
-##code add more tests here.
+
+#code add more tests here.
             
 
             set close_out [qf_close ]

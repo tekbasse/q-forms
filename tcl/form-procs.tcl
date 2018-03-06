@@ -1681,7 +1681,6 @@ ad_proc -public qf_choice {
         # when ID attribute is in a SELECT tag.
         set label_wrap_start_html "<label>"
         append label_wrap_start_html [string trim $attributes_arr(label)]
-        qf_append html $label_wrap_start_html form_id $attributes_arr(form_id)
 
         set label_wrap_end_html "</label>"
     }
@@ -1697,13 +1696,21 @@ ad_proc -public qf_choice {
     } else {
         set type "radio"
     }
-    
-    # call qf_select if type is "select" instead of duplicating purpose of that code
 
+    # At this point, the buffer for returned html vs. value supplied to form_id diverge,
+    # because return_html collects all output, whereas args_html is supplied to form_id
+    # as needed by the convenience of calling qf_input, qf_append etc.
+
+
+    set return_html $label_wrap_start_html
+    set args_html $label_wrap_start_html    
+    qf_append form_id $attributes_arr(form_id) html $args_html
+    set args_html ""
+    # call qf_select if type is "select" instead of duplicating purpose of that code
     if { $type eq "radio" } {
         # create wrapping tag
         set tag_wrapping "ul"
-        set args_html "<"
+        append args_html "<"
         append args_html $tag_wrapping
         foreach attribute $attributes_list {
             # ignore proc parameters that are not tag attributes for the tag_wrapping tag
@@ -1714,8 +1721,8 @@ ad_proc -public qf_choice {
             }
         }
         append args_html ">\n"
-        qf_append form_id $attributes_arr(form_id) html $args_html
-        set args_html ""
+
+
 
         # verify this is a list of lists.
         set list_length [llength $attributes_arr(value)]
@@ -1737,15 +1744,15 @@ ad_proc -public qf_choice {
                 }
                 set input_attributes_list [array get input_arr]
                 lappend input_attributes_list form_id $attributes_arr(form_id) type radio
-                qf_append form_id $attributes_arr(form_id) html "<li>"
-                qf_input $input_attributes_list
-                qf_append form_id $attributes_arr(form_id) html "</li>"
+                append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
+                append return_html [qf_input $input_attributes_list]
+                append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
             } else {
                 ns_log Notice "qf_choice.1353: list not even number of members, skipping rendering of value attribute with list: '${input_attributes_list}'"
             }
         }
         append args_html "</" $tag_wrapping ">"
-        qf_append form_id $attributes_arr(form_id) html $args_html
+        append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
 
     } else {
 
@@ -1754,10 +1761,9 @@ ad_proc -public qf_choice {
     }
     # \n is added here instead of after SELECT tag, in case a LABEL tag
     # wraps $args_html.
-    append label_wrap_end_html "\n"
-    qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
-
-    return $args_html
+    append args_html $label_wrap_end_html "\n"
+    append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
+    return $return_html
 }
 
 ad_proc -public qf_choices {
