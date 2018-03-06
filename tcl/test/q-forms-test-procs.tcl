@@ -65,8 +65,33 @@ aa_register_case -cats {api smoke} qf_form_checks {
             set append_expected $eg_text
             aa_equals "qf_append basic" $append_out $append_expected
 
+            set choices_ct [randomRange 10]
+            # Testing for hexadecimal or octal miss-interpretations
+            # and other boundary cases
+            set rand1_list [list "" 0xbad 0obad 0 1 .0 .1 -0 -.1 -- --test . "$t"]
+            set rand1_list [util::randomize_list $rand1_list]
+            set rand2_list [util::randomize_list $rand1_list]
+            set rand3_list [util::randomize_list $rand1_list]
+   
+            for {set i 0} {$i < $choices_ct} {incr i} {
+                rand1 [randomRange 2]
+                rand2 [randomRange 2]
+                rand3 [randomRange 2]
+                incr rand2 [randomRange 10]
+                lappend rand1_list [ad_generate_random_string $rand1]
+                lappend rand2_list [ad_generate_random_string $rand2]
+                lappend rand2_list [ad_generate_random_string $rand3]
+            }
+            set ii 0
+            foreach r1 $rand1_list {
+                set r2 [lindex $rand2_list $ii]
+                set r3 [lindex $rand2_list $ii]
+                # create name label value lists for qf_choices
+                incr ii
+            }
+            set choice_out [qf_choice label 
 ##code add more tests here.
-
+            
 
             set close_out [qf_close ]
             aa_equals "forms closed" $close_out 1
