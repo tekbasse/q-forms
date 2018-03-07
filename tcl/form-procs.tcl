@@ -942,7 +942,9 @@ ad_proc -private qf_options {
     }
 
     set options_html ""
+
     foreach option_tag_attribute_list $options_list_of_lists {
+
         append options_html [qf_option $option_tag_attribute_list]
     }
     return $options_html
@@ -972,7 +974,7 @@ ad_proc -private qf_option {
     set arg_list $option_attributes_list
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr(${attribute}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
@@ -1660,7 +1662,7 @@ ad_proc -public qf_choice {
             ad_script_abort
         }
     }
-
+    ns_log Notice "qf_choice.1665 attributes_arr(value) '$attributes_arr(value)'"
     # form_id needs to be passed to any qf_ api
     # default to last modified form_id
     set form_id_exists [info exists attributes_arr(form_id)]
@@ -1773,13 +1775,16 @@ ad_proc -public qf_choice {
 
     } else {
         # type = select
+        ns_log Notice "qf_choice.1778 attributes_arr(value) '$attributes_arr(value)'"
         set select_list [list]
         foreach attribute $attributes_list {
             if { [lsearch -exact $attributes_select_list $attribute] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
-                lappend select_list $attribute $value
+                ns_log Notice "qf_choice.1783 attribute '${attribute}' attributes_arr(attribute) '$attributes_arr(${attribute})'"
+                lappend select_list $attribute $attributes_arr(${attribute})
             } 
         }
+
         set args_html [qf_select $select_list]
 
     }
@@ -1852,32 +1857,58 @@ ad_proc -public qf_choices {
         set arg_list [list ]
     }
 
-    #was
-    #set attributes_select_list /list value accesskey align class cols name readonly rows style tabindex title wrap/
-    set __qf_doctype [qf_doctype]
-    set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype input]
 
-    set attributes_full_list $attributes_select_list
-    lappend attributes_full_list type form_id id label
-
+    # attributes_list are attribute/value pairs passed to structural, wrapping tag such as UL.
     set attributes_list [list]
-    set select_list [list]
+
+    # Type attribute is needed to know attributes_full_list elements.
+    # Save on overall processing by pre-processing 'type' attribute.
+    # Avoid creating a blind array that may contain garbage input.
+    set i 0
+    set type_idx [lsearch -exact -nocase $arg_list "type"]
+    set counter 0
+    set arg_list_len [llength $arg_list]
+    while { $type_idx > -1 && ![f::even_p $type_idx] && $counter < $arg_list_len } {
+        incr type_idx
+        incr counter
+        ns_log Notice "qf_choices.1878. 'type' found as a value.. lsearching again. counter '${counter}' arg_list_len '${arg_list_len}'"
+        set type_idx [lsearch -exact -index $type_idx -nocase $arg_list "type"]
+    }
+    if { $type_idx > -1 && [f::even_p $type_idx] } {
+        set attributes_arr(type) [lindex $arg_list $type_idx+1]
+    } else {
+        set attributes_arr(type) ""
+    }
+
+
+    # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
+    # if attributes_arr(type) = checkbox, then items are input tags, wrapped in a list for now
+    # if needing to paginate checkboxes, build the checkboxes using qf_input directly.
+    # qf_doctype_tag_attributes requires calling qf_doctype first.
+    set __qf_doctype [qf_doctype]
+    if { $attributes_arr(type) ne "checkbox" } {
+        set type "select"
+        set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype select]
+        set attributes_full_list $attributes_select_list
+        lappend attributes_full_list value
+    } else {
+        set type "checkbox"
+        set attributes_input_list [qf_doctype_tag_attributes $__qf_doctype input]
+        set attributes_full_list $attributes_input_list
+    }
+    lappend attributes_full_list type form_id id label
+    
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
-            ##code the following needs to be full_list, because it is passed 
-            # to another qf_* api including form_id
-            if { [lsearch -exact $attributes_select_list $attribute ] > -1 } {
-                # create a list to pass to qf_select without it balking at unknown parameters
-                lappend select_list $attribute $value
-            } 
-        } elseif { [lsearch -exact $attributes_full_list $attribute] < 0 } {
+        } else {
             ns_log Error "qf_choices.1416: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' attributes_select_list '${attributes_select_list}'"
             ad_script_abort
         }
     }
+    ns_log Notice "qf_choices.1883 attributes_arr(value) '$attributes_arr(value)'"
 
     # for passing select_list, we need to pass form_id literally
     # default to last modified form_id
@@ -1889,8 +1920,7 @@ ad_proc -public qf_choices {
         ns_log Error "qf_choices.1428: unknown form_id $attributes_arr(form_id)"
         ad_script_abort
     }
-    lappend select_list form_id $attributes_arr(form_id)
-    ns_log Notice "qf_choices. select_list '${select_list}'"
+
 
     set return_html ""
     set label_wrap_start_html ""
@@ -1906,28 +1936,32 @@ ad_proc -public qf_choices {
         set label_wrap_end_html "</label>"
     }
 
-
-    # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
-    # if attributes_arr(type) = checkbox, then items are input tags, wrapped in a list for now
-    # if needing to paginate checkboxes, build the checkboxes using qf_input directly.
-
-    if { $attributes_arr(type) ne "checkbox" } {
-        set type "select"
-    } else {
-        set type "checkbox"
-    }
     
     # call qf_select if type is "select" instead of duplicating purpose of that code
     set args_html ""
     if { $type eq "checkbox" } {
+
+        # input_list are attribute_value pairs passed to qf_input
+        set input_list [list]
+        lappend input_list form_id $attributes_arr(form_id)
+        ns_log Notice "qf_choices.1899 input_list '${input_list}'"
+
+        foreach attribute $attributes_list {
+            if { [lsearch -exact $attributes_input_list $attribute ] > -1 } {
+                # create a list to pass to qf_input without it balking at unknown parameters
+                ns_log Notice "qf_choices.1889 attribute '${attribute}' attributes_arr(${attribute}) '$attributes_arr(${attribute})' value '${value}'"
+                lappend input_list $attribute $value
+            }
+        }
+
         # create wrapping tag
         set tag_wrapping "ul"
-
+        set attributes_wrap_list [qf_doctype_tag_attributes $__qf_doctype $tag_wrapping]
         append args_html "<"
         append args_html $tag_wrapping
         foreach attribute $attributes_list {
             # ignore proc parameters that are not tag attributes
-            if { $attribute eq "id" || $attribute eq "style" || $attribute eq "class"  } {
+            if { [lsearch -exact -nocase $attributes_wrap_list $attribute] > -1 } {
                 # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
                 regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
                 append args_html " " $attribute "=\"" $attributes_arr(${attribute}) "\""
@@ -1965,7 +1999,19 @@ ad_proc -public qf_choices {
         append tag_wrapping_arg $tag_wrapping ">"
 
         append return_html [qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg]
+
     } else {
+        # select_list are attribute/value pairs passed to qf_select
+        set select_list [list]
+
+        foreach attribute $attributes_list {
+            if { [lsearch -exact $attributes_select_list $attribute ] > -1 } {
+                # create a list to pass to qf_select without it balking at unknown parameters
+                ns_log Notice "qf_choices.1879 attribute '${attribute}' attributes_arr(${attribute}) '$attributes_arr(${attribute})' value '${value}'"
+                lappend select_list $attribute $value
+            }
+        }
+
         append return_html [qf_select value $select_list multiple 1]
     }
 
