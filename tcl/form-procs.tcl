@@ -898,7 +898,7 @@ ad_proc -public qf_select {
         set value_list_html ""
     }
     if { [info exists attributes_arr(value)] } {
-        ns_log Notice "qf_select: attributes_arr(value) '$attributes_arr(value)'"
+        ns_log Notice "qf_select.901: attributes_arr(value) '$attributes_arr(value)'"
         append value_list_html [qf_options $attributes_arr(value)]
         
     }
@@ -1702,9 +1702,8 @@ ad_proc -public qf_choice {
     # because return_html collects all output, whereas args_html is supplied to form_id
     # as needed by the convenience of calling qf_input, qf_append etc.
 
-    set return_html $label_wrap_start_html
     set args_html $label_wrap_start_html    
-    qf_append form_id $attributes_arr(form_id) html $args_html
+    set return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
     set args_html ""
 
     # call qf_select if type is "select" instead of duplicating purpose of that code
@@ -1729,8 +1728,9 @@ ad_proc -public qf_choice {
             }
         }
         append args_html ">\n"
-
-
+        append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
+        
+        set args_html ""
         # verify this is a list of lists.
         set list_length [llength $attributes_arr(value)]
         # test on the second input, less chance its a special case
@@ -1771,7 +1771,6 @@ ad_proc -public qf_choice {
             }
         }
         append args_html "</" $tag_wrapping ">"
-        append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
 
     } else {
         # type = select
