@@ -808,14 +808,14 @@ ad_proc -public qf_select {
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact $attributes_tag_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr($attribute) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
                 lappend attributes_list $attribute
             }
-        } else {
-            ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute."
+        } elseif { [lsearch -exact $attributes_full_list $attribute] < 0 } {
+            ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}'"
             ad_script_abort
         }
     }
@@ -977,7 +977,7 @@ ad_proc -private qf_option {
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_options.806: '${attribute}' is not a valid attribute. Invoke with attribute value pairs. Separate each with a space."
+            ns_log Error "qf_options.806: '${attribute}' is not a valid attribute. Invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}'"
             ad_script_abort
         }
     }
@@ -1839,7 +1839,7 @@ ad_proc -public qf_choices {
     set attributes_list [list]
     set select_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact $attributes_select_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
@@ -1847,8 +1847,8 @@ ad_proc -public qf_choices {
                 # create a list to pass to qf_select without it balking at unknown parameters
                 lappend select_list $attribute $value
             } 
-        } else {
-            ns_log Error "qf_choices.1416: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
+        } elseif { [lsearch -exact $attributes_full_list $attribute] < 0 } {
+            ns_log Error "qf_choices.1416: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' attributes_select_list '${attributes_select_list}'"
             ad_script_abort
         }
     }
@@ -1860,11 +1860,11 @@ ad_proc -public qf_choices {
         set attributes_arr(form_id) $__qf_arr(form_id) 
     }
     if { [lsearch $__form_ids_list $attributes_arr(form_id)] == -1 } {
-        ns_log Error "qf_choice.1428: unknown form_id $attributes_arr(form_id)"
+        ns_log Error "qf_choices.1428: unknown form_id $attributes_arr(form_id)"
         ad_script_abort
     }
     lappend select_list form_id $attributes_arr(form_id)
-
+    ns_log Notice "qf_choices. select_list '${select_list}'"
 
     set label_wrap_start_html ""
     set label_wrap_end_html ""
@@ -1937,7 +1937,7 @@ ad_proc -public qf_choices {
         append tag_wrapping_arg $tag_wrapping ">\n"
         qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg
     } else {
-        set args_html [qf_select $select_list]
+        set args_html [qf_select value $select_list multiple 1]
     }
 
     append label_wrap_end_html "\n"
