@@ -808,13 +808,13 @@ ad_proc -public qf_select {
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_tag_list $attribute]
+        set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr($attribute) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
                 lappend attributes_list $attribute
             }
-        } elseif { [lsearch -exact $attributes_full_list $attribute] < 0 } {
+        } else {
             ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}'"
             ad_script_abort
         }
@@ -865,9 +865,10 @@ ad_proc -public qf_select {
     }
 
     set tag_html ""
-    ##code auto closing the select tag has been debrecated
+    # Auto closing the select tag via qf_close has been deprecated,
     # because qf_choice and qf_choices exist.
-    # TO add this feature requires checking other input tags etc too.
+    # It adds too much complexity for a nonstandard api usage case.
+    # To add this feature requires checking other input tags etc too.
     # This code will be ignored for now, but left in place for future expansion.
     set previous_select 0
     # first close any existing selects tag with form_id
@@ -891,11 +892,13 @@ ad_proc -public qf_select {
 
     # add options tag
     if { [info exists attributes_arr(value_html)] } {
+
         set value_list_html $attributes_arr(value_html)
     } else {
         set value_list_html ""
     }
     if { [info exists attributes_arr(value)] } {
+        ns_log Notice "qf_select: attributes_arr(value) '$attributes_arr(value)'"
         append value_list_html [qf_options $attributes_arr(value)]
         
     }
@@ -964,7 +967,8 @@ ad_proc -private qf_option {
     set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype option]
 
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list label name
+    lappend attributes_full_list label name 
+    # type form_id
     set arg_list $option_attributes_list
     set attributes_list [list]
     foreach {attribute value} $arg_list {
@@ -1637,30 +1641,27 @@ ad_proc -public qf_choice {
 
     #was set attributes_select_list /list value accesskey align class cols name readonly rows style tabindex title wrap/
     set __qf_doctype [qf_doctype]
-    set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype input]
+    set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype select]
+    set attributes_input_list [qf_doctype_tag_attributes $__qf_doctype input]
+    set attributes_full_list [concat $attributes_select_list $attributes_input_list]
+    lappend attributes_full_list type form_id label 
 
-    set attributes_full_list $attributes_select_list
-    lappend attributes_full_list type form_id id label
-
+    # A subset of attributes_list gets passed to wrapping tag (select or ul/input)
     set attributes_list [list]
-    set select_list [list]
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
-            if { [lsearch -exact $attributes_select_list $attribute] > -1 } {
-                # create a list to pass to qf_select without it balking at unknown parameters
-                lappend select_list $attribute $value
-            } 
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_choice.1283: [string range ${attribute} 0 15] is not a valid attribute."
+            ns_log Error "qf_choice.1283: '[string range ${attribute} 0 15]' is not a valid attribute."
             ad_script_abort
         }
     }
-    # for passing select_list, we need to pass form_id literally
+
+    # form_id needs to be passed to any qf_ api
     # default to last modified form_id
     set form_id_exists [info exists attributes_arr(form_id)]
     if { $form_id_exists == 0 || ( $form_id_exists == 1 && $attributes_arr(form_id) eq "" ) } { 
@@ -1670,9 +1671,9 @@ ad_proc -public qf_choice {
         ns_log Error "qf_choice.1294: unknown form_id '$attributes_arr(form_id)'"
         ad_script_abort
     }
-    lappend select_list form_id $attributes_arr(form_id)
+    lappend attributes_list form_id $attributes_arr(form_id)
 
-
+    # If a label is supplied, wrap the output with a LABEL tag.
     set label_wrap_start_html ""
     set label_wrap_end_html ""
     if { [info exists attributes_arr(label)] } {
@@ -1689,8 +1690,6 @@ ad_proc -public qf_choice {
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = radio, then items are input tags, wrapped in a list for now
     # if needing to paginate radio buttons, build the radio buttons using qf_input directly.
-
-
     if { $attributes_arr(type) ne "radio" } {
         set type "select"
     } else {
@@ -1701,27 +1700,33 @@ ad_proc -public qf_choice {
     # because return_html collects all output, whereas args_html is supplied to form_id
     # as needed by the convenience of calling qf_input, qf_append etc.
 
-
     set return_html $label_wrap_start_html
     set args_html $label_wrap_start_html    
     qf_append form_id $attributes_arr(form_id) html $args_html
     set args_html ""
+
     # call qf_select if type is "select" instead of duplicating purpose of that code
     if { $type eq "radio" } {
+
         # create wrapping tag
         set tag_wrapping "ul"
         append args_html "<"
         append args_html $tag_wrapping
-        foreach attribute $attributes_list {
-            # ignore proc parameters that are not tag attributes for the tag_wrapping tag
-            if { $attribute eq "id" || $attribute eq "style" || $attribute eq "class"  } {
-                # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
-                regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
-                append args_html " " $attribute "=\"" $attributes_arr(${attribute}) "\""
+
+        # ignore proc parameters that are not tag attributes for the tag_wrapping tag
+        # This is coded, so that later code can be adapted to change UL to 
+        # something custom by parameter without changing code much.
+        if { $tag_wrapping ne "" } {
+            set attributes_wrap_list [qf_doctype_tag_attributes $__qf_doctype $tag_wrapping]
+            foreach attribute $attributes_list {
+                if { [lsearch -exact $attributes_wrap_list $attribute]> -1 } {
+                    # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
+                    regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
+                    append args_html " " $attribute "=\"" $attributes_arr(${attribute}) "\""
+                }
             }
         }
         append args_html ">\n"
-
 
 
         # verify this is a list of lists.
@@ -1734,18 +1739,30 @@ ad_proc -public qf_choice {
         }
         foreach input_attributes_list $attributes_arr(value) {
             if { [f::even_p [llength $input_attributes_list]] } {
-                array unset input_arr
-                array set input_arr $input_attributes_list
-                if { ![info exists input_arr(label)] && [info exists input_arr(value)] } {
-                    set input_arr(label) $input_arr(value)
-                } 
-                if { ![info exists input_arr(name)] && [info exists attributes_arr(name)] } {
-                    set input_arr(name) $attributes_arr(name)
+                lappend attributes_input_list label
+                foreach {n v} $input_attributes_list {
+                    if { [lsearch -exact $attributes_input_list $n] > -1 } {
+                        lappend input_atts_list $n $v
+                        lappend input_att_names_list $n
+                    }
                 }
-                set input_attributes_list [array get input_arr]
-                lappend input_attributes_list form_id $attributes_arr(form_id) type radio
+                # Add a label based on value, if there isn't one.
+                if { [lsearch -exact -nocase $input_atts_list "label"] < 0 } {
+                    set value_idx [lsearch -exact -nocase $input_atts_list "value"]
+                    if { $value_idx > -1 } {
+                        set v [lindex $input_atts_list $value_idx+1]
+                        lappend input_atts_list "label" $v
+                    }
+                }
+                # pass the name from tag attribute to choice item, if name isn't included
+                if { [lsearch -exact -nocase $input_atts_list "name" ] < 0 } {
+                    if { [info exists attributes_arr(name)] } {
+                        lappend input_atts_list "name" $attributes_arr(name)
+                    }
+                }
+                lappend input_atts_list form_id $attributes_arr(form_id) type radio
                 append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
-                append return_html [qf_input $input_attributes_list]
+                append return_html [qf_input $input_atts_list]
                 append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
             } else {
                 ns_log Notice "qf_choice.1353: list not even number of members, skipping rendering of value attribute with list: '${input_attributes_list}'"
@@ -1755,7 +1772,14 @@ ad_proc -public qf_choice {
         append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
 
     } else {
-
+        # type = select
+        set select_list [list]
+        foreach attribute $attributes_list {
+            if { [lsearch -exact $attributes_select_list $attribute] > -1 } {
+                # create a list to pass to qf_select without it balking at unknown parameters
+                lappend select_list $attribute $value
+            } 
+        }
         set args_html [qf_select $select_list]
 
     }
@@ -1839,10 +1863,12 @@ ad_proc -public qf_choices {
     set attributes_list [list]
     set select_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_select_list $attribute]
+        set attribute_index [lsearch -exact $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
             set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
+            ##code the following needs to be full_list, because it is passed 
+            # to another qf_* api including form_id
             if { [lsearch -exact $attributes_select_list $attribute ] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
                 lappend select_list $attribute $value
@@ -1866,6 +1892,7 @@ ad_proc -public qf_choices {
     lappend select_list form_id $attributes_arr(form_id)
     ns_log Notice "qf_choices. select_list '${select_list}'"
 
+    set return_html ""
     set label_wrap_start_html ""
     set label_wrap_end_html ""
     if { [info exists attributes_arr(label)] } {
@@ -1874,7 +1901,7 @@ ad_proc -public qf_choices {
         # when ID attribute is in a SELECT tag.
         set label_wrap_start_html "<label>"
         append label_wrap_start_html [string trim $attributes_arr(label)]
-        qf_append html $label_wrap_start_html form_id $attributes_arr(form_id)
+        append return_html [qf_append html $label_wrap_start_html form_id $attributes_arr(form_id)]
 
         set label_wrap_end_html "</label>"
     }
@@ -1891,11 +1918,12 @@ ad_proc -public qf_choices {
     }
     
     # call qf_select if type is "select" instead of duplicating purpose of that code
-
+    set args_html ""
     if { $type eq "checkbox" } {
         # create wrapping tag
         set tag_wrapping "ul"
-        set args_html "<"
+
+        append args_html "<"
         append args_html $tag_wrapping
         foreach attribute $attributes_list {
             # ignore proc parameters that are not tag attributes
@@ -1906,7 +1934,7 @@ ad_proc -public qf_choices {
             }
         }
         append args_html ">\n"
-        qf_append form_id $attributes_arr(form_id) html $args_html
+        set return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
         set args_html ""
 
         # verify this is a list of lists.
@@ -1929,21 +1957,23 @@ ad_proc -public qf_choices {
             }
             set input_attributes_list [array get input_arr]
             lappend input_attributes_list form_id $attributes_arr(form_id) type checkbox
-            qf_append form_id $attributes_arr(form_id) html "<li>"
-            qf_input $input_attributes_list
-            qf_append form_id $attributes_arr(form_id) html "</li>"
+            append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
+            append return_html [qf_input $input_attributes_list]
+            append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
         }
         set tag_wrapping_arg "</"
-        append tag_wrapping_arg $tag_wrapping ">\n"
-        qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg
+        append tag_wrapping_arg $tag_wrapping ">"
+
+        append return_html [qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg]
     } else {
-        set args_html [qf_select value $select_list multiple 1]
+        append return_html [qf_select value $select_list multiple 1]
     }
 
     append label_wrap_end_html "\n"
-    qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html 
+
+    append return_html [qf_append form_id $attributes_arr(form_id) html $label_wrap_end_html ]
     
-    return $args_html
+    return $return_html
 }
 
 ad_proc -private qf_doctype_tag_attributes {
@@ -1994,7 +2024,7 @@ ad_proc -private qf_html4_tag_attributes {
             lappend attr_list name size multiple disabled tabindex disabled tabindex
         }
         input {
-            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept alt align accept
+            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey alt align accept
         }
         optgroup {
             lappend attr_list selected disabled label
@@ -2178,6 +2208,7 @@ ad_proc -public qf_element {
     args
 } {
     Returns an html or xml element consisting of a consistent structure based on tag type and passed content and/or attributes (as a tcl name value list).
+    Does not get passed to a form_id.
 <br><br>
     Accepts name value pairs, where name is: tag, attribute_nv_list or content.
 <br><br>
@@ -2212,9 +2243,9 @@ If list consists of 'class test', then continuing the hr example, attributes are
     
     set names_list [list tag attribute_nv_list content]
     foreach n $names_list {
-        set n_idx [lsearch -exact -nocase $args_list $n] 
+        set n_idx [lsearch -exact -nocase $arg_list $n] 
         if { $n_idx > -1 } {
-            set $n [lindex $args_list $n_idx+1]
+            set $n [lindex $arg_list $n_idx+1]
         } else {
             set $n ""
         }
