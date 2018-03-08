@@ -797,7 +797,7 @@ ad_proc -public qf_select {
     } else {
         set arg_list [list ]
     }
-
+    ns_log Notice "qf_select.800: arg_list '${arg_list}'"
     #was
     #set attributes_tag_list /list accesskey align class cols id name readonly rows style tabindex title wrap/
     set __qf_doctype [qf_doctype]
@@ -863,7 +863,7 @@ ad_proc -public qf_select {
             lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         }
     }
-
+    ns_log Notice "qf_select.866 tag_attributes_list '${tag_attributes_list}'"
     set tag_html ""
     # Auto closing the select tag via qf_close has been deprecated,
     # because qf_choice and qf_choices exist.
@@ -944,7 +944,7 @@ ad_proc -private qf_options {
     set options_html ""
 
     foreach option_tag_attribute_list $options_list_of_lists {
-
+        ns_log Notice "qf_options.947: options_list_of_lists '${options_list_of_lists}'"
         append options_html [qf_option $option_tag_attribute_list]
     }
     return $options_html
@@ -983,7 +983,7 @@ ad_proc -private qf_option {
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_options.806: '${attribute}' is not a valid attribute. Invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}'"
+            ns_log Error "qf_option.806: '${attribute}' is not a valid attribute. Invoke with attribute value pairs. \n attributes_full_list '${attributes_full_list}' \n attributes_tag_list '${attributes_tag_list}' "
             ad_script_abort
         }
     }
@@ -1785,7 +1785,7 @@ ad_proc -public qf_choice {
             } 
         }
 
-        set args_html [qf_select $select_list]
+        set return_html [qf_select $select_list]
 
     }
     # \n is added here instead of after SELECT tag, in case a LABEL tag
@@ -1871,7 +1871,7 @@ ad_proc -public qf_choices {
     while { $type_idx > -1 && ![f::even_p $type_idx] && $counter < $arg_list_len } {
         incr type_idx
         incr counter
-        ns_log Notice "qf_choices.1878. 'type' found as a value.. lsearching again. counter '${counter}' arg_list_len '${arg_list_len}'"
+        ns_log Notice "qf_choices.1378. 'type' found as a value.. lsearching again. counter '${counter}' arg_list_len '${arg_list_len}'"
         set type_idx [lsearch -exact -index $type_idx -nocase $arg_list "type"]
     }
     if { $type_idx > -1 && [f::even_p $type_idx] } {
@@ -1879,7 +1879,7 @@ ad_proc -public qf_choices {
     } else {
         set attributes_arr(type) ""
     }
-
+ns_log Notice "qf_choices.1400: attributes_arr(type) '$attributes_arr(type)'"
 
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = checkbox, then items are input tags, wrapped in a list for now
@@ -2003,16 +2003,16 @@ ad_proc -public qf_choices {
     } else {
         # select_list are attribute/value pairs passed to qf_select
         set select_list [list]
-
+        lappend attributes_select_list value
         foreach attribute $attributes_list {
             if { [lsearch -exact $attributes_select_list $attribute ] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
                 ns_log Notice "qf_choices.1879 attribute '${attribute}' attributes_arr(${attribute}) '$attributes_arr(${attribute})' value '${value}'"
-                lappend select_list $attribute $value
+                lappend select_list $attribute $attributes_arr(${attribute})
             }
         }
-
-        append return_html [qf_select value $select_list multiple 1]
+        lappend select_list multiple 1
+        append return_html [qf_select $select_list]
     }
 
     append label_wrap_end_html "\n"
