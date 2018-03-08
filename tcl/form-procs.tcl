@@ -1776,6 +1776,7 @@ ad_proc -public qf_choice {
         # type = select
         ns_log Notice "qf_choice.1778 attributes_arr(value) '$attributes_arr(value)'"
         set select_list [list]
+        lappend attributes_select_list value
         foreach attribute $attributes_list {
             if { [lsearch -exact $attributes_select_list $attribute] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
