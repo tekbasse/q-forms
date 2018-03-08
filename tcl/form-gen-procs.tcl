@@ -95,7 +95,7 @@ ad_proc -public qfo_2g {
     -fields_array:required
     {-fields_ordered_list ""}
     {-field_types_lists ""}
-    {-inputs_as_array "qfi"}
+    {-inputs_as_array "qfi_arr"}
     {-form_submitted_p ""}
     {-form_id ""}
     {-doc_type ""}
@@ -126,7 +126,7 @@ ad_proc -public qfo_2g {
     in sequential order according to relative tabindex value.
     Actual tabindex value is calculated, so that a sequence is contiguous
     even if supplied values are not.
-   
+    
     <br><br>
     <code>field_types_lists</code> is a list of lists 
     as defined by ::qdt::data_types parameter 
@@ -223,8 +223,8 @@ ad_proc -public qfo_2g {
 
         # Grab new field definitions
 
-       # set qtable_id /lindex $qtable_list 2/
-       # set instance_id /lindex $qtable_list 1/
+        # set qtable_id /lindex $qtable_list 2/
+        # set instance_id /lindex $qtable_list 1/
 
         qt_field_defs_maps_set $qtable_id \
             -field_type_of_label_array_name qt_fields_larr
@@ -259,11 +259,12 @@ ad_proc -public qfo_2g {
             # Build this array here that gets used later.
             set datatype_of_arr(${label}) $datatype
         }
- 
+        
 
     }
 
     set qfi_fields_list [array names fields_arr]
+    ns_log Notice "qfo_2g.267: qfi_fields_list '${qfi_fields_list}'"
     set field_ct [llength $qfi_fields_list]
     # Create a field attributes array
     # fatts = field attributes
@@ -391,72 +392,78 @@ ad_proc -public qfo_2g {
     } 
 
     # Don't use qfi_arr anymore, as it may contain extraneous input
-    # Use qfv_arr
+    # Use qfv_arr for input array
     array unset qfi_arr
     
     set validated_p 0
     set invalid_field_val_list [list ]
     set row_list [list ]
-    if { $submitted_p } {
+    if { $form_submitted_p } {
         # validate inputs
         
         foreach f $qfi_fields_list {
+            if { ![info exists qfv_arr(${f})] } {
+                ##code if not allowed to be blank, set to default_procs value
+                set qfv_arr(${f}) ""
+            }
             set f_value $qfv_arr(${f})
+            
             # Creating row_list here saves re-parsing later, outside of loop
             lappend row_list $f $f_value
-            set valida_proc $fatts_arr(${f},valida_proc)
-            set valid_p 0
-            ##code switch details
-            switch -- $valida_proc {
-                qf_is_decimal {}
-                qf_is_integer {}
-                hf_are_safe_and_visibe_characters_q {}
-                hf_are_safe_and_printable_characters_q {}
-                util_url_valid_p {}
-                qf_email_valid_q {}
-                qf_clock_scan {}
-                qf_is_decimal {}
-                ad_var_type_check_safefilename_p {}
-                default {
-                    if { $qtable_enabled_p } {
-                        # Check for custom cases
-                        if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
-                            # more than one q-tables exist
-                            # Maybe change this to find one in a subsite.
-                            # something like qc_set_instance_id from q-control
-                            set default_val ""
-                        }
-                        set custom_procs [parameter::get \
-                                              -package_id $instance_id \
-                                              -parameter AllowedValidationProcs \
-                                              -default $default_val]
-                        set allowed_p 0
-                        foreach p $custom_procs {
-                            if { [string match $p $valida_proc] } {
-                                set allowed_p 1
+            if { ![info exists fatts_arr(${f},valida_proc)] } {
+                set valida_proc $fatts_arr(${f},valida_proc)
+                set valid_p 0
+                ##code switch details
+                switch -- $valida_proc {
+                    qf_is_decimal {}
+                    qf_is_integer {}
+                    hf_are_safe_and_visibe_characters_q {}
+                    hf_are_safe_and_printable_characters_q {}
+                    util_url_valid_p {}
+                    qf_email_valid_q {}
+                    qf_clock_scan {}
+                    qf_is_decimal {}
+                    ad_var_type_check_safefilename_p {}
+                    default {
+                        if { $qtable_enabled_p } {
+                            # Check for custom cases
+                            if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
+                                # more than one q-tables exist
+                                # Maybe change this to find one in a subsite.
+                                # something like qc_set_instance_id from q-control
+                                set default_val ""
                             }
-                        }
-                        if { !$allowed_p } {
-                            ns_log Warning "qfo_g2: Broken UI. \
+                            set custom_procs [parameter::get \
+                                                  -package_id $instance_id \
+                                                  -parameter AllowedValidationProcs \
+                                                  -default $default_val]
+                            set allowed_p 0
+                            foreach p $custom_procs {
+                                if { [string match $p $valida_proc] } {
+                                    set allowed_p 1
+                                }
+                            }
+                            if { !$allowed_p } {
+                                ns_log Warning "qfo_g2: Broken UI. \
  Unknown validation proc '$fatts_arr(${f},valida_proc)' \
  for datatype '$fatts_arr(${f},label)"
-                            lappend invalid_field_val_list $f
-                        } else {
-                            ns_log Notice "qfo_g2: processing safe_eval '${valida_proc}'"
-                            set valid_p [safe_eval [list $valida_proc ${f_value}]]
+                                lappend invalid_field_val_list $f
+                            } else {
+                                ns_log Notice "qfo_g2: processing safe_eval '${valida_proc}'"
+                                set valid_p [safe_eval [list $valida_proc ${f_value}]]
+                            }
                         }
                     }
                 }
+                set all_valid_p [expr { $all_valid_p && $valid_p } ]
+                # keep track of each invalid field.
+                set qfv_valid_arr(${f}) $valid_p
             }
-            set all_valid_p [expr { $all_valid_p && $valid_p } ]
-            # keep track of each invalid field.
-            set qfv_valid_arr(${f}) $valid_p
+            set validated_p $all_valid_p
         }
-        set validated_p $all_valid_p
     }
-
     if { $validated_p } {
-       
+        
         if { $qtable_enabled_p } {
             # save a new row in customized q-tables table
             qt_row_create $qtable_id $row_list
@@ -499,7 +506,7 @@ ad_proc -public qfo_2g {
         # Use qfi_fields_sorted_list to generate an ordered list of inputs
         foreach f $qfi_fields_sorted_list {
             switch -- $fatts_arr(${f},form_tag_type) {
-##code
+                ##code
             }
         }
         qf_close $form_id
