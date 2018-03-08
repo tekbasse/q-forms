@@ -95,6 +95,7 @@ aa_register_case -cats {api smoke} qf_form_checks {
                     }
                     # type is select
                     set type "select"
+
                     set choice_out [qf_choice label $label type $type \
                                         name $name \
                                         value $qfc_tag_attribute_list ]
@@ -115,15 +116,16 @@ aa_register_case -cats {api smoke} qf_form_checks {
                                         value $qfc_tag_attribute_list ]
                     set choices_expected "<label>"
                     append choices_expected [string trim $label] \
-                        "<select name=\"" $name "\">"
+                        "<select name=\"" $name "\" multiple>"
                     foreach label_value_list $qfc_tag_attribute_list {
                         lassign $label_value_list l1 l2 v1 v2
                         append choices_expected "<option ${l1}=\"" $l2
                         append choices_expected "\" ${v1}=\"" $v2 "\"> "
                         append choices_expected $l2 " </option>\n"
                     }
-                    append choice_expected "</select></label>\n"
-                    aa_equals "qf_choice basic" $choice_out $choice_expected
+                    append choices_expected "</select></label>\n"
+                    aa_equals "qf_choices basic" $choices_out $choices_expected
+
                 }
             }
 

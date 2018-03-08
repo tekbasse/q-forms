@@ -797,9 +797,7 @@ ad_proc -public qf_select {
     } else {
         set arg_list [list ]
     }
-    ns_log Notice "qf_select.800: arg_list '${arg_list}'"
-    #was
-    #set attributes_tag_list /list accesskey align class cols id name readonly rows style tabindex title wrap/
+
     set __qf_doctype [qf_doctype]
     set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype select]
 
@@ -815,7 +813,7 @@ ad_proc -public qf_select {
                 lappend attributes_list $attribute
             }
         } else {
-            ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}'"
+            ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}' arg_list '${arg_list}'"
             ad_script_abort
         }
     }
@@ -863,7 +861,7 @@ ad_proc -public qf_select {
             lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         }
     }
-    ns_log Notice "qf_select.866 tag_attributes_list '${tag_attributes_list}'"
+
     set tag_html ""
     # Auto closing the select tag via qf_close has been deprecated,
     # because qf_choice and qf_choices exist.
@@ -898,7 +896,7 @@ ad_proc -public qf_select {
         set value_list_html ""
     }
     if { [info exists attributes_arr(value)] } {
-        ns_log Notice "qf_select.901: attributes_arr(value) '$attributes_arr(value)'"
+
         append value_list_html [qf_options $attributes_arr(value)]
         
     }
@@ -944,7 +942,7 @@ ad_proc -private qf_options {
     set options_html ""
 
     foreach option_tag_attribute_list $options_list_of_lists {
-        ns_log Notice "qf_options.947: options_list_of_lists '${options_list_of_lists}'"
+
         append options_html [qf_option $option_tag_attribute_list]
     }
     return $options_html
@@ -1486,7 +1484,6 @@ ad_proc -public qf_input {
     append tag_html "\n"
     append __form_arr($attributes_arr(form_id)) $tag_html
 
-    #ns_log Notice "qf_input.1116: tag_html '${tag_html}'"
     return $tag_html
 }
 
@@ -1662,7 +1659,7 @@ ad_proc -public qf_choice {
             ad_script_abort
         }
     }
-    ns_log Notice "qf_choice.1665 attributes_arr(value) '$attributes_arr(value)'"
+
     # form_id needs to be passed to any qf_ api
     # default to last modified form_id
     set form_id_exists [info exists attributes_arr(form_id)]
@@ -1774,18 +1771,17 @@ ad_proc -public qf_choice {
 
     } else {
         # type = select
-        ns_log Notice "qf_choice.1778 attributes_arr(value) '$attributes_arr(value)'"
+
         set select_list [list]
         lappend attributes_select_list value
         foreach attribute $attributes_list {
             if { [lsearch -exact $attributes_select_list $attribute] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
-                ns_log Notice "qf_choice.1783 attribute '${attribute}' attributes_arr(attribute) '$attributes_arr(${attribute})'"
                 lappend select_list $attribute $attributes_arr(${attribute})
             } 
         }
 
-        set return_html [qf_select $select_list]
+        append return_html [qf_select $select_list]
 
     }
     # \n is added here instead of after SELECT tag, in case a LABEL tag
@@ -1879,7 +1875,6 @@ ad_proc -public qf_choices {
     } else {
         set attributes_arr(type) ""
     }
-ns_log Notice "qf_choices.1400: attributes_arr(type) '$attributes_arr(type)'"
 
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = checkbox, then items are input tags, wrapped in a list for now
@@ -1908,7 +1903,6 @@ ns_log Notice "qf_choices.1400: attributes_arr(type) '$attributes_arr(type)'"
             ad_script_abort
         }
     }
-    ns_log Notice "qf_choices.1883 attributes_arr(value) '$attributes_arr(value)'"
 
     # for passing select_list, we need to pass form_id literally
     # default to last modified form_id
@@ -1944,12 +1938,10 @@ ns_log Notice "qf_choices.1400: attributes_arr(type) '$attributes_arr(type)'"
         # input_list are attribute_value pairs passed to qf_input
         set input_list [list]
         lappend input_list form_id $attributes_arr(form_id)
-        ns_log Notice "qf_choices.1899 input_list '${input_list}'"
 
         foreach attribute $attributes_list {
             if { [lsearch -exact $attributes_input_list $attribute ] > -1 } {
                 # create a list to pass to qf_input without it balking at unknown parameters
-                ns_log Notice "qf_choices.1889 attribute '${attribute}' attributes_arr(${attribute}) '$attributes_arr(${attribute})' value '${value}'"
                 lappend input_list $attribute $value
             }
         }
@@ -2007,7 +1999,6 @@ ns_log Notice "qf_choices.1400: attributes_arr(type) '$attributes_arr(type)'"
         foreach attribute $attributes_list {
             if { [lsearch -exact $attributes_select_list $attribute ] > -1 } {
                 # create a list to pass to qf_select without it balking at unknown parameters
-                ns_log Notice "qf_choices.1879 attribute '${attribute}' attributes_arr(${attribute}) '$attributes_arr(${attribute})' value '${value}'"
                 lappend select_list $attribute $attributes_arr(${attribute})
             }
         }
