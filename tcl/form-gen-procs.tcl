@@ -214,7 +214,7 @@ ad_proc -public qfo_2g {
 
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
-
+    ns_log Notice "qfo_2g.217: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
 
@@ -263,7 +263,9 @@ ad_proc -public qfo_2g {
 
     }
 
+
     set qfi_fields_list [array names fields_arr]
+    ns_log Notice "qfo_2g.266: array get fields_arr '[array get fields_arr]'"
     ns_log Notice "qfo_2g.267: qfi_fields_list '${qfi_fields_list}'"
     set field_ct [llength $qfi_fields_list]
     # Create a field attributes array
@@ -290,37 +292,90 @@ ad_proc -public qfo_2g {
     #    css_abbrev 
     #    xml_format
     set fields_ordered_list_len [llength $fields_ordered_list]
+
+    # Make a list of available datatypes
+    set data_type_existing_list [list]
+    foreach n [array names qdt_types_arr "*,label"] {
+        lappend data_type_existing_list [string range $n 0 end-6]
+    }
+    # Make a list of datatype elements
+    set datatype_dummy [lindex $data_type_existing_list 0]
+    set datatype_elements_list [list]
+    set datatype_dummy_len [string length $datatype_dummy]
+    foreach n [array names qdt_types_arr "${datatype_dummy},*"] {
+        lappend datatype_elements_list [string range $n $datatype_dummy_len+1 end]
+    }
+    ns_log Notice "qfo_2g: datatype_elements_list '${datatype_elements_list}'"
+
+
+
     if { $qtable_enabled_p } {
         set tabindex_adj [expr { 0 - $field_ct - $fields_ordered_list_len } ]
     } else {
         set tabindex_adj $fields_ordered_list_len
     }
     set tabindex_tail [expr { $fields_ordered_list_len + $field_ct } ]
+
+    set datatype_const "datatype"
+    set tabindex_const "tabindex"
     foreach f $qfi_fields_list {
-        foreach {attr val} $fields_arr(${f}) {
-            if { [string match -nocase "datatype" $attr] } {
-                # Put datatypes in an array where value is list of
-                # fields using it.
-                lappend fields_w_datatypes_used_arr(${val}) $f
-                set fatts_arr(${f},${attr}) $val
-            } elseif { [string match -nocase "tabindex" $attr] } {
-                if { [qf_is_integer $val] } {
-                    set val [expr { $val + $tabindex_adj } ]
-                    set fatts_arr(${f},${attr}) $val
-                } else {
-                    ns_log Warning "qfo_2g.308: tabindex not integer for \
+        set datatype_list $fields_arr(${f})
+        # fatts_arr($f,$attr) could reference just the custom values
+        # but then double pointing against the default datatype values
+        # pushes complexity to later on.
+        # Is lowest burden to get datatype first, load defaults,
+        # then overwrite values supplied with field?  Yes.
+        # What if case is a table with 100+ fields with same type?
+        # Doesn't matter, if every $f and $attr will be referenced:
+        # A proc could be called that caches, with parameters:
+        # $f and $attr, yet that is slower than just filling the array
+        # to begin with, if every $f and $attr will be referenced.
+        set datatype_idx [lsearch -exact $datatype_list $datatype_const]
+        if { $datatype_idx > -1 } {
+            set datatype [lindex $datatype_list $datatype_idx+1]
+            set fatts_arr(${f},${datatype_const}) $datatype
+        } else {
+            ns_log Error "qfo_2g: datatype for field '${f}' not found."
+            set error_p 1
+        }
+        if { !$error_p } {
+            # e = element
+            foreach e $datatype_elements_list {
+                # Set field data defaults according to datatype
+                set fatts_arr(${f},${e}) $qdt_types_arr(${datatype},${e})
+            }
+            
+            foreach {attr val} $datatype_list {
+                if { [string match -nocase $datatype_const $attr] } {
+                    # Put datatypes in an array where value is list of
+                    # fields using it.
+                    lappend fields_w_datatypes_used_arr(${val}) $f
+                    # We set type before adding default datatype elements
+                    #set fatts_arr(${f},${attr}) $val
+                } elseif { [string match -nocase $tabindex_const $attr] } {
+                    if { [qf_is_integer $val] } {
+                        set val [expr { $val + $tabindex_adj } ]
+                        set fatts_arr(${f},${attr}) $val
+                    } else {
+                        ns_log Warning "qfo_2g.308: tabindex not integer for \
  tabindex attribute of field '${f}'. Value is '${val}'"
+                    }
+                } else {
+                    set fatts_arr(${f},${attr}) $val
                 }
-            } else {
-                set fatts_arr(${f},${attr}) $val
+            }
+            if { ![info exists fatts_arr(${f},tabindex) ] } {
+                # add it to the end 
+                set fatts_arr(${f},tabindex) $tabindex_tail
+                incr tabindex_tail
             }
         }
-        if { ![info exists fatts_arr(${f},tabindex) ] } {
-            # add it to the end 
-            set fatts_arr(${f},tabindex) $tabindex_tail
-            incr tabindex_tail
-        }
+        ns_log Notice "qfo_2g.324: array get fatts_arr '[array get fatts_arr]'"
+    } else {
+        ns_log Notice "qfo_2g.375: data_type_existing_list '${data_type_existing_list}'"
     }
+
+
     # All the fields and datatypes are known.
     # Proceed with form building and UI stuff
 
@@ -330,19 +385,9 @@ ad_proc -public qfo_2g {
     # as system grows in complexity etc.
     set datatypes_used_list [array names fields_w_datatypes_used_arr]
 
-    # Verify that used data types exist
 
-    set data_type_existing_list [list]
-    foreach n [array names qdt_types_arr "*,label"] {
-        lappend data_type_existing_list [string range $n 0 end-6]
-    }
 
-    foreach f $datatypes_used_list {
-        if { $f ni $data_type_existing_list } {
-            ns_log Error "qfo_2g: datatype '${f}' not found."
-            set error_p 1
-        }
-    }
+
     # field types are settled by this point
 
     if { $form_submitted_p eq "" } {
@@ -396,6 +441,7 @@ ad_proc -public qfo_2g {
     array unset qfi_arr
     
     set validated_p 0
+    set all_valid_p 0
     set invalid_field_val_list [list ]
     set row_list [list ]
     if { $form_submitted_p } {
