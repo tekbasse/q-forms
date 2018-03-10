@@ -401,8 +401,8 @@ ad_proc -public qfo_2g {
                                   multiple_key_as_list $multiple_key_as_list \
                                   hash_check $hash_check \
                                   post_only $post_only ]
-    }
-    
+    } 
+
     # Make sure every qfi_arr(x) exists for each field
     # Fastest to just collect the most fine grained defaults of each field
     # into an array and then overwrite the array with qfi_arr
@@ -433,18 +433,18 @@ ad_proc -public qfo_2g {
         # Overwrite defaults with any inputs
         if { [info exists qfi_arr(${f})] } {
             set qfv_arr(${f}) $qfi_arr(${f})
-            else { [info exists fatts_arr(${f},value) ] } {
-                # This value already sets default as that from
-                # datatype, if one is not supplied:
-                set qfv_arr(${f}) $fatts_arr(${f},value)
-            }
+        } elseif { [info exists fatts_arr(${f},value) ] } {
+            # This value already sets default as that from
+            # datatype, if one is not supplied:
+
+
         }
     } 
-
     # Don't use qfi_arr anymore, as it may contain extraneous input
     # Use qfv_arr for input array
     array unset qfi_arr
     
+    # validate inputs?
     set validated_p 0
     set all_valid_p 0
     set invalid_field_val_list [list ]
@@ -454,14 +454,21 @@ ad_proc -public qfo_2g {
         
         foreach f $qfi_fields_list {
             if { ![info exists qfv_arr(${f})] } {
-                ##code if not allowed to be blank, set to default_procs value
-                set qfv_arr(${f}) ""
+                # Make sure variable exists.
+                if { [qf_is_true $fatts_arr(${f},empty_allowed_p) ] } {
+                    set qfv_arr(${f}) ""
+                } else {
+                    # set to default value
+                    # Is default_proc allowed?
+                    set qfv_arr(${f}) [qf_default_val $fatts_arr(${f},default_proc) ]
+                }
             }
             set f_value $qfv_arr(${f})
             
             # Creating row_list here saves re-parsing later, outside of loop
             lappend row_list $f $f_value
-            if { ![info exists fatts_arr(${f},valida_proc)] } {
+
+            if { [info exists fatts_arr(${f},valida_proc)] } {
                 set valida_proc $fatts_arr(${f},valida_proc)
                 set valid_p 0
                 ##code switch details
@@ -512,7 +519,17 @@ ad_proc -public qfo_2g {
             }
             set validated_p $all_valid_p
         }
+
+
+    } else {
+        # form not submitted
+
+        # Populate form values with defaults
+        foreach f $qfi_fields_list {
+            set qfv_arr(${f}) [qf_default_val $fatts_arr(${f},default_proc) ] 
+        }
     }
+
     if { $validated_p } {
         
         if { $qtable_enabled_p } {
@@ -566,4 +583,20 @@ ad_proc -public qfo_2g {
     }
     
     return $validated_p
+}
+
+ad_proc -private qf_default_val {
+    default_proc_q
+} {
+    Returns the value of default_proc_q, or the value passed if default_proc_q is not a recognized default proc according to parameter <code>allowedDefaultProcs</code>.
+} {
+    set procs_list [parameter::get_from_package_key \
+                        -package_key q-forms \
+                        -parameter allowedDefaultProcs ]
+    if { [lsearch -exact $procs_list $default_proc_q ] > -1 } {
+        set return_val [safe_eval $default_proc_q ]
+    } else {
+        set return_val $default_proc_q
+    }
+    return $return_val
 }

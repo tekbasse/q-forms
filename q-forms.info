@@ -25,6 +25,9 @@
         <parameters>
             <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="enableQFormGenP"  default="0" description="Set this parameter to 1 in package using qfo_ procs to enable q-tables features with form generation features."/>
             <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="defaultDocType"  default="html4" description="The default markup language for form generation if doc(type) is not defined.  For consistent rendering sitewide, set to the same as doc(type) is defined in acs_root_dir/www/blank-master.tcl or the parsed part: 'html4', 'html5' or 'xml'"/>
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="allowedDefaultProcs"  default="" description="The procs allowed for creating a default value in a form element."/>
+
+
         </parameters>
 
     </version>
