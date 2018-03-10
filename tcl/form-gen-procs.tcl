@@ -294,6 +294,10 @@ ad_proc -public qfo_2g {
     set fields_ordered_list_len [llength $fields_ordered_list]
 
     # Make a list of available datatypes
+
+    set datatype_const "datatype"
+    set tabindex_const "tabindex"
+
     set data_type_existing_list [list]
     foreach n [array names qdt_types_arr "*,label"] {
         lappend data_type_existing_list [string range $n 0 end-6]
@@ -306,8 +310,8 @@ ad_proc -public qfo_2g {
         lappend datatype_elements_list [string range $n $datatype_dummy_len+1 end]
     }
     ns_log Notice "qfo_2g: datatype_elements_list '${datatype_elements_list}'"
-
-
+    
+    
 
     if { $qtable_enabled_p } {
         set tabindex_adj [expr { 0 - $field_ct - $fields_ordered_list_len } ]
@@ -316,8 +320,6 @@ ad_proc -public qfo_2g {
     }
     set tabindex_tail [expr { $fields_ordered_list_len + $field_ct } ]
 
-    set datatype_const "datatype"
-    set tabindex_const "tabindex"
     foreach f $qfi_fields_list {
         set datatype_list $fields_arr(${f})
         # fatts_arr($f,$attr) could reference just the custom values
@@ -339,10 +341,13 @@ ad_proc -public qfo_2g {
             set error_p 1
         }
         if { !$error_p } {
+            # element "datatype" already exists, skip that loop:
+            set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
             # e = element
-            foreach e $datatype_elements_list {
+            foreach e [lreplace $datatype_elements_list $dedt_idx $dedt_idx] {
                 # Set field data defaults according to datatype
                 set fatts_arr(${f},${e}) $qdt_types_arr(${datatype},${e})
+                ns_log Notice "qfo_2g.300 set fatts_arr(${f},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
             }
             
             foreach {attr val} $datatype_list {
