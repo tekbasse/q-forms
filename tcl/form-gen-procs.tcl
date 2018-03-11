@@ -446,7 +446,7 @@ ad_proc -public qfo_2g {
     
     # validate inputs?
     set validated_p 0
-    set all_valid_p 0
+    set all_valid_p 1
     set invalid_field_val_list [list ]
     set row_list [list ]
     if { $form_submitted_p } {
@@ -458,68 +458,27 @@ ad_proc -public qfo_2g {
                 if { [qf_is_true $fatts_arr(${f},empty_allowed_p) ] } {
                     set qfv_arr(${f}) ""
                 } else {
-                    # set to default value
-                    # Is default_proc allowed?
+                    # set variable to default
                     set qfv_arr(${f}) [qf_default_val $fatts_arr(${f},default_proc) ]
                 }
             }
-            set f_value $qfv_arr(${f})
             
-            # Creating row_list here saves re-parsing later, outside of loop
-            lappend row_list $f $f_value
-
+            # validate
             if { [info exists fatts_arr(${f},valida_proc)] } {
-                set valida_proc $fatts_arr(${f},valida_proc)
-                set valid_p 0
-                ##code switch details
-                switch -- $valida_proc {
-                    qf_is_decimal {}
-                    qf_is_integer {}
-                    hf_are_safe_and_visibe_characters_q {}
-                    hf_are_safe_and_printable_characters_q {}
-                    util_url_valid_p {}
-                    qf_email_valid_q {}
-                    qf_clock_scan {}
-                    qf_is_decimal {}
-                    ad_var_type_check_safefilename_p {}
-                    default {
-                        if { $qtable_enabled_p } {
-                            # Check for custom cases
-                            if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
-                                # more than one q-tables exist
-                                # Maybe change this to find one in a subsite.
-                                # something like qc_set_instance_id from q-control
-                                set default_val ""
-                            }
-                            set custom_procs [parameter::get \
-                                                  -package_id $instance_id \
-                                                  -parameter AllowedValidationProcs \
-                                                  -default $default_val]
-                            set allowed_p 0
-                            foreach p $custom_procs {
-                                if { [string match $p $valida_proc] } {
-                                    set allowed_p 1
-                                }
-                            }
-                            if { !$allowed_p } {
-                                ns_log Warning "qfo_g2: Broken UI. \
- Unknown validation proc '$fatts_arr(${f},valida_proc)' \
- for datatype '$fatts_arr(${f},label)"
-                                lappend invalid_field_val_list $f
-                            } else {
-                                ns_log Notice "qfo_g2: processing safe_eval '${valida_proc}'"
-                                set valid_p [safe_eval [list $valida_proc ${f_value}]]
-                            }
-                        }
-                    }
+                set valid_p [qf_validate_input \
+                                 -input $qfv_arr(${f}) \
+                                 -proc_name $fatts_arr(${f},valida_proc) \
+                                 -q_tables_enabled_p $qtable_enabled_p ]
+                set qfv_arr(${f}) $valid_p
+                if { !$valid_p } {
+                    lappend invalid_field_val_list $f
                 }
-                set all_valid_p [expr { $all_valid_p && $valid_p } ]
-                # keep track of each invalid field.
-                set qfv_valid_arr(${f}) $valid_p
             }
-            set validated_p $all_valid_p
-        }
 
+    # keep track of each invalid field.
+            set all_valid_p [expr { $all_valid_p && $valid_p } ]
+        }
+        set validated_p $all_valid_p
 
     } else {
         # form not submitted
@@ -599,4 +558,69 @@ ad_proc -private qf_default_val {
         set return_val $default_proc_q
     }
     return $return_val
+}
+
+ad_proc -private qf_validate_input {
+    -input 
+    -proc_name
+    {-q_tables_enabled_p "0"}
+
+
+} {
+    Returns '1' if value is validated. Otherwise returns '0'.
+} {
+
+    # Is default_proc allowed?
+    set procs_list [parameter::get \
+                        -package_id $instance_id \
+                        -parameter AllowedValidationProcs \
+                        -default $default_val]
+    
+
+
+    set proc_name $fatts_arr(${f},proc_name)
+    set valid_p 0
+    ##code switch details
+    switch -- $proc_name {
+        qf_is_decimal {}
+        qf_is_integer {}
+        hf_are_safe_and_visibe_characters_q {}
+        hf_are_safe_and_printable_characters_q {}
+        util_url_valid_p {}
+        qf_email_valid_q {}
+        qf_clock_scan {}
+        qf_is_decimal {}
+        ad_var_type_check_safefilename_p {}
+        default {
+            if { $qtable_enabled_p } {
+                # Check for custom cases
+                if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
+                    # more than one q-tables exist
+                    # Maybe change this to find one in a subsite.
+                    # something like qc_set_instance_id from q-control
+                    g                                set default_val ""
+                }
+                set custom_procs [parameter::get \
+                                      -package_id $instance_id \
+                                      -parameter AllowedValidationProcs \
+                                      -default $default_val]
+                set allowed_p 0
+                foreach p $custom_procs {
+                    if { [string match $p $proc_name] } {
+                        set allowed_p 1
+                    }
+                }
+                if { !$allowed_p } {
+                    ns_log Warning "qf_validate_input: Broken UI. \
+ Unknown validation proc '$proc_name'"
+
+
+                } else {
+                    ns_log Notice "qf_validate_input: processing safe_eval '${proc_name}'"
+                    set valid_p [safe_eval [list $proc_name ${f_value}]]
+                }
+            }
+        }
+    }    
+    return $valid_p
 }
