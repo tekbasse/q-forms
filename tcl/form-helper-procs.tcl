@@ -1724,5 +1724,45 @@ ad_proc qf_domain_name_valid_q {
     return $is_name_valid_p
 }
 
-# per https://tools.ietf.org/html/rfc3490#page-10  Make a proc ToASCII and ToUnicode
+##code per https://tools.ietf.org/html/rfc3490#page-10 Make procs ToASCII,ToUnicode
 # to handle translation of internationalized domains
+
+ad_proc -public qf_is_boolean {
+    value
+} {
+    Validates boolean. Returns 1 if validates. Checks for localized case if available.
+    Based on:
+    <code>template::data::validate::boolean</code>
+
+    @see template::data::validate::boolean
+} {
+    set value [string tolower $value]
+
+    set valid_p 0
+    switch $value {
+        0 -
+        1 -
+        f -
+        t -
+        n -
+        y -
+        no -
+        yes -
+        false -
+        true {
+            set valid_p 1
+        }
+        default {
+            # check for internationalized cases
+            if { [ad_var_type_check_word_p ] } {
+                set yes_local [_ acs-kernel.common_yes]
+                set no_local [_ acs-kernel.common_no]
+                if { $value eq $yes_local || $value eq $no_local } {
+                    set valid_p 1
+                }
+            }
+        }
+    }
+    return $valid_p
+}
+

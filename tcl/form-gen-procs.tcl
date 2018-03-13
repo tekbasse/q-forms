@@ -569,42 +569,71 @@ ad_proc -private qf_validate_input {
 } {
     Returns '1' if value is validated. Otherwise returns '0'.
 } {
-
-    # Is default_proc allowed?
-    set procs_list [parameter::get \
-                        -package_id $instance_id \
-                        -parameter AllowedValidationProcs \
-                        -default $default_val]
     
-
-
-    set proc_name $fatts_arr(${f},proc_name)
     set valid_p 0
     ##code switch details
     switch -- $proc_name {
-        qf_is_decimal {}
-        qf_is_integer {}
-        hf_are_safe_and_visibe_characters_q {}
-        hf_are_safe_and_printable_characters_q {}
-        util_url_valid_p {}
-        qf_email_valid_q {}
-        qf_clock_scan {}
-        qf_is_decimal {}
-        ad_var_type_check_safefilename_p {}
+        qf_is_decimal {
+            set valid_p [qf_is_decimal $input ]
+        }
+        qf_is_integer {
+            set valid_p [qf_is_integer $input ]
+        }
+        hf_are_safe_and_visibe_characters_q {
+            set valid_p [hf_are_safe_and_visibe_characters_q $input ]
+        }
+        hf_are_safe_and_printable_characters_q {
+            set valid_p [hf_are_safe_and_printable_characters_q $input ]
+        }
+        util_url_valid_p {
+            set valid_p [util_url_valid_p $input ]
+        }
+        qf_email_valid_q {
+            set valid_p [qf_email_valid_q $input ]
+        }
+        qf_clock_scan {
+            set time_since_epoch [qf_clock_scan $input]
+            if { $time_since_epoch ne "" } {
+                set valid_p 1
+            }
+        }
+        qf_is_decimal {
+            set valid_p [qf_is_decimal $input ]
+        }
+        ad_var_type_check_safefilename_p {
+            set valid_p [ad_var_type_check_safefilename_p $input ]
+        }
+        qf_domain_name_valid_q {
+            set valid_p [qf_domain_name_valid_q $input ]
+        }
+        ad_var_type_check_word_p {
+            set valid_p [qf_ad_var_type_check_word_p $input]
+        }
+        qf_is_boolean {
+            set valid_p [qf_is_boolean $input ]
+        }
         default {
-            if { $qtable_enabled_p } {
+            # Is default_proc allowed?
+            set allowed_p 0
+            set procs_list [parameter::get \
+                                -package_id $instance_id \
+                                -parameter AllowedValidationProcs \
+                                -default $default_val]
+            if { [lsearch -exact $procs_list $proc_name ] > -1 } {
+                set allowed_p 1
+            }
+            if { !$allowed_p && $qtable_enabled_p } {
                 # Check for custom cases
                 if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
                     # more than one q-tables exist
                     # Maybe change this to find one in a subsite.
                     # something like qc_set_instance_id from q-control
-                    g                                set default_val ""
+                    set default_val ""
                 }
                 set custom_procs [parameter::get \
                                       -package_id $instance_id \
                                       -parameter AllowedValidationProcs \
                                       -default $default_val]
-                set allowed_p 0
                 foreach p $custom_procs {
                     if { [string match $p $proc_name] } {
                         set allowed_p 1
@@ -612,7 +641,7 @@ ad_proc -private qf_validate_input {
                 }
                 if { !$allowed_p } {
                     ns_log Warning "qf_validate_input: Broken UI. \
- Unknown validation proc '$proc_name'"
+ Unknown validation proc '${proc_name}'"
 
 
                 } else {
