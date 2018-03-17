@@ -1545,6 +1545,11 @@ ad_proc -public qf_trimleft_zeros {
 } {
     Returns a tcl friendly representation of a loosely defined decimal number. 
     For example, '-0001.1' becomes '-1.1'.
+    <br><br>
+    Similar to <code>template::util::leadingTrim value</code>, except
+    this one checks for negative numbers.
+
+    @template::util::leadingTrim
 } {
     if { [string range $decimal_number 0 0] eq "-" } {
         set tcl_num "-"
@@ -1766,3 +1771,68 @@ ad_proc -public qf_is_boolean {
     return $valid_p
 }
 
+
+ad_proc -public qf_is_currency_like {
+    value 
+} {
+    Returns 1 if value looks like some kind of currency as decribed by 
+    https://en.wikipedia.org/wiki/Currency_symbol#Usage
+} {
+
+
+
+    return $valid_p
+}
+
+ad_proc -public qf_is_currency {
+    -value
+    {-allow_decimal_padding ""}
+    {-see "autoNumeric/src/AutoNumericOptions.js"}
+} {
+    Returns 1 if valid currency type as specified by parameters
+    <br><br>
+    Currenty type is determined according to locale, for example,
+    the following forms: "$2.03" "Rs 50.42" "12.52L" "Y5,13c"
+    <br><br>
+    Based on ad_form api <code>template::data::validate::currency</code>
+    with consideration of options provided by autoNumeric.js
+    ( https://github.com/autoNumeric/autoNumeric )
+    and partly derived from variants expressed at:
+    https://en.wikipedia.org/wiki/Currency_symbol
+
+
+    @see template::data::validate::currency
+    
+} {
+
+    #
+
+
+    set value_wo_sign [qf_trimleft_zeros $value]
+
+    # a currency is a 6 element list supporting, for example, the following forms: "$2.03" "Rs 50.42" "12.52L" "Y5,13c"
+    # equivalent of date::unpack
+    set leading_symbol  [lindex $value 0]
+    set whole_part      [lindex $value 1]
+    set separator       [lindex $value 2]
+    set fractional_part [lindex $value 3]
+    set trailing_money  [lindex $value 4]
+    set format          [lindex $value 5]
+
+    set format_whole_part      [lindex $format 1]
+    set format_fractional_part [lindex $format 3]
+
+    set whole_part_valid_p [qf_is_integer $whole_part]
+    if { $fractional_part ne "" } {
+        set fractional_part_valid_p [qf_is_integer $fractional_part]
+    } else {
+        set fractional_part_valid_p 1
+    }
+
+    if { ! $whole_part_valid_p || ! $fractional_part_valid_p } {
+        set valid_p 0
+    } else {
+        set valid_p 1
+    }
+    return $valid_p
+}
