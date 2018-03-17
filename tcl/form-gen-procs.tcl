@@ -571,6 +571,14 @@ ad_proc -private qf_validate_input {
 } {
     
     set valid_p 0
+
+    # Simplify any future cases, where 
+    # proc_name is called with default ' {value}' explicitly added.
+    if { [llength $proc_name] eq 2 \
+             && [string range $proc_name end-7 end] eq " {value}" } {
+        set proc_name [string range $proc_name 0 end-8]
+    }
+    regsub -- {{value}} $proc_name "\${input}" proc_name
     ##code switch details
     switch -- $proc_name {
         qf_is_decimal {
@@ -619,7 +627,10 @@ ad_proc -private qf_validate_input {
                                 -package_id $instance_id \
                                 -parameter AllowedValidationProcs \
                                 -default $default_val]
-            if { [lsearch -exact $procs_list $proc_name ] > -1 } {
+            set proc_param_list [split $proc_name " "]
+            set proc_check [lindex $proc_param_list 0]
+
+            if { [lsearch -exact $procs_list $proc_check ] > -1 } {
                 set allowed_p 1
             }
             if { !$allowed_p && $qtable_enabled_p } {
@@ -635,18 +646,18 @@ ad_proc -private qf_validate_input {
                                       -parameter AllowedValidationProcs \
                                       -default $default_val]
                 foreach p $custom_procs {
-                    if { [string match $p $proc_name] } {
+                    if { [string match $p $proc_check] } {
                         set allowed_p 1
                     }
                 }
                 if { !$allowed_p } {
                     ns_log Warning "qf_validate_input: Broken UI. \
- Unknown validation proc '${proc_name}'"
+ Unknown validation proc '${proc_check}' proc_param_list '${proc_param_list}'"
 
 
                 } else {
-                    ns_log Notice "qf_validate_input: processing safe_eval '${proc_name}'"
-                    set valid_p [safe_eval [list $proc_name ${f_value}]]
+                    ns_log Notice "qf_validate_input: processing safe_eval '${proc_param_list}'"
+                    set valid_p [safe_eval $proc_param_list]
                 }
             }
         }
