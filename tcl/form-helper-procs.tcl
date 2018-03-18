@@ -1777,12 +1777,84 @@ ad_proc -public qf_is_currency_like {
 } {
     Returns 1 if value looks like some kind of currency as decribed by 
     https://en.wikipedia.org/wiki/Currency_symbol#Usage
+    <br><br>
+    This is extra permissive to allow for localization variants,
+    such as comma as decimal fraction separator.
+    Or commas used to separate hundreds and Lakhs for example,
+    the following forms: "$2.03" "Rs 50.42" "12.52L" "Y5,13" "12.345,00DKr"
+    <br><br>
+    Because of the variety of expressions of currency internationally,
+    this just checks for availability of info for use to express currency
+    without strict parsing.
+    Assumes a default currency is expressed elsewhere.
+    And that maybe final parsing is by human to process informal, slang forms.
 } {
 
-
+    # A currency may be placed instead of decimal in some cases.
+    # 
+    set valid_p 1
+    set type_prev ""
+    set a_ctr 0
+    set a_len 0
+    set n_ctr 0
+    set c_ctr 0
+    set d_ctr 0
+    set m_ctr 0
+    set i 0
+    set value_len [string length $value ]
+    while { $i < $value_len && $valid_p } {
+        set v [lindex $i]
+        switch -nocase -glob -- $v {
+            [0-9] {
+                set type "n"
+                if { $type_prev ne $type } {
+                    incr n_ctr
+                }
+            }
+            "," {
+                set type "c"
+                if { $type_prev ne $prev } {
+                     incr c_ctr
+                 } else {
+                     set valid_p 0
+                 }
+            }
+            "." {
+                set type "d"
+                if { $type_prev ne $prev } {
+                     incr d_ctr
+                 } else {
+                     set valid_p 0
+                 }
+            }
+            "-" {
+                set type "m"
+                incr m_ctr
+            }
+            default {
+                # alphanum that represents a currency, like USD
+                set type "a"
+                if { $type_prev ne $type } {
+                    incr a_ctr
+                } else {
+                    incr a_len
+                }
+            }
+        }
+        set type_prev $type
+        incr i
+    }
+    if { $a_len > 3 \
+             || $a_ctr > 1 \
+             || $n_ctr > 2 \
+             || ( $c_ctr > 1 && $d_ctr > 1 ) \
+             || $m_ctr > 1 } {
+        set valid_p 0
+    }
 
     return $valid_p
 }
+
 
 ad_proc -public qf_is_currency {
     -value
@@ -1792,7 +1864,7 @@ ad_proc -public qf_is_currency {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
     Currenty type is determined according to locale, for example,
-    the following forms: "$2.03" "Rs 50.42" "12.52L" "Y5,13c"
+    the following forms: "$2.03" "Rs 50.42" "12.52L" "Y5,13" "12.345,00DKr"
     <br><br>
     Based on ad_form api <code>template::data::validate::currency</code>
     with consideration of options provided by autoNumeric.js
