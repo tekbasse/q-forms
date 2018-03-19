@@ -1912,7 +1912,7 @@ ad_proc -public qf_is_currency {
     the fractional part of the value.
     <br><br>
     <strong>decimal character</strong> is the character to use to separate 
-    whole currency units from fractional currency units.
+    whole currency units from fractional currency units. Multiple choices are allowed.
     <br>
     Set this to 
     <ul><li>
@@ -1963,14 +1963,19 @@ ad_proc -public qf_is_currency {
 } {
     set params_list [split $parameters " "]
     set flags_list [split [lindex $params_list 0] ""]
-    set decimals [lindex $params_list 1]
-    set decimal_char [lindex $params_list 2]
+    set decimals_max [lindex $params_list 1]
+    set decimal_chars_list [split [lindex $params_list 2] ""]
     set nondec_separators_list [split [lindex $params_list 3] ""]
     set signs_codes_list [lrange $params_list 4 end]
 
     # setup flags
 
     # alllowed flags
+
+##code What options for parenthesis that indicate negative number?
+# parens around number required/allowed
+# parens around number and any prefix/suffix allowed/required
+# parens may appear with negative number allowed
     set negative_prefix_allowed_p 0
     set negative_suffix_allowed_p 0
     set negative_before_allowed_p 0
@@ -2018,61 +2023,62 @@ ad_proc -public qf_is_currency {
                 set negative_suffix_required_p 1
             }
             c {
-    set negative_before_allowed_p 0
+                set negative_before_allowed_p 1
             }
             C {
-    set negative_before_required_p 0
+                set negative_before_required_p 1
             }
             d {
-    set positive_prefix_allowed_p 0
+                set positive_prefix_allowed_p 1
             }
             D {
-    set positive_prefix_required_p 0
+                set positive_prefix_required_p 1
             }
             e {
-    set positive_suffix_allowed_p 0
+                set positive_suffix_allowed_p 1
             }
             E {
-    set positive_suffix_required_p 0
+                set positive_suffix_required_p 1
             }
             f {
-    set positive_before_allowed_p 0
+                set positive_before_allowed_p 1
             }
             F {
-    set positive_before_required_p 0
+                set positive_before_required_p 1
             }
             j {
-    set currency_code_before_allowed_p 0
+                set currency_code_before_allowed_p 1
             }
             J {
-    set currency_code_before_required_p 0
+                set currency_code_before_required_p 1
             }
             k {
-    set currency_code_after_allowed_p 0
+                set currency_code_after_allowed_p 1
             }
             K {
-    set currency_code_after_required_p 0
+                set currency_code_after_required_p 1
             }
             w {
-    set nondec_separator_in_threes_allowed_p 0
+                set nondec_separator_in_threes_allowed_p 1
             }
             W {
-    set nondec_separator_in_threes_required_p 0
+                set nondec_separator_in_threes_required_p 1
             }
             h {
-    set nondec_separator_in_lakhs_allowed_p 0
+                set nondec_separator_in_lakhs_allowed_p 1
             }
             H {
-    set nondec_separator_in_lakhs_required_p 0
+                set nondec_separator_in_lakhs_required_p 1
             }
             T -
             t {
-                set truncated_decimals_allowed_p 0
+                # 'T' required? Where's the Ministry of Pragmatism?
+                set truncated_decimals_allowed_p 1
             }
             U -
             u {
                 # 'U' is not significant here
-    set ignore_case_in_codes_symbols_p 0
+                set ignore_case_in_codes_symbols_p 1
             }
             default {
                 ns_log "qf_is_currency.1976: flag '${f}' unknown. Ignored."
@@ -2081,8 +2087,23 @@ ad_proc -public qf_is_currency {
     }
 
     # nondecimal separator flags
-    set currency_as_dec_separator_allowed_p 0
-    set no_dec_separator_allowed_p 0
+    foreach d $decimal_chars_list {
+        switch -exact -- $d {
+            m {
+                set currency_as_dec_separator_allowed_p 1
+            }
+            M {
+                set currency_as_dec_separator_required_p 1
+            }
+            n {
+                set no_dec_separator_allowed_p 1
+            }
+            N {
+                set no_dec_separator_required_p 1
+            }
+        }
+    }
+
 
 
 
