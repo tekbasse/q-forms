@@ -1857,8 +1857,8 @@ ad_proc -public qf_is_currency_like {
 
 
 ad_proc -public qf_is_currency {
-    {parameters " 2 . ,s $ USD"}
     value
+    {parameters "bcefjkwht 2 . ,s $ USD"}
 } {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
@@ -1869,8 +1869,10 @@ ad_proc -public qf_is_currency {
     <strong>decimal character</strong>,
     <strong>non-decimal separators</strong>, and
     <strong>currency signs and/or codes<strong>..
-    Default is to not allow a decimal separator, positive or negative sign, or symbol or code, or a number with fewer fractional decimals than defined by second position in <code>parameters</code>.
-
+    Default is to not allow a decimal separator, positive or negative sign, or symbol or code, or a number with fewer fractional decimals than defined by second position in <code>parameters</code>. 
+    Treat fractional units as separate signs/codes with their own ISO code, if necessary. For example 'USD,$ XUSD,¢'. 
+    This way, any number is validated against one unit of measure of currency.
+    Combinations are not validated against a standard, so validation is fully customizable.
     <br><br>
     <strong>flags</strong> If there are no flags passed, still include the
     space separator to the left of <strong>decimal character</strong>.
@@ -1890,9 +1892,9 @@ ad_proc -public qf_is_currency {
     </li><li>
     f - allow positive sign anywhere before number
     </li><li>
-    j - allow one currency code or sign to the left of the number
+    j - allow one currency code or sign before the number
     </li><li>
-    k - allow one currency code or sign to the right of the number
+    k - allow one currency code or sign after the number
     </li><li>
     w - allow strict interpretation of non-decimal separators in threes:
     For example: 1,000,000,000,000 but not 1,00,000 (as with Indian Rs.)
@@ -1902,6 +1904,8 @@ ad_proc -public qf_is_currency {
     See: https://en.wikipedia.org/wiki/Indian_numbering_system#Use_of_separators
     </li><li>
     t - allow fewer decimals to the right of the 'decimals' separator.
+    </li><li>
+    u - ignore upper/lowercase designation in codes and symbols.
     </li></ul>
     <br><br>
     <strong>decimals</strong>  The number of decimals that represent
@@ -1932,17 +1936,20 @@ ad_proc -public qf_is_currency {
     <strong>currency signs and/or codes</strong>
     This is space separated list of symbols and codes.
     <code>code</code> refers to ISO-4217 codes, or similar.
-    See https://en.wikipedia.org/wiki/ISO_4217
+    See https://en.wikipedia.org/wiki/ISO_4217 and
+    https://en.wikipedia.org/wiki/List_of_circulating_currencies
     <br><br>
-    Provide each code and symbol pair without a space delimiter between them.
+    Provide each code and symbol pair with a space delimiter between them.
     If more than one currency is represented, 
     separate each currency with a space.
     If only a symbol or code is expected for a particular currency, 
-    then just supply what is expected, that is, a symbol or code.
+    then supply symbol or code options separated by comma.
     If more than one currency is represented, 
     Here is an example, supply like so without quotes:
-    'USD$ GBP£ YEN¥ EUR€ XBT Ξ XRP'
-    Multiple symbols may be supplied that match a single alphanumeric code.
+    'USD,$ GBP,£ JPY,¥ EUR,€ XBT Ξ XRP BOB,Bs. XOF,Fr BAM,KM,КМ'
+    To handle limitations of keyboards and the like, 
+    multiple symbols may be supplied that match a single alphanumeric code,
+    or example, 'ITL,₤,£ CNY,¥,元 LKR,Rs,රු ,ரூ' 
     <br><br>
     Symbols are partly derived from variants expressed at:
     https://en.wikipedia.org/wiki/Currency_symbol
@@ -1954,6 +1961,130 @@ ad_proc -public qf_is_currency {
     @see template::data::validate::currency
     
 } {
-    ##code
+    set params_list [split $parameters " "]
+    set flags_list [split [lindex $params_list 0] ""]
+    set decimals [lindex $params_list 1]
+    set decimal_char [lindex $params_list 2]
+    set nondec_separators_list [split [lindex $params_list 3] ""]
+    set signs_codes_list [lrange $params_list 4 end]
+
+    # setup flags
+
+    # alllowed flags
+    set negative_prefix_allowed_p 0
+    set negative_suffix_allowed_p 0
+    set negative_before_allowed_p 0
+    set positive_prefix_allowed_p 0
+    set positive_suffix_allowed_p 0
+    set positive_before_allowed_p 0
+    set currency_code_before_allowed_p 0
+    set currency_code_after_allowed_p 0
+    set nondec_separator_in_threes_allowed_p 0
+    set nondec_separator_in_lakhs_allowed_p 0
+    set truncated_decimals_allowed_p 0
+    set currency_as_dec_separator_allowed_p 0
+    set no_dec_separator_allowed_p 0
+
+    # required flags
+    set negative_prefix_required_p 0
+    set negative_suffix_required_p 0
+    set negative_before_required_p 0
+    set positive_prefix_required_p 0
+    set positive_suffix_required_p 0
+    set positive_before_required_p 0
+    set currency_code_before_required_p 0
+    set currency_code_after_required_p 0
+    set nondec_separator_in_threes_required_p 0
+    set nondec_separator_in_lakhs_required_p 0
+    set currency_as_dec_separator_required_p 0
+    set no_dec_separator_required_p 0
+
+    # other flags
+    set ignore_case_in_codes_symbols_p 0
+    set truncated_decimals_required_p 0
+
+    foreach f $flags_list {
+        switch -exact -- $f {
+            a {
+                set negative_prefix_allowed_p 1
+            }
+            A {
+                set negative_prefix_required_p 1
+            }
+            b {
+                set negative_suffix_allowed_p 1
+            }
+            B {
+                set negative_suffix_required_p 1
+            }
+            c {
+    set negative_before_allowed_p 0
+            }
+            C {
+    set negative_before_required_p 0
+            }
+            d {
+    set positive_prefix_allowed_p 0
+            }
+            D {
+    set positive_prefix_required_p 0
+            }
+            e {
+    set positive_suffix_allowed_p 0
+            }
+            E {
+    set positive_suffix_required_p 0
+            }
+            f {
+    set positive_before_allowed_p 0
+            }
+            F {
+    set positive_before_required_p 0
+            }
+            j {
+    set currency_code_before_allowed_p 0
+            }
+            J {
+    set currency_code_before_required_p 0
+            }
+            k {
+    set currency_code_after_allowed_p 0
+            }
+            K {
+    set currency_code_after_required_p 0
+            }
+            w {
+    set nondec_separator_in_threes_allowed_p 0
+            }
+            W {
+    set nondec_separator_in_threes_required_p 0
+            }
+            h {
+    set nondec_separator_in_lakhs_allowed_p 0
+            }
+            H {
+    set nondec_separator_in_lakhs_required_p 0
+            }
+            T -
+            t {
+                set truncated_decimals_allowed_p 0
+            }
+            U -
+            u {
+                # 'U' is not significant here
+    set ignore_case_in_codes_symbols_p 0
+            }
+            default {
+                ns_log "qf_is_currency.1976: flag '${f}' unknown. Ignored."
+            }
+        }
+    }
+
+    # nondecimal separator flags
+    set currency_as_dec_separator_allowed_p 0
+    set no_dec_separator_allowed_p 0
+
+
+
     return $valid_p
 }
