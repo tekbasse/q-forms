@@ -1857,79 +1857,96 @@ ad_proc -public qf_is_currency_like {
 
 
 ad_proc -public qf_is_currency {
-    {flags_decimals_separator_pretty_symbols_n_codes " 2 . ,s $ USD"}
+    {parameters " 2 . ,s $ USD"}
     value
 } {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
-    Currency type is determined according to parameter
-    <code>flags_decimals_separator_pretty_symbols_n_code</code>, where 
-    this contains an ordered, space separated list consisting of:
+    Currency type is determined according to <code>parameters</code>, 
+    where <code>parameters</codes> consists of a space separated list of:
+    <strong>flags</strong>, 
+    <strong>decimals</strong>,
+    <strong>decimal character</strong>,
+    <strong>non-decimal separators</strong>, and
+    <strong>currency signs and/or codes<strong>..
+    Default is to not allow a decimal separator, positive or negative sign, or symbol or code, or a number with fewer fractional decimals than defined by second position in <code>parameters</code>.
+
     <br><br>
-    <code>flags</code> If there are no flags passed, still include the
-    separating space.
-    Available flags:
-    <br><br>
+    <strong>flags</strong> If there are no flags passed, still include the
+    space separator to the left of <strong>decimal character</strong>.
+    An uppercase flag indicates that the flag's attribute is required.
+    Lowercase indicates the flag's attribute is optional.
+    <br>Available flags:
     <ul><li>
     a - allow negative sign as prefix to number
     </li><li>
-b - allow negative sign as suffix to number
+    b - allow negative sign as suffix to number
     </li><li>
-c - allow negative sign anywhere before number
+    c - allow negative sign anywhere before number
     </li><li>
-d - allow positive sign as prefix to number
+    d - allow positive sign as prefix to number
     </li><li>
-e - allow positive sign as suffix to number
+    e - allow positive sign as suffix to number
     </li><li>
-f - allow positive sign anywhere before number
+    f - allow positive sign anywhere before number
     </li><li>
-j - allow one currency code or sign to the left of the number
+    j - allow one currency code or sign to the left of the number
     </li><li>
-k - allow one currency code or sign to the right of the number
+    k - allow one currency code or sign to the right of the number
     </li><li>
-w - allow strict interpretation of non-decimal placeholders in threes:
+    w - allow strict interpretation of non-decimal separators in threes:
     For example: 1,000,000,000,000 but not 1,00,000 (as with Indian Rs.)
     </li><li>
-h - allow strict interpretation of Indian Lakh non-decimal separators:
+    h - allow strict interpretation of Indian Lakh non-decimal separators:
     For example: 167,89,000,00,00,000  
     See: https://en.wikipedia.org/wiki/Indian_numbering_system#Use_of_separators
     </li><li>
-t - allow fewer decimals to the right of the 'decimals' separator.
-
+    t - allow fewer decimals to the right of the 'decimals' separator.
     </li></ul>
-    An uppercase letter denotes that the flag's attribute is required.
-    <br>
-    Default is to ignore unit separators that are supplied by parameter.
-    Default is to not require a decimal separator or symbol or code.
     <br><br>
-    <code>code</code> usually consisting of one or more ISO-4217 codes, or similar. 
-    See https://en.wikipedia.org/wiki/ISO_4217
-    <br><br>
-    <code>decimals</code>. The number of decimals that represent
+    <strong>decimals</strong>  The number of decimals that represent
     the fractional part of the value.
     <br><br>
-    <code>separator</code>. This is the separator used to separate
-    the whole units from the fractional units. 
-    <code>pretty<code>. This is the separator used to separate
+    <strong>decimal character</strong> is the character to use to separate 
+    whole currency units from fractional currency units.
+    <br>
+    Set this to 
+    <ul><li>
+    m - if currency sign is allowed here.
+    </li><li>
+    n - if no decimal character is allowed (because it is implied)
+    </li></ul>
+    Uppercase means the 'M' or 'N' are required, 
+    consistent usage with above uppercase usage.
+    <br><br>
+    <strong>non-decimal separators<strong> 
+    This is the separator used to separate
     multiple whole units, such as thousands from hundreds of units.
     If multiple characters are appended together, any is considered valid as
     long as it is consistently applied. 
     's' means space character. A number such as '12,345 678.'
-    would not be a consistent use of ',s', whereas '12,345,678.' and '12 345 678.' are valid for the default case.
+    would not be a consistent use of ',s', whereas '12,345,678.' and
+    '12 345 678.' are valid for the default case 
+    provided when <code>parameters</code> is an empty string.
     <br><br>
-    <code>symbols_n_codes</code>.
-    This is space seprated list of symbols and codes.
-    Each code and symbol pair are appended to each-other without space.
-    Multiple symbols and codes are separated by a space.
-    If only a symbol or code is expected, then just supply what is expected.
+    <strong>currency signs and/or codes</strong>
+    This is space separated list of symbols and codes.
+    <code>code</code> refers to ISO-4217 codes, or similar.
+    See https://en.wikipedia.org/wiki/ISO_4217
+    <br><br>
+    Provide each code and symbol pair without a space delimiter between them.
     If more than one currency is represented, 
-    it is expected that they will be paired or supplied like so without quotes:
+    separate each currency with a space.
+    If only a symbol or code is expected for a particular currency, 
+    then just supply what is expected, that is, a symbol or code.
+    If more than one currency is represented, 
+    Here is an example, supply like so without quotes:
     'USD$ GBP£ YEN¥ EUR€ XBT Ξ XRP'
     Multiple symbols may be supplied that match a single alphanumeric code.
     <br><br>
-   
-    and partly derived from variants expressed at:
+    Symbols are partly derived from variants expressed at:
     https://en.wikipedia.org/wiki/Currency_symbol
+    <br><br><br>
     This is an attempt at simplifying ad_form currency validation via 
     <code>template::data::validate::currency</code>
     
