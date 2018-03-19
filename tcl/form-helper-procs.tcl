@@ -1857,16 +1857,52 @@ ad_proc -public qf_is_currency_like {
 
 
 ad_proc -public qf_is_currency {
-    {decimals_separator_pretty_symbols_n_codes "2 . ,s $ USD"}
+    {flags_decimals_separator_pretty_symbols_n_codes " 2 . ,s $ USD"}
     value
 } {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
     Currency type is determined according to parameter
-    <code>code_decimals_separator_symbol</code>, where 
+    <code>flags_decimals_separator_pretty_symbols_n_code</code>, where 
     this contains an ordered, space separated list consisting of:
     <br><br>
-    <code>code</code>. Usually the ISO-4217 code, or similar. 
+    <code>flags</code> If there are no flags passed, still include the
+    separating space.
+    Available flags:
+    <br><br>
+    <ul><li>
+    a - allow negative sign as prefix to number
+    </li><li>
+b - allow negative sign as suffix to number
+    </li><li>
+c - allow negative sign anywhere before number
+    </li><li>
+d - allow positive sign as prefix to number
+    </li><li>
+e - allow positive sign as suffix to number
+    </li><li>
+f - allow positive sign anywhere before number
+    </li><li>
+j - allow one currency code or sign to the left of the number
+    </li><li>
+k - allow one currency code or sign to the right of the number
+    </li><li>
+w - allow strict interpretation of non-decimal placeholders in threes:
+    For example: 1,000,000,000,000 but not 1,00,000 (as with Indian Rs.)
+    </li><li>
+h - allow strict interpretation of Indian Lakh non-decimal separators:
+    For example: 167,89,000,00,00,000  
+    See: https://en.wikipedia.org/wiki/Indian_numbering_system#Use_of_separators
+    </li><li>
+t - allow fewer decimals to the right of the 'decimals' separator.
+
+    </li></ul>
+    An uppercase letter denotes that the flag's attribute is required.
+    <br>
+    Default is to ignore unit separators that are supplied by parameter.
+    Default is to not require a decimal separator or symbol or code.
+    <br><br>
+    <code>code</code> usually consisting of one or more ISO-4217 codes, or similar. 
     See https://en.wikipedia.org/wiki/ISO_4217
     <br><br>
     <code>decimals</code>. The number of decimals that represent
@@ -1879,14 +1915,17 @@ ad_proc -public qf_is_currency {
     If multiple characters are appended together, any is considered valid as
     long as it is consistently applied. 
     's' means space character. A number such as '12,345 678.'
-    would not be a consistent use of ',s', whereas '12,345,678.' and '12 345 678.' are valid.
-    for the default case.
+    would not be a consistent use of ',s', whereas '12,345,678.' and '12 345 678.' are valid for the default case.
     <br><br>
     <code>symbols_n_codes</code>.
-    This is space seprated list of symbols and codes 
-    that should be matched if provided. If more than one
-    currency is represented, it is expected that they will be paired like so:
-    'USD $ GBP £ YEN ¥ EUR €'
+    This is space seprated list of symbols and codes.
+    Each code and symbol pair are appended to each-other without space.
+    Multiple symbols and codes are separated by a space.
+    If only a symbol or code is expected, then just supply what is expected.
+    If more than one currency is represented, 
+    it is expected that they will be paired or supplied like so without quotes:
+    'USD$ GBP£ YEN¥ EUR€ XBT Ξ XRP'
+    Multiple symbols may be supplied that match a single alphanumeric code.
     <br><br>
    
     and partly derived from variants expressed at:
