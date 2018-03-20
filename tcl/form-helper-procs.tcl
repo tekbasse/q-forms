@@ -1964,18 +1964,23 @@ ad_proc -public qf_is_currency {
     set params_list [split $parameters " "]
     set flags_list [split [lindex $params_list 0] ""]
     set decimals_max [lindex $params_list 1]
+
+    # Answers question: What characters are allowed/required in 
+    # position that separates whole units from fractional ones?
     set decimal_chars_list [split [lindex $params_list 2] ""]
+
+    # Answers question: What characters separate whole units
+    # to make them easier to read by convention?
     set nondec_separators_list [split [lindex $params_list 3] ""]
+
+    # What currency codes and signs are allowed?
     set signs_codes_list [lrange $params_list 4 end]
 
     # setup flags
 
     # alllowed flags
 
-##code What options for parenthesis that indicate negative number?
-# parens around number required/allowed
-# parens around number and any prefix/suffix allowed/required
-# parens may appear with negative number allowed
+
     set negative_prefix_allowed_p 0
     set negative_suffix_allowed_p 0
     set negative_before_allowed_p 0
@@ -1986,9 +1991,11 @@ ad_proc -public qf_is_currency {
     set currency_code_after_allowed_p 0
     set nondec_separator_in_threes_allowed_p 0
     set nondec_separator_in_lakhs_allowed_p 0
-    set truncated_decimals_allowed_p 0
     set currency_as_dec_separator_allowed_p 0
     set no_dec_separator_allowed_p 0
+    set parens_allowed_p 0
+    set parens_wrap_currency_allowed_p 0
+    set parens_and_negative_redundancy_allowed_p 0
 
     # required flags
     set negative_prefix_required_p 0
@@ -2003,10 +2010,14 @@ ad_proc -public qf_is_currency {
     set nondec_separator_in_lakhs_required_p 0
     set currency_as_dec_separator_required_p 0
     set no_dec_separator_required_p 0
+    set parens_required_p 0
+    set parens_wrap_currency_required_p 0
+
 
     # other flags
     set ignore_case_in_codes_symbols_p 0
-    set truncated_decimals_required_p 0
+    set truncated_decimals_allowed_p 0
+    set redundant_parens_negative_allowed_p 0
 
     foreach f $flags_list {
         switch -exact -- $f {
@@ -2070,6 +2081,18 @@ ad_proc -public qf_is_currency {
             H {
                 set nondec_separator_in_lakhs_required_p 1
             }
+            p {
+                set parens_allowed_p 1
+            }
+            P {
+                set parens_required_p 1
+            }
+            q {
+                set parens_wrap_currency_allowed_p 1
+            }
+            Q {
+                set parens_wrap_currency_required_p 1
+            }
             T -
             t {
                 # 'T' required? Where's the Ministry of Pragmatism?
@@ -2079,6 +2102,12 @@ ad_proc -public qf_is_currency {
             u {
                 # 'U' is not significant here
                 set ignore_case_in_codes_symbols_p 1
+            }
+            R -
+            r {
+                # Still treat as a negative number. 
+                # Surely user wants to be certain value is negative.
+                set redundant_parens_negative_allowed_p 1
             }
             default {
                 ns_log "qf_is_currency.1976: flag '${f}' unknown. Ignored."
@@ -2104,8 +2133,57 @@ ad_proc -public qf_is_currency {
         }
     }
 
+    # map currencies allowed
 
+    foreach currency_set $signs_codes_list {
+        set c_list [split $currency_set]
+        foreach c $c_list {
+            # Would be nice to use concat, but index may not be defined
+            # and adding an IF seems expensive for a potentially long list
+            foreach d $c_list {
+                lappend c_arr(${c}) $d
+            }
+        }
+    }
 
+    # parse
+
+    set value_len [string length $value]
+    set num_prev ""
+
+    set e_prev ""
+    set e_next [string range $value 0 0]
+    while { $valid_p && $i < $value_len && $e_next ne "" } {
+        set e $e_next
+        set e_next [string range $value $i+1 $i+1]
+
+        set i_num 0
+##code change switch to if's with string first not lsearch..
+##which means nums_list becomes numchars...
+        set nums_list [list 0 1 2 3 4 5 6 7 8 9]
+        switch -glob -- $e {
+            [0-9] {
+                # Currency number
+                if { $num_prev ne $e_prev } {
+                    incr i_num
+                    if { $i_num > 2 } {
+                        set valid_p 0
+                    }
+                }
+                append num_arr(${i_num}) $e
+                set num_prev $e
+            }
+            default {
+                # Must also check for number case of 
+                # e in nondec_separators_list
+
+            }
+
+        }
+
+        set e_prev $e
+        incr i
+    }
 
     return $valid_p
 }
