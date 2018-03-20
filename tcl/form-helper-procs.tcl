@@ -1967,11 +1967,11 @@ ad_proc -public qf_is_currency {
 
     # Answers question: What characters are allowed/required in 
     # position that separates whole units from fractional ones?
-    set decimal_chars_list [split [lindex $params_list 2] ""]
+    set decimal_separators [lindex $params_list 2]
 
     # Answers question: What characters separate whole units
     # to make them easier to read by convention?
-    set nondec_separators_list [split [lindex $params_list 3] ""]
+    set nondec_separators [lindex $params_list 3]
 
     # What currency codes and signs are allowed?
     set signs_codes_list [lrange $params_list 4 end]
@@ -2110,14 +2110,17 @@ ad_proc -public qf_is_currency {
                 set redundant_parens_negative_allowed_p 1
             }
             default {
-                ns_log "qf_is_currency.1976: flag '${f}' unknown. Ignored."
+                ns_log Warning "qf_is_currency.1976: flag '${f}' unknown. Ignored."
             }
         }
     }
 
     # nondecimal separator flags
-    foreach d $decimal_chars_list {
-        switch -exact -- $d {
+    set s_i 0
+    set decimal_separators_len [string length $decimal_separators]
+    while { $s_i < $decimal_separators_len } {
+        set s [string range $decimal_separators $s_i $s_i]
+        switch -exact -- $s {
             m {
                 set currency_as_dec_separator_allowed_p 1
             }
@@ -2129,6 +2132,10 @@ ad_proc -public qf_is_currency {
             }
             N {
                 set no_dec_separator_required_p 1
+            }
+            default { 
+                ns_log Warning "qf_is_currency.2113: decimal separator \
+ '${s}' unknown. Ignored."
             }
         }
     }
@@ -2150,6 +2157,9 @@ ad_proc -public qf_is_currency {
 
     set value_len [string length $value]
     set num_prev ""
+    set i_num 0
+    set numerals "0123456789"
+    append numerals
 
     set e_prev ""
     set e_next [string range $value 0 0]
@@ -2157,10 +2167,9 @@ ad_proc -public qf_is_currency {
         set e $e_next
         set e_next [string range $value $i+1 $i+1]
 
-        set i_num 0
+
 ##code change switch to if's with string first not lsearch..
 ##which means nums_list becomes numchars...
-        set nums_list [list 0 1 2 3 4 5 6 7 8 9]
         switch -glob -- $e {
             [0-9] {
                 # Currency number
