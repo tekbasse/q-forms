@@ -1932,6 +1932,7 @@ ad_proc -public qf_is_currency {
     <strong>integral separators<strong> 
     This is the separator used to separate
     multiple inetgral (whole) units, such as thousands from hundreds of units.
+    For background, see: https://en.wikipedia.org/wiki/Decimal_separator#Other_numeral_systems
     If multiple characters are appended together, any is considered valid as
     long as it is consistently applied. 
     's' means space character. A number such as '12,345 678.'
@@ -2028,7 +2029,8 @@ ad_proc -public qf_is_currency {
     set ignore_case_in_codes_symbols_p 0
     set truncated_decimals_allowed_p 0
     set redundant_parens_negative_allowed_p 0
-
+    
+    
     foreach f $flags_list {
         switch -exact -- $f {
             a {
@@ -2039,9 +2041,11 @@ ad_proc -public qf_is_currency {
             }
             b {
                 set negative_suffix_allowed_p 1
+
             }
             B {
                 set negative_suffix_required_p 1
+
             }
             c {
                 set negative_before_allowed_p 1
@@ -2166,19 +2170,86 @@ ad_proc -public qf_is_currency {
     # parse, setup
     # Strictest requirements prevail over more flexible ones
 
-    #    types in a tree of paths of acceptable possibilities
-        array set types_larr [list \
+
+    # types in a tree of paths of acceptable possibilities
+    array set types_larr [list \
                                   start [list ] \
                                   symbol [list ] \
                                   integral_num [list ] \
                                   separatrix [list ] \
-                                  fractrional_num [list ] \
+                                  fractional_num [list ] \
                                   paren_left [list ] \
                                   paren_right [list ] \
                                   positive_sign [list ] \
                                   negative_sign [list ] \
                                   end [list ] ]
 
+    # set base case
+    lappend types_larr(start) integral_num
+    lappend types_larr(integral_num) separatrix
+    lappend types_larr(separatrix) fractional_num
+    lappend types_larr(fractional_nu) end
+
+    if { $negative_prefix_allowed_p || $negative_prefix_required_p } {
+        lappend types_larr(start) negative_sign
+        lappend types_larr(negative_sign) integral_num
+        if { $negative_prefix_required_p } {
+            # break non_negative paths
+            set types_larr(start) [list negative_sign]
+        }
+    }
+    if { $negative_suffix_allowed_p || $negative_suffix_required_p } {
+        lappend types_larr(fractional_num) negative_sign
+        lappend types_larr(negative_sign) end
+        if { $negative_suffix_required_p } {
+            # break non_negative_paths
+            set types_larr(fractional_num) negative_sign
+        }
+    }
+    if { $negative_before_allowed_p || $negative_before_required_p } {
+        # anytime before integral_num, means
+        set paths_list [list [list start integral_num] \
+                            [list start symbol] \
+                            [list symbol integral_num] \
+                            [list paren_left symbol] \
+                            [list symbol paren_left] ]
+        foreach path_list {
+            lassign $path_list a b
+            lappend types_larr(${a}) negative_sign
+            lappend types_larr(negative_sign) ${b}
+        }
+        ##code check negative_before_required_p manually to reduce complexity
+    }
+    if { $positive_prefix_allowed_p || $positive_prefix_required_p } {
+        lappend types_larr(start) positive_sign
+        lappend types_larr(positive_sign) integral_num
+        if { $positive_prefix_required_p } {
+            # break non_positive paths
+            set types_larr(start) [list positive_sign]
+        }
+    }
+    if { $positive_suffix_allowed_p || $positive_suffix_required_p } {
+        lappend types_larr(fractional_num) positive_sign
+        lappend types_larr(positive_sign) end
+        if { $positive_suffix_required_p } {
+            # break non_positive_paths
+            set types_larr(fractional_num) positive_sign
+        }
+    }
+    if { $positive_before_allowed_p || $positive_before_required_p } {
+        # anytime before integral_num, means
+        set paths_list [list [list start integral_num] \
+                            [list start symbol] \
+                            [list symbol integral_num] \
+                            [list paren_left symbol] \
+                            [list symbol paren_left] ]
+        foreach path_list {
+            lassign $path_list a b
+            lappend types_larr(${a}) positive_sign
+            lappend types_larr(positive_sign) ${b}
+        }
+        ##code check positive_before_required_p manually to reduce complexity
+    }
 
     # parse 
     set value_len [string length $value]
