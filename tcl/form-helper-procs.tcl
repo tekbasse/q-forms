@@ -1858,16 +1858,18 @@ ad_proc -public qf_is_currency_like {
 
 ad_proc -public qf_is_currency {
     value
-    {parameters "bcefjkwht 2 . ,s $ USD"}
+    {parameters "bcefjkwht +s - 2 . ,s $ USD"}
 } {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
     Currency type is determined according to <code>parameters</code>, 
     where <code>parameters</codes> consists of a space separated list of:
     <strong>flags</strong>, 
+    <strong>positive signs</strong>,
+    <strong>negative signs</strong>
     <strong>decimals</strong>,
-    <strong>decimal character</strong>,
-    <strong>non-decimal separators</strong>, and
+    <strong>decimal character (separatrix)</strong>,
+    <strong>integral separators</strong>, and
     <strong>currency signs and/or codes<strong>..
     Default is to not allow a decimal separator, positive or negative sign, or symbol or code, or a number with fewer fractional decimals than defined by second position in <code>parameters</code>. 
     Treat fractional units as separate signs/codes with their own ISO code, if necessary. For example 'USD,$ XUSD,¢'. 
@@ -1875,7 +1877,7 @@ ad_proc -public qf_is_currency {
     Combinations are not validated against a standard, so validation is fully customizable.
     <br><br>
     <strong>flags</strong> If there are no flags passed, still include the
-    space separator to the left of <strong>decimal character</strong>.
+    space separator to the left of <strong>separatrix</strong>.
     An uppercase flag indicates that the flag's attribute is required.
     Lowercase indicates the flag's attribute is optional.
     <br>Available flags:
@@ -1908,24 +1910,28 @@ ad_proc -public qf_is_currency {
     u - ignore upper/lowercase designation in codes and symbols.
     </li></ul>
     <br><br>
+    <strong>positive signs</strong> Usually "+" and/or space " ", where space is indicated by "s":  +s
+    <br><br>
+    <strong>negative signs</strong> Usually "-". May be changed to include em-dsh or some other variants.
+    <br><br>
     <strong>decimals</strong>  The number of decimals that represent
     the fractional part of the value.
     <br><br>
-    <strong>decimal character</strong> is the character to use to separate 
-    whole currency units from fractional currency units. Multiple choices are allowed.
+    <strong>separatrix</strong> is the character to use to separate 
+    integral (whole) currency units from fractional currency units. Multiple choices are allowed.
     <br>
     Set this to 
     <ul><li>
     m - if currency sign is allowed here.
     </li><li>
-    n - if no decimal character is allowed (because it is implied)
+    n - if no separatrix is allowed (because it is implied)
     </li></ul>
     Uppercase means the 'M' or 'N' are required, 
     consistent usage with above uppercase usage.
     <br><br>
-    <strong>non-decimal separators<strong> 
+    <strong>integral separators<strong> 
     This is the separator used to separate
-    multiple whole units, such as thousands from hundreds of units.
+    multiple inetgral (whole) units, such as thousands from hundreds of units.
     If multiple characters are appended together, any is considered valid as
     long as it is consistently applied. 
     's' means space character. A number such as '12,345 678.'
@@ -1956,25 +1962,29 @@ ad_proc -public qf_is_currency {
     <br><br><br>
     This is an attempt at simplifying ad_form currency validation via 
     <code>template::data::validate::currency</code>
-    
+    Positive signs are plus "+" or space " ". Negative signs are parenthesis or "-".
 
     @see template::data::validate::currency
     
 } {
     set params_list [split $parameters " "]
     set flags_list [split [lindex $params_list 0] ""]
-    set decimals_max [lindex $params_list 1]
+
+    set positives [lindex $params_list 1]
+    set negatives [lindex $params_list 2]
+    set decimals_max [lindex $params_list 3]
 
     # Answers question: What characters are allowed/required in 
-    # position that separates whole units from fractional ones?
-    set decimal_separators [lindex $params_list 2]
+    # position that separates integral units from fractional ones?
 
-    # Answers question: What characters separate whole units
+    set separatrixes [lindex $params_list 4]
+
+    # Answers question: What characters separate integral units
     # to make them easier to read by convention?
-    set nondec_separators [lindex $params_list 3]
+    set integral_separators [lindex $params_list 5]
 
     # What currency codes and signs are allowed?
-    set signs_codes_list [lrange $params_list 4 end]
+    set signs_codes_list [lrange $params_list 6 end]
 
     # setup flags
 
@@ -1989,10 +1999,10 @@ ad_proc -public qf_is_currency {
     set positive_before_allowed_p 0
     set currency_code_before_allowed_p 0
     set currency_code_after_allowed_p 0
-    set nondec_separator_in_threes_allowed_p 0
-    set nondec_separator_in_lakhs_allowed_p 0
+    set integral_separator_in_threes_allowed_p 0
+    set integral_separator_in_lakhs_allowed_p 0
     set currency_as_dec_separator_allowed_p 0
-    set no_dec_separator_allowed_p 0
+    set no_separatrix_allowed_p 0
     set parens_allowed_p 0
     set parens_wrap_currency_allowed_p 0
     set parens_and_negative_redundancy_allowed_p 0
@@ -2006,10 +2016,10 @@ ad_proc -public qf_is_currency {
     set positive_before_required_p 0
     set currency_code_before_required_p 0
     set currency_code_after_required_p 0
-    set nondec_separator_in_threes_required_p 0
-    set nondec_separator_in_lakhs_required_p 0
+    set integral_separator_in_threes_required_p 0
+    set integral_separator_in_lakhs_required_p 0
     set currency_as_dec_separator_required_p 0
-    set no_dec_separator_required_p 0
+    set no_separatrix_required_p 0
     set parens_required_p 0
     set parens_wrap_currency_required_p 0
 
@@ -2070,16 +2080,16 @@ ad_proc -public qf_is_currency {
                 set currency_code_after_required_p 1
             }
             w {
-                set nondec_separator_in_threes_allowed_p 1
+                set integral_separator_in_threes_allowed_p 1
             }
             W {
-                set nondec_separator_in_threes_required_p 1
+                set integral_separator_in_threes_required_p 1
             }
             h {
-                set nondec_separator_in_lakhs_allowed_p 1
+                set integral_separator_in_lakhs_allowed_p 1
             }
             H {
-                set nondec_separator_in_lakhs_required_p 1
+                set integral_separator_in_lakhs_required_p 1
             }
             p {
                 set parens_allowed_p 1
@@ -2115,11 +2125,11 @@ ad_proc -public qf_is_currency {
         }
     }
 
-    # nondecimal separator flags
+    # integral separator flags
     set s_i 0
-    set decimal_separators_len [string length $decimal_separators]
-    while { $s_i < $decimal_separators_len } {
-        set s [string range $decimal_separators $s_i $s_i]
+    set separatrixes_len [string length $separatrixes]
+    while { $s_i < $separatrixes_len } {
+        set s [string range $separatrixes $s_i $s_i]
         switch -exact -- $s {
             m {
                 set currency_as_dec_separator_allowed_p 1
@@ -2128,10 +2138,10 @@ ad_proc -public qf_is_currency {
                 set currency_as_dec_separator_required_p 1
             }
             n {
-                set no_dec_separator_allowed_p 1
+                set no_separatrix_allowed_p 1
             }
             N {
-                set no_dec_separator_required_p 1
+                set no_separatrix_required_p 1
             }
             default { 
                 ns_log Warning "qf_is_currency.2113: decimal separator \
@@ -2153,13 +2163,33 @@ ad_proc -public qf_is_currency {
         }
     }
 
-    # parse
+    # parse, setup
+    # Strictest requirements prevail over more flexible ones
 
+    #    types in a tree of paths of acceptable possibilities
+        array set types_larr [list \
+                                  start [list ] \
+                                  symbol [list ] \
+                                  integral_num [list ] \
+                                  separatrix [list ] \
+                                  fractrional_num [list ] \
+                                  paren_left [list ] \
+                                  paren_right [list ] \
+                                  positive_sign [list ] \
+                                  negative_sign [list ] \
+                                  end [list ] ]
+
+
+    # parse 
     set value_len [string length $value]
     set num_prev ""
     set i_num 0
     set numerals "0123456789"
-    append numerals
+    set numerals_w_integral_seps $numerals
+    append numerals_w_separators $integral_separators
+    set paren_right ")"
+    set paren_left "("
+         
 
     set e_prev ""
     set e_next [string range $value 0 0]
@@ -2168,10 +2198,7 @@ ad_proc -public qf_is_currency {
         set e_next [string range $value $i+1 $i+1]
 
 
-##code change switch to if's with string first not lsearch..
-##which means nums_list becomes numchars...
-        switch -glob -- $e {
-            [0-9] {
+        
                 # Currency number
                 if { $num_prev ne $e_prev } {
                     incr i_num
@@ -2184,7 +2211,7 @@ ad_proc -public qf_is_currency {
             }
             default {
                 # Must also check for number case of 
-                # e in nondec_separators_list
+                # e in integral_separators_list
 
             }
 
