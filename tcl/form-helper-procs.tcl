@@ -2338,6 +2338,9 @@ ad_proc -public qf_is_currency {
     set paren_left "("
     
 
+##code convert positive sign,negative sign and separatrix parameters to
+    ##any representative characters, such as 's' becomes ' '
+
     set e_prev ""
     set e_type_prev ""
     set e_next [string range $value 0 0]
@@ -2346,10 +2349,12 @@ ad_proc -public qf_is_currency {
         set e_next [string range $value $i+1 $i+1]
 
         # determine e_type
+        # Using nested 'if's to reduce cpu time 
+        #      and avoid cpu intense regular expressions.
         set n_idx [string first $e $numerals_w_integral_seps]
 
         if { $n_idx > -1 } {
-            # Currency number, integral or fractional
+            # type: integral_num or fractional_num
             if { ![string match "*_num" $e_type_prev ] } {
                 incr i_num
                 if { $i_num > 2 } {
@@ -2365,6 +2370,7 @@ ad_proc -public qf_is_currency {
         } else { 
             set sc_idx [string first $e $signs_and_codes]
             if { $sc_idx > -1 } {
+                # type: symbol
                 set e_type "symbol"
                 if { $e_type_prev eq $e_type } {
                     # check if character is valid in position of currency code
@@ -2379,6 +2385,15 @@ ad_proc -public qf_is_currency {
                     ns_log Notice "qf_is_currency.2379: '${e}' \
  not found in list of supplied currency codes and signs: '${signs_and_codes}'"
                 }
+
+            } else {
+                # What other types are there?
+                # type: separatrix
+                # type: paren_left
+                # type: paren_right
+                # type: positive_sign
+                # type: negative_sign
+
 
             }
         }
