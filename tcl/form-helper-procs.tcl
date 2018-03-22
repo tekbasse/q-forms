@@ -2002,7 +2002,7 @@ ad_proc -public qf_is_currency {
     set currency_code_after_allowed_p 0
     set integral_separator_in_threes_allowed_p 0
     set integral_separator_in_lakhs_allowed_p 0
-    set currency_as_dec_separator_allowed_p 0
+    set currency_as_separatrix_allowed_p 0
     set no_separatrix_allowed_p 0
     set parens_allowed_p 0
     set parens_wrap_currency_allowed_p 0
@@ -2019,7 +2019,7 @@ ad_proc -public qf_is_currency {
     set currency_code_after_required_p 0
     set integral_separator_in_threes_required_p 0
     set integral_separator_in_lakhs_required_p 0
-    set currency_as_dec_separator_required_p 0
+    set currency_as_separatrix_required_p 0
     set no_separatrix_required_p 0
     set parens_required_p 0
     set parens_wrap_currency_required_p 0
@@ -2136,10 +2136,10 @@ ad_proc -public qf_is_currency {
         set s [string range $separatrixes $s_i $s_i]
         switch -exact -- $s {
             m {
-                set currency_as_dec_separator_allowed_p 1
+                set currency_as_separatrix_allowed_p 1
             }
             M {
-                set currency_as_dec_separator_required_p 1
+                set currency_as_separatrix_required_p 1
             }
             n {
                 set no_separatrix_allowed_p 1
@@ -2173,16 +2173,16 @@ ad_proc -public qf_is_currency {
 
     # types in a tree of paths of acceptable possibilities
     array set types_larr [list \
-                                  start [list ] \
-                                  symbol [list ] \
-                                  integral_num [list ] \
-                                  separatrix [list ] \
-                                  fractional_num [list ] \
-                                  paren_left [list ] \
-                                  paren_right [list ] \
-                                  positive_sign [list ] \
-                                  negative_sign [list ] \
-                                  end [list ] ]
+                              start [list ] \
+                              symbol [list ] \
+                              integral_num [list ] \
+                              separatrix [list ] \
+                              fractional_num [list ] \
+                              paren_left [list ] \
+                              paren_right [list ] \
+                              positive_sign [list ] \
+                              negative_sign [list ] \
+                              end [list ] ]
 
     # set base case
     lappend types_larr(start) integral_num
@@ -2250,8 +2250,72 @@ ad_proc -public qf_is_currency {
         }
         ##code check positive_before_required_p manually to reduce complexity
     }
+    if { $currency_code_before_allowed_p || $currency_code_before_required_p } {
+        # anytime before integral_num, means
+        set paths_list [list [list start integral_num] \
+                            [list start positive_sign] \
+                            [list start negative_sign] \
+                            [list positive_sign integral_num] \
+                            [list negative_sign integral_num] \
+                            [list paren_left positive_sign] \
+                            [list paren_left negative_sign] \
+                            [list positive_sign paren_left] \
+                            [list negative_sign paren_left] ]
+        foreach path_list {
+            lassign $path_list a b
+            lappend types_larr(${a}) symbol
+            lappend types_larr(symbol) ${b}
+        }
+        ##code check positive_before_required_p manually to reduce complexity
+    }
+    if { $parens_allowed_p || $parens_required_p } {
+        # anytime before integral_num, means
+        set paths_list [list [list start integral_num] \
+                            [list start positive_sign] \
+                            [list start negative_sign] \
+                            [list positive_sign integral_num] \
+                            [list negative_sign integral_num] \
+                            [list symbol positive_sign] \
+                            [list symbol negative_sign] \
+                            [list symbol integral_num] ]
 
-    # parse 
+        foreach path_list {
+            lassign $path_list a b
+            lappend types_larr(${a}) paren_left
+            lappend types_larr(paren_left) ${b}
+        }
+
+        ##code check parens_required_p manually to reduce complexity
+    }
+    if { $parens_wrap_currency_allowed_p } {
+        # before symbol
+        lappend types_larr(start) paren_left
+        lappend types_larr(paren_left) symbol
+    }
+    if { $parens_allowed_p || $parens_required_p \
+             || $parens_wrap_currency_allowed_p \
+             || $parens_wrap_currency_required_p } {
+        # anytime after fractional_num means
+        set paths_list [list [list fractional_num end] \
+                            [list separatrix end] \
+                            [list positive_sign end] \
+                            [list negative_sign end] ]
+        foreach path_list {
+            lassign $path_list a b
+            lappend types_larr(${a}) paren_left
+            lappend types_larr(paren_left) ${b}
+        }
+    }
+    if { $parens_wrap_currency_required_p } {
+        set types_larr(start) paren_left
+        set types_larr(paren_left) symbol
+    }
+
+    ##code check trucated_decimals_allowed_p
+    ##code check ignore_case_in_codes_symbols_p
+    ##code check redundant_parens_negative_allowed_p
+    ##code check currency_as_separatrix
+    # parse value
     set value_len [string length $value]
     set num_prev ""
     set i_num 0
@@ -2260,7 +2324,7 @@ ad_proc -public qf_is_currency {
     append numerals_w_separators $integral_separators
     set paren_right ")"
     set paren_left "("
-         
+    
 
     set e_prev ""
     set e_next [string range $value 0 0]
@@ -2270,27 +2334,24 @@ ad_proc -public qf_is_currency {
 
 
         
-                # Currency number
-                if { $num_prev ne $e_prev } {
-                    incr i_num
-                    if { $i_num > 2 } {
-                        set valid_p 0
-                    }
-                }
-                append num_arr(${i_num}) $e
-                set num_prev $e
+        # Currency number
+        if { $num_prev ne $e_prev } {
+            incr i_num
+            if { $i_num > 2 } {
+                set valid_p 0
             }
-            default {
-                # Must also check for number case of 
-                # e in integral_separators_list
-
-            }
-
         }
+        append num_arr(${i_num}) $e
+        set num_prev $e
 
+        # Must also check for number case of 
+        # e in integral_separators_list
+        
         set e_prev $e
         incr i
     }
+
+
 
     return $valid_p
 }
