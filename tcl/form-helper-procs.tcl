@@ -2156,13 +2156,22 @@ ad_proc -public qf_is_currency {
 
     # map currencies allowed
 
+    set signs_and_codes ""
     foreach currency_set $signs_codes_list {
-        set c_list [split $currency_set]
-        foreach c $c_list {
+        set symbol_or_code_list [split $currency_set ","]
+        foreach c $symbol_or_code_list {
             # Would be nice to use concat, but index may not be defined
             # and adding an IF seems expensive for a potentially long list
             foreach d $c_list {
                 lappend c_arr(${c}) $d
+            }
+            append supplied_signs_and_codes $c
+            set c_len [string length $c]
+            for {set i 0} {$i < $c_len} {incr i} {
+                # signs_codes_pos_arr
+                # will check validity of character as it is parsed
+                # by checking character in context of local position
+                append signs_codes_idx_arr(${i}) [string range $c $i $i]
             }
         }
     }
@@ -2172,6 +2181,7 @@ ad_proc -public qf_is_currency {
 
 
     # types in a tree of paths of acceptable possibilities
+    #       Each index lists acceptable next step(s).
     array set types_larr [list \
                               start [list ] \
                               symbol [list ] \
@@ -2319,6 +2329,8 @@ ad_proc -public qf_is_currency {
     set value_len [string length $value]
     set num_prev ""
     set i_num 0
+    set i_symbol 0
+    set symbol_char_idx 0
     set numerals "0123456789"
     set numerals_w_integral_seps $numerals
     append numerals_w_separators $integral_separators
@@ -2327,27 +2339,53 @@ ad_proc -public qf_is_currency {
     
 
     set e_prev ""
+    set e_type_prev ""
     set e_next [string range $value 0 0]
     while { $valid_p && $i < $value_len && $e_next ne "" } {
         set e $e_next
         set e_next [string range $value $i+1 $i+1]
 
+        # determine e_type
+        set n_idx [string first $e $numerals_w_integral_seps]
 
-        
-        # Currency number
-        if { $num_prev ne $e_prev } {
-            incr i_num
-            if { $i_num > 2 } {
-                set valid_p 0
+        if { $n_idx > -1 } {
+            # Currency number, integral or fractional
+            if { ![string match "*_num" $e_type_prev ] } {
+                incr i_num
+                if { $i_num > 2 } {
+                    set valid_p 0
+                }
+            }
+            append num_arr(${i_num}) $e
+            if { $n_idx < 10 && $i_num eq 2 } {
+                set e_type "fractional_num"
+            } else {
+                set e_type "integral_num"
+            }
+        } else { 
+            set sc_idx [string first $e $signs_and_codes]
+            if { $sc_idx > -1 } {
+                set e_type "symbol"
+                if { $e_type_prev eq $e_type } {
+                    # check if character is valid in position of currency code
+                    incr symbol_char_idx
+
+                } else {
+                    set symbol_char_idx 0
+                }
+                # Is character expected within symbol?
+                if { [string first $signs_codes_idx_arr(${symbol_char_idx}) ] < 0 } {
+                    set valid_p 0
+                    ns_log Notice "qf_is_currency.2379: '${e}' \
+ not found in list of supplied currency codes and signs: '${signs_and_codes}'"
+                }
+
             }
         }
-        append num_arr(${i_num}) $e
-        set num_prev $e
 
-        # Must also check for number case of 
-        # e in integral_separators_list
         
         set e_prev $e
+        set e_type_prev $e_type
         incr i
     }
 
