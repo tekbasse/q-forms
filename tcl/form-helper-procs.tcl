@@ -1978,7 +1978,7 @@ ad_proc -public qf_is_currency {
     # Answers question: What characters are allowed/required in 
     # position that separates integral units from fractional ones?
 
-    set separatrixes [lindex $params_list 4]
+    set separatrixes_or_mn [lindex $params_list 4]
 
     # Answers question: What characters separate integral units
     # to make them easier to read by convention?
@@ -2131,9 +2131,10 @@ ad_proc -public qf_is_currency {
 
     # integral separator flags
     set s_i 0
-    set separatrixes_len [string length $separatrixes]
-    while { $s_i < $separatrixes_len } {
-        set s [string range $separatrixes $s_i $s_i]
+    set separatrixes ""
+    set separatrixes_or_mn_len [string length $separatrixes_or_mn]
+    while { $s_i < $separatrixes_or_mn_len } {
+        set s [string range $separatrixes_or_mn $s_i $s_i]
         switch -exact -- $s {
             m {
                 set currency_as_separatrix_allowed_p 1
@@ -2148,8 +2149,7 @@ ad_proc -public qf_is_currency {
                 set no_separatrix_required_p 1
             }
             default { 
-                ns_log Warning "qf_is_currency.2113: decimal separator \
- '${s}' unknown. Ignored."
+                append separatrixes $s
             }
         }
     }
@@ -2341,6 +2341,7 @@ ad_proc -public qf_is_currency {
 ##code convert positive sign,negative sign and separatrix parameters to
     ##any representative characters, such as 's' becomes ' '
 
+    set types_ol [list ]
     set e_prev ""
     set e_type_prev ""
     set e_next [string range $value 0 0]
@@ -2367,37 +2368,40 @@ ad_proc -public qf_is_currency {
             } else {
                 set e_type "integral_num"
             }
-        } else { 
-            set sc_idx [string first $e $signs_and_codes]
-            if { $sc_idx > -1 } {
-                # type: symbol
-                set e_type "symbol"
-                if { $e_type_prev eq $e_type } {
-                    # check if character is valid in position of currency code
-                    incr symbol_char_idx
-
-                } else {
-                    set symbol_char_idx 0
-                }
-                # Is character expected within symbol?
-                if { [string first $signs_codes_idx_arr(${symbol_char_idx}) ] < 0 } {
-                    set valid_p 0
-                    ns_log Notice "qf_is_currency.2379: '${e}' \
- not found in list of supplied currency codes and signs: '${signs_and_codes}'"
-                }
-
+        } elseif { [string first $e $signs_and_codes] > -1 } {
+            # type: symbol
+            set e_type "symbol"
+            if { $e_type_prev eq $e_type } {
+                # check if character is valid in position of currency code
+                incr symbol_char_idx
+                
             } else {
-                # What other types are there?
-                # type: separatrix
-                # type: paren_left
-                # type: paren_right
-                # type: positive_sign
-                # type: negative_sign
-
-
+                set symbol_char_idx 0
             }
-        }
+            # Is character expected within symbol?
+            if { [string first $signs_codes_idx_arr(${symbol_char_idx}) ] < 0 } {
+                set valid_p 0
+                ns_log Notice "qf_is_currency.2379: '${e}' \
+ not found in list of supplied currency codes and signs: '${signs_and_codes}'"
+            }
 
+        } elseif { [string first $e $separatrixes] > -1 } {
+            set e_type "separatrix"
+        } elseif { $e eq $paren_left } {
+            set e_type "paren_left"
+        } elseif { $e eq $paren_right } {
+            set e_type "paren_right"
+        } elseif { [string first $e $negative_sign] } {
+            set e_type "negative_sign"
+        } elseif { [string first $e $positive_sign] } {
+            set e_type "positive_sign"
+        } else {
+            set e_type ""
+            set valid_p 0
+            ns_log Notice "qf_is_currency.2400: '${e}' \
+ not part of a currency pattern according to params_list '${params_list}'"
+        }
+        lappend types_ol $e_type
         
         set e_prev $e
         set e_type_prev $e_type
@@ -2405,6 +2409,26 @@ ad_proc -public qf_is_currency {
     }
 
 
+    # Are types in an expected path? 
+    # We ask after path is made, because some patterns cannot be 
+    # validated until entire pattern is parsed.
+    set types_ol_len [llength $types_ol]
+    set type_idx 0
+    set type_prev "start"
+    while { $valid_p && $type_idx < $types_ol_len } {
+        set type [lindex $type_idx]
+        if { [lsearch -exact $types_larr(${type_prev}) $type] < 0 } {
+            ns_log Notice "qf_is_currency.2421. type '${type}' not found in \
+ types_larr(${type_prev}) '$types_larr(${type_prev})'"
+        }
+
+
+        incr type_idx
+    }
+    ns_log Notice "qf_is_currency.2440: types_ol '${types_ol}'"
+
+    # What other checks need to be made?
+    # fractional_num will be missing when no_separatrix exists.
 
     return $valid_p
 }
