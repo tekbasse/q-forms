@@ -1968,6 +1968,9 @@ ad_proc -public qf_is_currency {
     @see template::data::validate::currency
     
 } {
+    set upvar_varname "__qf_verror_list"
+    upvar 1 __qf_verror_list $upvar_varname
+
     set params_list [split $parameters " "]
     set flags_list [split [lindex $params_list 0] ""]
 
@@ -2122,6 +2125,12 @@ ad_proc -public qf_is_currency {
                 # Still treat as a negative number. 
                 # Surely user wants to be certain value is negative.
                 set redundant_parens_negative_allowed_p 1
+            }
+            l {
+                set log_messages_p 1
+            }
+            L {
+                set upvar_messages_p
             }
             default {
                 ns_log Warning "qf_is_currency.1976: flag '${f}' unknown. Ignored."
@@ -2338,6 +2347,8 @@ ad_proc -public qf_is_currency {
     }
 
     # Parse value
+
+    # initializations and setup
     set value_len [string length $value]
     set num_prev ""
     set i_num 0
@@ -2353,8 +2364,8 @@ ad_proc -public qf_is_currency {
     append numerals_w_separators $integral_separators
     set paren_right ")"
     set paren_left "("
-    
-
+    set num_arr(0) ""
+    set num_arr(1) ""
     # Convert positive sign,negative sign and separatrix parameters to
     # any representative characters, such as 's' becomes ' '
     regsub -- {s} $positives { } positives
@@ -2371,6 +2382,7 @@ ad_proc -public qf_is_currency {
     set e_next [string range $value 0 0]
     # type_prev is previous, different type
     set type_prev ""
+
     while { $valid_p && $i < $value_len && $e_next ne "" } {
         set e $e_next
         set e_next [string range $value $i+1 $i+1]
@@ -2394,65 +2406,95 @@ ad_proc -public qf_is_currency {
             } else {
                 set e_type "integral_num"
             }
-        } elseif { [string first $e $signs_and_codes] > -1 } {
-            # type: symbol
-            set e_type "symbol"
 
-           
-            if { $e_type_prev eq $e_type } {
-                # check if character is valid in position of currency code
-                incr symbol_char_idx
+        } else { 
+
+            # check ignore_case_in_codes_symbols_p, before checking for symbol
+            if { $ignore_case_in_codes_symbols_p } {
+                set symbol_p [string match -nocase "*${e}*" $signs_and_codes ]
             } else {
-                set symbol_char_idx 0
-            }
-            # Is character expected within symbol?
-            if { [string first $signs_codes_idx_arr(${symbol_char_idx}) ] < 0 } {
-                set valid_p 0
-                ns_log Notice "qf_is_currency.2379: '${e}' \
- not found in list of supplied currency codes and signs: '${signs_and_codes}'"
+                set s_idx [string first $e $signs_and_codes]
+                if { $s_idx > -1 } {
+                    set symbol_p 1
+                } else {
+                    set symbol_p 0
+                }
             }
 
-        } elseif { [string first $e $separatrixes] > -1 } {
-            set e_type "separatrix"
-            incr i_separatrix
-            if { $i_separatrix > 1 } {
+            if { $symbol_p } {
+
+                set e_type "symbol"
+                if { $e_type_prev eq $e_type } {
+                    # check if character is valid in position of currency code
+                    incr symbol_char_idx
+                } else {
+                    set symbol_char_idx 0
+                }
+                # Is character expected within symbol?
+                if { $ignore_case_in_codes_symbols_p } {
+                    set expected_p [string match -nocase "*${e}*" $signs_codes_idx_arr(${symbol_char_idx}) ]
+                } else {
+                    if { [string first $signs_codes_idx_arr(${symbol_char_idx}) ] < 0 } {
+                        set expected_p 0
+                    }
+                }
+                if { !$expected_p } {
+                    set valid_p 0
+                    qf_log -message "qf_is_currency.2379: '${e}' \
+ not found in list of supplied currency codes and signs: '${signs_and_codes}' \
+ specifically, \
+ after '{$e_prev}' must be one of '$signs_codes_idx_arr(${symbol_char_idx})'" \
+                        -by_notice $log_messages_p \
+                        -by_upvar $upvar_varname
+                }
+
+            } elseif { [string first $e $separatrixes] > -1 } {
+                set e_type "separatrix"
+                incr i_separatrix
+                if { $i_separatrix > 1 } {
+                    set valid_p 0
+                }
+            } elseif { $e eq $paren_left } {
+                set e_type "paren_left"
+                incr i_paren_left
+                if { $i_paren_left > 1 } {
+                    set valid_p 0
+                }
+            } elseif { $e eq $paren_right } {
+                set e_type "paren_right"
+                incr i_paren_right
+                if { $i_paren_right > 1 } {
+                    set valid_p 0
+                }
+            } elseif { [string first $e $negative_sign] } {
+                set e_type "negative_sign"
+                incr i_negative_sign
+                if { $i_negative_sign > 1 } {
+                    set valid_p 0
+                }
+            } elseif { [string first $e $positive_sign] } {
+                set e_type "positive_sign"
+                incr i_positive_sign
+                if { $i_positive_sign > 1 } {
+                    set valid_p 0
+                }
+            } else {
+                set e_type ""
                 set valid_p 0
+                qf_log -message "qf_is_currency.2400: '${e}' \
+ not part of a currency pattern according to params_list '${params_list}'" \
+                    -by_notice $log_messages_p \
+                    -by_upvar $upvar_varname
+
             }
-        } elseif { $e eq $paren_left } {
-            set e_type "paren_left"
-            incr i_paren_left
-            if { $i_paren_left > 1 } {
-                set valid_p 0
-            }
-        } elseif { $e eq $paren_right } {
-            set e_type "paren_right"
-            incr i_paren_right
-            if { $i_paren_right > 1 } {
-                set valid_p 0
-            }
-        } elseif { [string first $e $negative_sign] } {
-            set e_type "negative_sign"
-            incr i_negative_sign
-            if { $i_negative_sign > 1 } {
-                set valid_p 0
-            }
-        } elseif { [string first $e $positive_sign] } {
-            set e_type "positive_sign"
-            incr i_positive_sign
-            if { $i_positive_sign > 1 } {
-                set valid_p 0
-            }
-        } else {
-            set e_type ""
-            set valid_p 0
-            ns_log Notice "qf_is_currency.2400: '${e}' \
- not part of a currency pattern according to params_list '${params_list}'"
         }
         lappend types_ol $e_type
         
         if { !$valid_p } {
-            ns_log Notice "qf_is_currency.2454: invalid, maybe too many. \
- e '${e}' e_type '${e_type}'"
+            qf_log -message "qf_is_currency.2454: invalid, maybe too many. \
+ e '${e}' e_type '${e_type}'" \
+                        -by_notice $log_messages_p \
+                        -by_upvar $upvar_varname
         }
 
         if { $e_type ne $e_type_prev } {
@@ -2475,8 +2517,11 @@ ad_proc -public qf_is_currency {
     while { $valid_p && $type_idx < $types_ol_len } {
         set type [lindex $types_ol $type_idx]
         if { [lsearch -exact $types_larr(${type_prev}) $type] < 0 } {
-            ns_log Notice "qf_is_currency.2421. type '${type}' not found in \
- types_larr(${type_prev}) '$types_larr(${type_prev})' types_ol '${types_ol}'"
+            qf_log -message "qf_is_currency.2421. type '${type}' not found in \
+ types_larr(${type_prev}) '$types_larr(${type_prev})' types_ol '${types_ol}'" \
+                -by_notice $log_messages_p \
+                -by_upvar $upvar_varname
+
             set valid_p 0
         }
         incr type_idx
@@ -2488,17 +2533,149 @@ ad_proc -public qf_is_currency {
         # Check for required cases 
         # that cannot be ruled out by branch-based map.
 
-        ##code check negative_before_required_p manually to reduce complexity
+        # check negative_before_required_p manually to reduce complexity
+        if { $negative_before_required_p && $valid_p } {
+            if { $i_negative_sign ne 1 \
+                     || ( $i_paren_left ne 1 \
+                              && $i_paren_right ne 1 ) } {
+                # There must be a negative
+                set valid_p 0
+                qf_log -message "qf_is_currency.2498. negative_sign required, \
+ not found." \
+                    -by_notice $log_messages_p \
+                    -by_upvar $upvar_varname
+            }
+        }
 
 
-        ##code check positive_before_required_p manually to reduce complexity
-        ##code check positive_before_required_p manually to reduce complexity
-        ##code check parens_required_p manually to reduce complexity
-        ##code check trucated_decimals_allowed_p
-        ##code check ignore_case_in_codes_symbols_p
-        ##code check redundant_parens_negative_allowed_p
-        ##code check currency_as_separatrix_required_p 
+        # check positive_before_required_p manually to reduce complexity
+        if { $positive_before_required_p && $valid_p } {
+            if { $i_positive_sign ne 1 } {
+                set valid_p 0
+                qf_log -message "qf_is_currency.2508. positive_sign required, \
+ not found." \
+                    -by_notice $log_messages_p \
+                    -by_upvar $upvar_varname
+            }
+        }
+
+        # check parens_required_p manually to reduce complexity
+        if { $parens_required_p && $valid_p } {
+            if { $i_paren_left ne 1 \
+                     && $i_paren_right ne 1 } {
+                set valid_p 0
+                qf_log -message "qf_is_currency.2518. parenthesis required, \
+ not found." \
+                    -by_notice $log_messages_p \
+                    -by_upvar $upvar_varname
+            }
+        }
+
+        # check truncated_decimals_allowed_p
+        # ie truncated decimals *not* allowed
+        if { !$truncated_decimals_allowed_p && $valid_p } {
+
+            # Consider also that fractional_num has length of 0
+            # when there is no separatrix. 
+            # In that case, verify length against integral_num,
+            # and allow all cases where decimals are longer than
+            # minimum regardless of $truncated_decimals_allowed_p,
+            # because the check becomes insignificant.
+            # num_arr(1) is integral_num
+            # num_arr(2) is fractional_num
+            if { $i_separatrix eq 0 } {
+                if { [string length $num_arr(1) ] < $decimals_max } {
+                    set valid_p 0
+                    qf_log -message "qf_is_currency.2541: integral_num \
+ substituted for fractional_num, number has too few digits." \
+                        -by_notice $log_messages_p \
+                        -by_upvar $upvar_varname
+                }
+            } else {
+                if { [string length $num_arr(2) ] ne $decimals_max } {
+                    set valid_p 0
+                    qf_log -message "qf_is_currency.2547: '${decimals_max}' \
+ decimals required in the fractional part." \
+                        -by_notice $log_messages_p \
+                        -by_upvar $upvar_varname
+                }
+            }
+        }
+
+        # check redundant_parens_negative_allowed_p
+        if { !$redundant_parens_negative_allowed_p && $valid_p } {
+            if { $i_negative_sign eq 1 \
+                     && $i_paren_left eq 1 \
+                     && $i_paren_right eq 1 } {
+                set valid_p 0
+                qf_log -message "qf_is_currency.2514. negative_sign and \
+ parenthesis found. Using both is not permitted by flags." \
+                    -by_notice $log_messages_p \
+                    -by_upvar $upvar_varname
+            }
+        }
+
+        # check currency_as_separatrix_required_p 
+        if { $currency_as_separatrix_required_p && $valid_p } {
+            # check in the path of types
+            set integral_idx [lsearch -exact $types_ol "integral_num"]
+            if { [lindex $types_ol ${integral_idx}+1 ] ne "symbol" } {
+                set valid_p 0
+                qf_log -message "qf_is_currency.2593. Expected \
+ a currency symbol instead of a separatrix (comma, period as set by flags)" \
+                    -by_notice $log_messages_p \
+                    -by_upvar $upvar_varname
+            }
+        }
     }        
 
     return $valid_p
+}
+
+ad_proc -private qf_log {
+    -message
+    {-by_notice "0"}
+    {-by_warning "0"}
+    {-by_upvar ""}
+} {
+    Passes message to server log and/or to calling proc via upvar.
+} {
+    This proc helps with converting code between app-level debugging,
+    and UI entry issues, by directing message in context of expectations,
+    which may be selectable at runtime by calling proc.
+    <br><br>
+    If <code>by_upvar</code> is not empty string, <code>lappend</code>s message to 
+    variable of that name for perhaps passing to UI via <code>util_user_message</code>. If value of by_upvar is a number or nonstandard variable name, and user is an admin, message is passed directly to util_user_message otherwise ignored.
+    <br><br>
+    If <code>by_notice</code> is true, logs message in server log as 'Notice'.
+    <br><br>
+    If <code>by_warning</code> is true, logs message in server log as 'Warning'.
+    @see util_user_message
+} {
+    set m "qf_log:"
+    append m $message
+    if { $by_upvar ne "" } {
+        if { [string match {[\_a-z]*} $by_upvar] } {
+            upvar 1 $by_upvar upvar_message_list
+            lappend upvar_message_list ${message}
+        } else {
+            if { [ad_conn isconnected] } {
+                set user_id [ad_conn user_id]
+                set package_id [ad_conn package_id]
+                set admin_p [permission::permission_p -party_id $user_id \
+                                 -object_id $package_id \
+                                 -privilege admin]
+                if { $admin_p } {
+                    util_user_message -message $m
+                }
+            }
+        }
+    }
+    if { [qf_is_true $by_notice] } {
+        ns_log Notice $m
+    }
+    if { [qf_is_true $by_warning] } {
+        ns_log Warning $m
+    }
+    return 1
 }
