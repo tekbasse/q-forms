@@ -2228,7 +2228,7 @@ ad_proc -public qf_is_currency {
             lappend types_larr(${a}) negative_sign
             lappend types_larr(negative_sign) ${b}
         }
-        ##code check negative_before_required_p manually to reduce complexity
+
     }
     if { $positive_prefix_allowed_p || $positive_prefix_required_p } {
         lappend types_larr(start) positive_sign
@@ -2258,7 +2258,7 @@ ad_proc -public qf_is_currency {
             lappend types_larr(${a}) positive_sign
             lappend types_larr(positive_sign) ${b}
         }
-        ##code check positive_before_required_p manually to reduce complexity
+
     }
     if { $currency_code_before_allowed_p || $currency_code_before_required_p } {
         # anytime before integral_num, means
@@ -2276,7 +2276,7 @@ ad_proc -public qf_is_currency {
             lappend types_larr(${a}) symbol
             lappend types_larr(symbol) ${b}
         }
-        ##code check positive_before_required_p manually to reduce complexity
+
     }
     if { $parens_allowed_p || $parens_required_p } {
         # anytime before integral_num, means
@@ -2295,7 +2295,7 @@ ad_proc -public qf_is_currency {
             lappend types_larr(paren_left) ${b}
         }
 
-        ##code check parens_required_p manually to reduce complexity
+
     }
     if { $parens_wrap_currency_allowed_p } {
         # before symbol
@@ -2321,11 +2321,23 @@ ad_proc -public qf_is_currency {
         set types_larr(paren_left) symbol
     }
 
-    ##code check trucated_decimals_allowed_p
-    ##code check ignore_case_in_codes_symbols_p
-    ##code check redundant_parens_negative_allowed_p
-    ##code check currency_as_separatrix
-    # parse value
+    if { $currency_as_separatrix_allowed_p } {
+        lappend types_larr(integral_num) "symbol"
+        lappend types_larr(symbol) "fractional_num"
+        # Since symbol is also possible in other places,
+        # check currency_as_separatrix_required_p at end
+
+    }
+    if { $no_separatrix_allowed_p } {
+        # fractional_num will be missing from the type path
+        # when no_separatrix exists.
+        # To adapt, add the branches of fractional_num to integral_num
+        set types_larr(fractional_num) [concat $types_larr(fractional_num) \
+                                            $types_larr(integral_num) ]
+        # It's okay if there are duplicates in the list.
+    }
+
+    # Parse value
     set value_len [string length $value]
     set num_prev ""
     set i_num 0
@@ -2338,13 +2350,22 @@ ad_proc -public qf_is_currency {
     set paren_left "("
     
 
-##code convert positive sign,negative sign and separatrix parameters to
-    ##any representative characters, such as 's' becomes ' '
+    # Convert positive sign,negative sign and separatrix parameters to
+    # any representative characters, such as 's' becomes ' '
+    regsub -- {s} $positives { } positives
+    regsub -- {s} $negatives { } negatives
+    regsub -- {s} $separatrixes { } separatrixes
+    regsub -- {s} $integral_separators { } integral_separators
+
 
     set types_ol [list ]
     set e_prev ""
+    # e_type is type of e
+    # e_type_prev is previous e_type
     set e_type_prev ""
     set e_next [string range $value 0 0]
+    # type_prev is previous, different type
+    set type_prev ""
     while { $valid_p && $i < $value_len && $e_next ne "" } {
         set e $e_next
         set e_next [string range $value $i+1 $i+1]
@@ -2371,10 +2392,11 @@ ad_proc -public qf_is_currency {
         } elseif { [string first $e $signs_and_codes] > -1 } {
             # type: symbol
             set e_type "symbol"
+
+           
             if { $e_type_prev eq $e_type } {
                 # check if character is valid in position of currency code
                 incr symbol_char_idx
-                
             } else {
                 set symbol_char_idx 0
             }
@@ -2403,11 +2425,14 @@ ad_proc -public qf_is_currency {
         }
         lappend types_ol $e_type
         
+        if { $e_type ne $e_type_prev } {
+            set type_prev $e_type_prev
+        }
         set e_prev $e
         set e_type_prev $e_type
+        
         incr i
     }
-
 
     # Are types in an expected path? 
     # We ask after path is made, because some patterns cannot be 
@@ -2421,14 +2446,20 @@ ad_proc -public qf_is_currency {
             ns_log Notice "qf_is_currency.2421. type '${type}' not found in \
  types_larr(${type_prev}) '$types_larr(${type_prev})'"
         }
-
-
         incr type_idx
     }
     ns_log Notice "qf_is_currency.2440: types_ol '${types_ol}'"
 
     # What other checks need to be made?
-    # fractional_num will be missing when no_separatrix exists.
+    ##code check negative_before_required_p manually to reduce complexity
+    ##code check positive_before_required_p manually to reduce complexity
+    ##code check positive_before_required_p manually to reduce complexity
+    ##code check parens_required_p manually to reduce complexity
+    ##code check trucated_decimals_allowed_p
+    ##code check ignore_case_in_codes_symbols_p
+    ##code check redundant_parens_negative_allowed_p
+    ##code check currency_as_separatrix_required_p 
 
+    # Check for required cases that cannot be ruled out by branch-based map.
     return $valid_p
 }
