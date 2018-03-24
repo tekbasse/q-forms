@@ -1909,6 +1909,7 @@ ad_proc -public qf_is_currency {
     </li><li>
     u - ignore upper/lowercase designation in codes and symbols.
     </li></ul>
+    <p>Two additional parameters are for admin level use when debugging or testing apps. Lowercase L 'l' logs reason validation fails to server log. 'L' passes the log message to an <code>upvar</code>'d variable where it can be used with building a more responsive UI and the like.
     <br><br>
     <strong>positive signs</strong> Usually "+" and/or space " ", where space is indicated by "s":  +s
     <br><br>
@@ -1968,8 +1969,10 @@ ad_proc -public qf_is_currency {
     @see template::data::validate::currency
     
 } {
-    set upvar_varname "__qf_verror_list"
-    upvar 1 __qf_verror_list $upvar_varname
+    # For flags 'l' and "L"
+    set upvar_varname_to_use "__qf_verror_list"
+    set upvar_varname ""
+    upvar 1 __qf_verror_list $upvar_varname_to_use
 
     set params_list [split $parameters " "]
     set flags_list [split [lindex $params_list 0] ""]
@@ -1994,7 +1997,7 @@ ad_proc -public qf_is_currency {
 
     # alllowed flags
 
-
+    set log_messages_p 0
     set negative_prefix_allowed_p 0
     set negative_suffix_allowed_p 0
     set negative_before_allowed_p 0
@@ -2130,7 +2133,7 @@ ad_proc -public qf_is_currency {
                 set log_messages_p 1
             }
             L {
-                set upvar_messages_p
+                set upvar_varname $upvar_varname_to_use
             }
             default {
                 ns_log Warning "qf_is_currency.1976: flag '${f}' unknown. Ignored."
