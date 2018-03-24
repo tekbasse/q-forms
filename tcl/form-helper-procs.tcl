@@ -2341,6 +2341,11 @@ ad_proc -public qf_is_currency {
     set value_len [string length $value]
     set num_prev ""
     set i_num 0
+    set i_separatrix 0
+    set i_paren_left 0
+    set i_paren_right 0
+    set i_negative_sign 0
+    set i_positive_sign 0
     set i_symbol 0
     set symbol_char_idx 0
     set numerals "0123456789"
@@ -2409,14 +2414,34 @@ ad_proc -public qf_is_currency {
 
         } elseif { [string first $e $separatrixes] > -1 } {
             set e_type "separatrix"
+            incr i_separatrix
+            if { $i_separatrix > 1 } {
+                set valid_p 0
+            }
         } elseif { $e eq $paren_left } {
             set e_type "paren_left"
+            incr i_paren_left
+            if { $i_paren_left > 1 } {
+                set valid_p 0
+            }
         } elseif { $e eq $paren_right } {
             set e_type "paren_right"
+            incr i_paren_right
+            if { $i_paren_right > 1 } {
+                set valid_p 0
+            }
         } elseif { [string first $e $negative_sign] } {
             set e_type "negative_sign"
+            incr i_negative_sign
+            if { $i_negative_sign > 1 } {
+                set valid_p 0
+            }
         } elseif { [string first $e $positive_sign] } {
             set e_type "positive_sign"
+            incr i_positive_sign
+            if { $i_positive_sign > 1 } {
+                set valid_p 0
+            }
         } else {
             set e_type ""
             set valid_p 0
@@ -2425,6 +2450,11 @@ ad_proc -public qf_is_currency {
         }
         lappend types_ol $e_type
         
+        if { !$valid_p } {
+            ns_log Notice "qf_is_currency.2454: invalid, maybe too many. \
+ e '${e}' e_type '${e_type}'"
+        }
+
         if { $e_type ne $e_type_prev } {
             set type_prev $e_type_prev
         }
@@ -2446,22 +2476,29 @@ ad_proc -public qf_is_currency {
         set type [lindex $types_ol $type_idx]
         if { [lsearch -exact $types_larr(${type_prev}) $type] < 0 } {
             ns_log Notice "qf_is_currency.2421. type '${type}' not found in \
- types_larr(${type_prev}) '$types_larr(${type_prev})'"
+ types_larr(${type_prev}) '$types_larr(${type_prev})' types_ol '${types_ol}'"
+            set valid_p 0
         }
         incr type_idx
     }
-    ns_log Notice "qf_is_currency.2440: types_ol '${types_ol}'"
+   
 
-    # What other checks need to be made?
-    ##code check negative_before_required_p manually to reduce complexity
-    ##code check positive_before_required_p manually to reduce complexity
-    ##code check positive_before_required_p manually to reduce complexity
-    ##code check parens_required_p manually to reduce complexity
-    ##code check trucated_decimals_allowed_p
-    ##code check ignore_case_in_codes_symbols_p
-    ##code check redundant_parens_negative_allowed_p
-    ##code check currency_as_separatrix_required_p 
+    if { $valid_p } {
+        # What other checks need to be made?
+        # Check for required cases 
+        # that cannot be ruled out by branch-based map.
 
-    # Check for required cases that cannot be ruled out by branch-based map.
+        ##code check negative_before_required_p manually to reduce complexity
+
+
+        ##code check positive_before_required_p manually to reduce complexity
+        ##code check positive_before_required_p manually to reduce complexity
+        ##code check parens_required_p manually to reduce complexity
+        ##code check trucated_decimals_allowed_p
+        ##code check ignore_case_in_codes_symbols_p
+        ##code check redundant_parens_negative_allowed_p
+        ##code check currency_as_separatrix_required_p 
+    }        
+
     return $valid_p
 }
