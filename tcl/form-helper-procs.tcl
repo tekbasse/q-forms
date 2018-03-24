@@ -2358,7 +2358,7 @@ ad_proc -public qf_is_currency {
     regsub -- {s} $integral_separators { } integral_separators
 
 
-    set types_ol [list ]
+    set types_ol [list "start"]
     set e_prev ""
     # e_type is type of e
     # e_type_prev is previous e_type
@@ -2437,11 +2437,13 @@ ad_proc -public qf_is_currency {
     # Are types in an expected path? 
     # We ask after path is made, because some patterns cannot be 
     # validated until entire pattern is parsed.
+    lappend types_ol "end"
     set types_ol_len [llength $types_ol]
-    set type_idx 0
+    set type_idx 1
+    # First entry of types_ol is always 'start'
     set type_prev "start"
     while { $valid_p && $type_idx < $types_ol_len } {
-        set type [lindex $type_idx]
+        set type [lindex $types_ol $type_idx]
         if { [lsearch -exact $types_larr(${type_prev}) $type] < 0 } {
             ns_log Notice "qf_is_currency.2421. type '${type}' not found in \
  types_larr(${type_prev}) '$types_larr(${type_prev})'"
