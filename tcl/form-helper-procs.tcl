@@ -2164,7 +2164,6 @@ ad_proc -public qf_is_currency {
                 append separatrixes $s
             }
         }
-        ns_log Notice "qf_is_currency.2166 s_i $s_i"
         incr s_i
     }
 
@@ -2391,7 +2390,6 @@ ad_proc -public qf_is_currency {
     while { $valid_p && $i < $value_len && $e_next ne "" } {
         set e $e_next
         set e_next [string range $value $i+1 $i+1]
-        ns_log Notice "qf_is_currency.2393 i $i"
         # determine e_type
         # Using nested 'if's to reduce cpu time 
         #      and avoid cpu intense regular expressions.
@@ -2471,13 +2469,13 @@ ad_proc -public qf_is_currency {
                 if { $i_paren_right > 1 } {
                     set valid_p 0
                 }
-            } elseif { [string first $e $negatives] } {
+            } elseif { [string first $e $negatives] > -1 } {
                 set e_type "negative_sign"
                 incr i_negative_sign
                 if { $i_negative_sign > 1 } {
                     set valid_p 0
                 }
-            } elseif { [string first $e $positives] } {
+            } elseif { [string first $e $positives] > -1 } {
                 set e_type "positive_sign"
                 incr i_positive_sign
                 if { $i_positive_sign > 1 } {
@@ -2496,7 +2494,7 @@ ad_proc -public qf_is_currency {
         lappend types_ol $e_type
         
         if { !$valid_p } {
-            qf_log -message "qf_is_currency.2454: invalid, maybe too many. \
+            qf_log -message "qf_is_currency.2454: invalid, maybe too many of \
  e '${e}' e_type '${e_type}'" \
                         -by_notice $log_messages_p \
                         -by_upvar $upvar_varname
