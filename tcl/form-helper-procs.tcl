@@ -1638,7 +1638,7 @@ ad_proc -public qf_vars_to_array {
     return $success_p
 }
 
-ad_proc qf_email_valid_q { query_email } {
+ad_proc -public qf_email_valid_q { query_email } {
     Returns 1 if an email address has more or less the correct form.
     Works like util_email_valid_p only more tolerant of valid addresses etc.
 
@@ -1665,7 +1665,7 @@ ad_proc qf_email_valid_q { query_email } {
     return $is_email_p
 }
 
-ad_proc qf_domain_name_valid_q {
+ad_proc -public qf_domain_name_valid_q {
     domain_name
     {ends_with_dot_p "0"}
 } {
@@ -1722,9 +1722,8 @@ ad_proc qf_domain_name_valid_q {
 
             if { ( ( $parts_list_len == 3 && $all_is_num_p ) || !$all_is_num_p ) && $all_valid_p && $parts_list_len > 0 } {
                 set is_name_valid_p 1
-            } 
-        } 
-           
+            }
+        }
     }
     return $is_name_valid_p
 }
@@ -1858,7 +1857,7 @@ ad_proc -public qf_is_currency_like {
 
 ad_proc -public qf_is_currency {
     value
-    {parameters "bcefjkwht +s - 2 . ,s $ USD"}
+    {parameters "bcefjkwhtul +s - 2 . ,s $ USD"}
 } {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
@@ -1994,6 +1993,7 @@ ad_proc -public qf_is_currency {
     set signs_codes_list [lrange $params_list 6 end]
 
     # setup flags
+    set valid_p 1
 
     # alllowed flags
 
@@ -2164,6 +2164,8 @@ ad_proc -public qf_is_currency {
                 append separatrixes $s
             }
         }
+        ns_log Notice "qf_is_currency.2166 s_i $s_i"
+        incr s_i
     }
 
     # map currencies allowed
@@ -2174,7 +2176,7 @@ ad_proc -public qf_is_currency {
         foreach c $symbol_or_code_list {
             # Would be nice to use concat, but index may not be defined
             # and adding an IF seems expensive for a potentially long list
-            foreach d $c_list {
+            foreach d $symbol_or_code_list {
                 lappend c_arr(${c}) $d
             }
             append supplied_signs_and_codes $c
@@ -2230,12 +2232,12 @@ ad_proc -public qf_is_currency {
     }
     if { $negative_before_allowed_p || $negative_before_required_p } {
         # anytime before integral_num, means
-        set paths_list [list [list start integral_num] \
+        set paths_lists [list [list start integral_num] \
                             [list start symbol] \
                             [list symbol integral_num] \
                             [list paren_left symbol] \
                             [list symbol paren_left] ]
-        foreach path_list {
+        foreach path_list $paths_lists {
             lassign $path_list a b
             lappend types_larr(${a}) negative_sign
             lappend types_larr(negative_sign) ${b}
@@ -2260,12 +2262,12 @@ ad_proc -public qf_is_currency {
     }
     if { $positive_before_allowed_p || $positive_before_required_p } {
         # anytime before integral_num, means
-        set paths_list [list [list start integral_num] \
+        set paths_lists [list [list start integral_num] \
                             [list start symbol] \
                             [list symbol integral_num] \
                             [list paren_left symbol] \
                             [list symbol paren_left] ]
-        foreach path_list {
+        foreach path_list $paths_lists {
             lassign $path_list a b
             lappend types_larr(${a}) positive_sign
             lappend types_larr(positive_sign) ${b}
@@ -2274,16 +2276,16 @@ ad_proc -public qf_is_currency {
     }
     if { $currency_code_before_allowed_p || $currency_code_before_required_p } {
         # anytime before integral_num, means
-        set paths_list [list [list start integral_num] \
-                            [list start positive_sign] \
-                            [list start negative_sign] \
-                            [list positive_sign integral_num] \
-                            [list negative_sign integral_num] \
-                            [list paren_left positive_sign] \
-                            [list paren_left negative_sign] \
-                            [list positive_sign paren_left] \
-                            [list negative_sign paren_left] ]
-        foreach path_list {
+        set paths_lists [list [list start integral_num] \
+                             [list start positive_sign] \
+                             [list start negative_sign] \
+                             [list positive_sign integral_num] \
+                             [list negative_sign integral_num] \
+                             [list paren_left positive_sign] \
+                             [list paren_left negative_sign] \
+                             [list positive_sign paren_left] \
+                             [list negative_sign paren_left] ]
+        foreach path_list $paths_lists {
             lassign $path_list a b
             lappend types_larr(${a}) symbol
             lappend types_larr(symbol) ${b}
@@ -2292,16 +2294,16 @@ ad_proc -public qf_is_currency {
     }
     if { $parens_allowed_p || $parens_required_p } {
         # anytime before integral_num, means
-        set paths_list [list [list start integral_num] \
-                            [list start positive_sign] \
-                            [list start negative_sign] \
-                            [list positive_sign integral_num] \
-                            [list negative_sign integral_num] \
-                            [list symbol positive_sign] \
-                            [list symbol negative_sign] \
-                            [list symbol integral_num] ]
+        set paths_lists [list [list start integral_num] \
+                             [list start positive_sign] \
+                             [list start negative_sign] \
+                             [list positive_sign integral_num] \
+                             [list negative_sign integral_num] \
+                             [list symbol positive_sign] \
+                             [list symbol negative_sign] \
+                             [list symbol integral_num] ]
 
-        foreach path_list {
+        foreach path_list $paths_lists {
             lassign $path_list a b
             lappend types_larr(${a}) paren_left
             lappend types_larr(paren_left) ${b}
@@ -2318,11 +2320,11 @@ ad_proc -public qf_is_currency {
              || $parens_wrap_currency_allowed_p \
              || $parens_wrap_currency_required_p } {
         # anytime after fractional_num means
-        set paths_list [list [list fractional_num end] \
-                            [list separatrix end] \
-                            [list positive_sign end] \
-                            [list negative_sign end] ]
-        foreach path_list {
+        set paths_lists [list [list fractional_num end] \
+                             [list separatrix end] \
+                             [list positive_sign end] \
+                             [list negative_sign end] ]
+        foreach path_list $paths_lists {
             lassign $path_list a b
             lappend types_larr(${a}) paren_left
             lappend types_larr(paren_left) ${b}
@@ -2389,7 +2391,7 @@ ad_proc -public qf_is_currency {
     while { $valid_p && $i < $value_len && $e_next ne "" } {
         set e $e_next
         set e_next [string range $value $i+1 $i+1]
-
+        ns_log Notice "qf_is_currency.2393 i $i"
         # determine e_type
         # Using nested 'if's to reduce cpu time 
         #      and avoid cpu intense regular expressions.
@@ -2469,13 +2471,13 @@ ad_proc -public qf_is_currency {
                 if { $i_paren_right > 1 } {
                     set valid_p 0
                 }
-            } elseif { [string first $e $negative_sign] } {
+            } elseif { [string first $e $negatives] } {
                 set e_type "negative_sign"
                 incr i_negative_sign
                 if { $i_negative_sign > 1 } {
                     set valid_p 0
                 }
-            } elseif { [string first $e $positive_sign] } {
+            } elseif { [string first $e $positives] } {
                 set e_type "positive_sign"
                 incr i_positive_sign
                 if { $i_positive_sign > 1 } {
@@ -2524,10 +2526,11 @@ ad_proc -public qf_is_currency {
  types_larr(${type_prev}) '$types_larr(${type_prev})' types_ol '${types_ol}'" \
                 -by_notice $log_messages_p \
                 -by_upvar $upvar_varname
-
+            
             set valid_p 0
         }
         incr type_idx
+        ns_log Notice "qf_is_currency.2532 type_idx $type_idx"
     }
    
 
@@ -2641,8 +2644,8 @@ ad_proc -private qf_log {
     {-by_warning "0"}
     {-by_upvar ""}
 } {
-    Passes message to server log and/or to calling proc via upvar.
-} {
+ OA   Passes message to server log and/or to calling proc via upvar.
+    <br><br>
     This proc helps with converting code between app-level debugging,
     and UI entry issues, by directing message in context of expectations,
     which may be selectable at runtime by calling proc.
@@ -2671,7 +2674,7 @@ ad_proc -private qf_log {
                 if { $admin_p } {
                     util_user_message -message $m
                 }
-            }
+            } 
         }
     }
     if { [qf_is_true $by_notice] } {
