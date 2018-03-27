@@ -2291,6 +2291,23 @@ ad_proc -public qf_is_currency {
         }
 
     }
+
+##code add currency_code_after_allowed_p currency_code_after_required_p
+    if { $currency_code_after_allowed_p || $currency_code_after_required_p } {
+        # anytime after fractional_num
+        lappend types_larr(fractional_num) symbol
+        if { $positive_suffix_allowed_p || $postive_suffix_required_p } {
+            lappend types_larr(positive_sign) symbol
+        }
+        if { $negative_suffix_allowed_p || $negative_suffix_required_p } {
+            lappend types_larr(negative_sign) symbol
+        }
+    }
+
+
+
+
+
     if { $parens_allowed_p || $parens_required_p } {
         # anytime before integral_num, means
         set paths_lists [list [list start integral_num] \
@@ -2325,8 +2342,8 @@ ad_proc -public qf_is_currency {
                              [list negative_sign end] ]
         foreach path_list $paths_lists {
             lassign $path_list a b
-            lappend types_larr(${a}) paren_left
-            lappend types_larr(paren_left) ${b}
+            lappend types_larr(${a}) paren_right
+            lappend types_larr(paren_right) ${b}
         }
     }
     if { $parens_wrap_currency_required_p } {
@@ -2529,6 +2546,7 @@ ad_proc -public qf_is_currency {
             set valid_p 0
         }
         incr type_idx
+        set type_prev $type
         ns_log Notice "qf_is_currency.2532 type_idx $type_idx"
     }
    
@@ -2575,6 +2593,9 @@ ad_proc -public qf_is_currency {
                     -by_upvar $upvar_varname
             }
         }
+##code check use of symbol after negative_sign or paren_right for case
+        # when negative_suffix_required_p or positive_suffix_required_p
+        # or paren_right required..
 
         # check truncated_decimals_allowed_p
         # ie truncated decimals *not* allowed
