@@ -2178,7 +2178,7 @@ ad_proc -public qf_is_currency {
             foreach d $symbol_or_code_list {
                 lappend c_arr(${c}) $d
             }
-            append supplied_signs_and_codes $c
+            append signs_and_codes $c
             set c_len [string length $c]
             for {set i 0} {$i < $c_len} {incr i} {
                 # signs_codes_pos_arr
@@ -2413,6 +2413,7 @@ ad_proc -public qf_is_currency {
         } else { 
 
             # check ignore_case_in_codes_symbols_p, before checking for symbol
+
             if { $ignore_case_in_codes_symbols_p } {
                 set symbol_p [string match -nocase "*${e}*" $signs_and_codes ]
             } else {
@@ -2491,7 +2492,6 @@ ad_proc -public qf_is_currency {
 
             }
         }
-        lappend types_ol $e_type
         
         if { !$valid_p } {
             qf_log -message "qf_is_currency.2454: invalid, maybe too many of \
@@ -2502,6 +2502,7 @@ ad_proc -public qf_is_currency {
 
         if { $e_type ne $e_type_prev } {
             set type_prev $e_type_prev
+            lappend types_ol $e_type
         }
         set e_prev $e
         set e_type_prev $e_type
