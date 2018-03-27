@@ -2292,10 +2292,11 @@ ad_proc -public qf_is_currency {
 
     }
 
-##code add currency_code_after_allowed_p currency_code_after_required_p
+
     if { $currency_code_after_allowed_p || $currency_code_after_required_p } {
         # anytime after fractional_num
         lappend types_larr(fractional_num) symbol
+        lappend types_larr(symbol) end
         if { $positive_suffix_allowed_p || $postive_suffix_required_p } {
             lappend types_larr(positive_sign) symbol
         }
@@ -2327,14 +2328,7 @@ ad_proc -public qf_is_currency {
 
 
     }
-    if { $parens_wrap_currency_allowed_p } {
-        # before symbol
-        lappend types_larr(start) paren_left
-        lappend types_larr(paren_left) symbol
-    }
-    if { $parens_allowed_p || $parens_required_p \
-             || $parens_wrap_currency_allowed_p \
-             || $parens_wrap_currency_required_p } {
+    if { $parens_allowed_p || $parens_required_p } {
         # anytime after fractional_num means
         set paths_lists [list [list fractional_num end] \
                              [list separatrix end] \
@@ -2345,10 +2339,18 @@ ad_proc -public qf_is_currency {
             lappend types_larr(${a}) paren_right
             lappend types_larr(paren_right) ${b}
         }
-    }
-    if { $parens_wrap_currency_required_p } {
-        set types_larr(start) paren_left
-        set types_larr(paren_left) symbol
+        
+        if { $parens_wrap_currency_allowed_p \
+                 || $parens_wrap_currency_required_p } {
+            
+            # before symbol
+            #redundant types_larr(start) paren_left
+            lappend types_larr(paren_left) symbol
+            
+            # after symbol
+            lappend types_larr(symbol) paren_right
+            #redundant types_larr(paren_right) end
+        }
     }
 
     if { $currency_as_separatrix_allowed_p } {
@@ -2593,14 +2595,85 @@ ad_proc -public qf_is_currency {
                     -by_upvar $upvar_varname
             }
         }
-##code check use of symbol after negative_sign or paren_right for case
-        # when negative_suffix_required_p or positive_suffix_required_p
-        # or paren_right required..
+        
+        
+        # Following must be checked manually, because
+        # symbol may be after paren_left or before paren_right
+        if { $currency_code_before_required_p \
+                 || $currency_code_after_required_p } {
+
+            set symbol_idx_list [lsearch -exact -all $types_ol "symbol"]
+            if { $currency_code_before_required_p } {
+                set integral_num_idx [lsearch -exact $types_ol "integral_num"]
+                if { [lindex $symbol_idx_list 0] > $integral_num_idx } {
+                    set valid_p 0
+                    qf_log -message "qf_is_currency.2602. symbol not before integral_num." \
+                        -by_notice $log_messages_p \
+                        -by_upvar $upvar_varname
+                }
+            }
+            if { $currency_code_after_required_p } {
+                # Careful here. separatrix may be a symbol,
+                # and there may not be a fractional_num if separatrix
+                # is allowed to be omitted. So, search a cascade of
+                # possibilities to catch all cases, based on flags.
+                if { $no_separatrix_allowed_p \
+                         || $currency_as_separatrix_allowed_p } {
+                    # If currency_as_separatrix_allowed, then another symbol
+                    # will exist right after integral_num
+                    # If no separatrix_allowed, then there may not be
+                    # a fractional_num type.
+                    # Use integral_num_idx +1 as the boundary to check for 
+                    # cases "after"
+                    if { ![info exists integral_num_idx] } {
+                        set integral_num_idx [lsearch -exact $types_ol "integral_num"]
+                    }
+                    incr integral_num_idx 2
+                    if { [lindex $symbol_idx_list end] < $integral_num_idx } {
+                        set valid_p 0
+                        qf_log -message "qf_is_currency.2599. symbol required after separatrix." \
+                            -by_notice $log_messages_p \
+                            -by_upvar $upvar_varname
+                    }
+
+                } else {
+                    # common case
+                    set fractional_num_idx [lsearch -exact $types_ol "fractional_num"]
+                    if { [lindex $symbol_idx_list end] < $fractional_num_idx } {
+                        set valid_p 0
+                        qf_log -message "qf_is_currency.2602. symbol required after fractional_num." \
+                            -by_notice $log_messages_p \
+                            -by_upvar $upvar_varname
+                    }
+                }
+            }
+            if { $parens_wrap_currency_required_p && $valid_p } {
+                set paren_left_idx [lsearch -exact $types_ol "paren_left"]
+                set paren_right_idx [lsearch -exact $types_ol "paren_right"]
+                
+                if { $currency_code_after_required_p } {
+                    if { [lindex $symbol_idx_list end] > $paren_right_idx } {
+                        set valid_p 0
+                        qf_log -message "qf_is_currency.2611. symbol after parenthises found." \
+                            -by_notice $log_messages_p \
+                            -by_upvar $upvar_varname
+                    }
+                }
+                if { $currency_code_before_required_p } {
+                    if { [lindex $symbol_idx_list 0] < $paren_left_idx } {
+                        set valid_p 0
+                        qf_log -message "qf_is_currency.2620. symbol before parenthises found." \
+                            -by_notice $log_messages_p \
+                            -by_upvar $upvar_varname
+                    }
+                }
+            }
+        }
 
         # check truncated_decimals_allowed_p
         # ie truncated decimals *not* allowed
         if { !$truncated_decimals_allowed_p && $valid_p } {
-
+            
             # Consider also that fractional_num has length of 0
             # when there is no separatrix. 
             # In that case, verify length against integral_num,
