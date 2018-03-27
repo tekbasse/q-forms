@@ -33,7 +33,7 @@ aa_register_case -cats {api smoke} qf_helper_proc_checks {
             set t_p [qf_is_currency_like $c]
             aa_true "qf_is_currency_like '${c}'" $t_p
 
-            set c "12,234.56USD"
+            set c "12,234.56uSD"
             set t_p [qf_is_currency $c]
             aa_true "qf_is_currency '${c}'" $t_p
 
