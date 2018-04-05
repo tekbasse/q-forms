@@ -1862,14 +1862,14 @@ ad_proc -public qf_is_currency {
     Returns 1 if valid currency type as specified by parameters
     <br><br>
     Currency type is determined according to <code>parameters</code>, 
-    where <code>parameters</codes> consists of a space separated list of:
+    where <code>parameters</code> consists of a space separated list of:
     <strong>flags</strong>, 
     <strong>positive signs</strong>,
     <strong>negative signs</strong>
     <strong>decimals</strong>,
     <strong>decimal character (separatrix)</strong>,
     <strong>integral separators</strong>, and
-    <strong>currency signs and/or codes<strong>..
+    <strong>currency signs and/or codes</strong>..
     Default is to not allow a decimal separator, positive or negative sign, or symbol or code, or a number with fewer fractional decimals than defined by second position in <code>parameters</code>. 
     Treat fractional units as separate signs/codes with their own ISO code, if necessary. For example 'USD,$ XUSD,¢'. 
     This way, any number is validated against one unit of measure of currency.
@@ -1929,7 +1929,7 @@ ad_proc -public qf_is_currency {
     Uppercase means the 'M' or 'N' are required, 
     consistent usage with above uppercase usage.
     <br><br>
-    <strong>integral separators<strong> 
+    <strong>integral separators</strong> 
     This is the separator used to separate
     multiple inetgral (whole) units, such as thousands from hundreds of units.
     For background, see: https://en.wikipedia.org/wiki/Decimal_separator#Other_numeral_systems
