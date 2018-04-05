@@ -574,14 +574,19 @@ ad_proc -private qf_validate_input {
 
     # Simplify any future cases, where 
     # proc_name is called with default ' {value}' explicitly added.
+
     set proc_name_len [llength $proc_name]
-    if { $proc_name_len eq 2 \
-             && [string range $proc_name end-7 end] eq " {value}" } {
-        set proc_name [string range $proc_name 0 end-8]
-        set proc_name_len 1
+    if { $proc_name_len > 1 } {
+        if { $proc_name_len eq 2 \
+                 && [lindex $proc_name 1] eq "{value}" } {
+            set proc_name [lindex 0]
+            set proc_name_len 1
+        } else {
+            regsub -- {{value}} $proc_name "\${input}" proc_name
+            set proc_params_list [split $proc_name " "]
+            set proc_name [lindex $proc_params_list 0]
+        }
     }
-    regsub -- {{value}} $proc_name "\${input}" proc_name
-    ##code switch details
     switch -- $proc_name {
         qf_is_decimal {
             set valid_p [qf_is_decimal $input ]
@@ -627,8 +632,7 @@ ad_proc -private qf_validate_input {
         }
         qf_is_currency {
             if { $proc_name_len eq 2 } {
-                set params [lindex $proc_name 1]
-                set valid_p [qf_is_currency $input $params]
+                set valid_p [qf_is_currency $input [lindex $proc_params_list 1]]
             } else {
                 set valid_p [qf_is_currency $input]
             }
@@ -640,10 +644,8 @@ ad_proc -private qf_validate_input {
                                 -package_id $instance_id \
                                 -parameter AllowedValidationProcs \
                                 -default $default_val]
-            set proc_param_list [split $proc_name " "]
-            set proc_check [lindex $proc_param_list 0]
 
-            if { [lsearch -exact $procs_list $proc_check ] > -1 } {
+            if { [lsearch -exact $procs_list $proc_name ] > -1 } {
                 set allowed_p 1
             }
             if { !$allowed_p && $qtable_enabled_p } {
@@ -659,18 +661,18 @@ ad_proc -private qf_validate_input {
                                       -parameter AllowedValidationProcs \
                                       -default $default_val]
                 foreach p $custom_procs {
-                    if { [string match $p $proc_check] } {
+                    if { [string match $p $proc_name] } {
                         set allowed_p 1
                     }
                 }
                 if { !$allowed_p } {
                     ns_log Warning "qf_validate_input: Broken UI. \
- Unknown validation proc '${proc_check}' proc_param_list '${proc_param_list}'"
+ Unknown validation proc '${proc_name}' proc_params_list '${proc_params_list}'"
 
 
                 } else {
-                    ns_log Notice "qf_validate_input: processing safe_eval '${proc_param_list}'"
-                    set valid_p [safe_eval $proc_param_list]
+                    ns_log Notice "qf_validate_input: processing safe_eval '${proc_params_list}'"
+                    set valid_p [safe_eval $proc_params_list]
                 }
             }
         }
