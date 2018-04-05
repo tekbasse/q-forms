@@ -574,9 +574,11 @@ ad_proc -private qf_validate_input {
 
     # Simplify any future cases, where 
     # proc_name is called with default ' {value}' explicitly added.
-    if { [llength $proc_name] eq 2 \
+    set proc_name_len [llength $proc_name]
+    if { $proc_name_len eq 2 \
              && [string range $proc_name end-7 end] eq " {value}" } {
         set proc_name [string range $proc_name 0 end-8]
+        set proc_name_len 1
     }
     regsub -- {{value}} $proc_name "\${input}" proc_name
     ##code switch details
@@ -619,6 +621,17 @@ ad_proc -private qf_validate_input {
         }
         qf_is_boolean {
             set valid_p [qf_is_boolean $input ]
+        }
+        qf_is_currency_like {
+            set valid_p [qf_is_currency_like $input]
+        }
+        qf_is_currency {
+            if { $proc_name_len eq 2 } {
+                set params [lindex $proc_name 1]
+                set valid_p [qf_is_currency $input $params]
+            } else {
+                set valid_p [qf_is_currency $input]
+            }
         }
         default {
             # Is default_proc allowed?
