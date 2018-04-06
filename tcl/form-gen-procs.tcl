@@ -296,16 +296,41 @@ ad_proc -public qfo_2g {
     # Make a list of available datatypes
 
     ##code 
-    # Html SELECT tags present a discrete list, which is a
+    # Html SELECT tags, and
+    # INPUT tag with attribute type=radio or type=checkbox
+    # present a discrete list, which is a
     # set of specific data choices. 
     # To validate against one (or more in case of MULTIPLE) SELECT choices
     # either the choices must be rolled into a standardized validation proc
     # such as a 'qf_days_of_week' or provide the choices in a list, which
     # is required to build a form anyway.
     #  So, a special datatype is needed for two dynamic cases:
-    #  select one / choice
-    #  select multiple / choices
-    # To be consistent, name datatyes: choice, choices
+    #  select one / choice, such as for qf_choice
+    #  select multiple / choices, such as for qf_choices
+    # To be consistent, provide for cases when:
+    #   1. qf_choice or qf_choices is used.
+    #   2. INPUT (type checkbox or select) or SELECT tags are directly used.
+    #   Case 2 does not fit this automated paradigm, so can ignore
+    # for this proc. Yet, must still be considered in context of validation.
+    # The api is already designed for handling case 2.
+    # This proc uses qf_choice/choices paradigm, 
+    # so special datatype handling is acceptable here, even if 
+    # not part of q-data-types.
+    # Name datatypes: choice, choices?
+    # No, because what if there are multiple sets of choices?
+    # name is unique, so:
+    # datatype name:  value of name attribute appended to choice (or choices).
+    # Delimiter should avoid using comma, since that is used internally
+    # and could mess with tabled data, such as cvs format.
+    # Dash "-" is a common delmiter. Underscore another choice, but
+    # is expected as a fixed word artificial delimiter.
+    #
+    # External to this proc, datatype is 'choice' or 'choices'.
+    # In this proc, datatype is converted to:
+    # datatype name for choice:  choice-<value of attribute name>
+    # datatype name for choices: choices-<value of attribute name>
+    # Except that choices have to be validated per name, for each name.
+
 
     set datatype_const "datatype"
     set tabindex_const "tabindex"
