@@ -113,7 +113,7 @@ ad_proc -public qfo_2g {
     Each indexed value is a list containing attribute/value pairs of form element. 
     <br><br>
     Each form element is expected to have a 'datatype' in the list. 
-    'text' datatype is default. For input tags, a 'value' element represents a default value for the form element.
+    'text' datatype is default. For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element. For html <code>SELECT</code> tags, a 'value' is expected to be a list of lists. See qf_select for usage.
     <br><br>
     Form elements are displayed in order of attribute 'tabindex' values.
     Order defaults are supplied by <code>-fields_ordered_list</code> consisting
@@ -185,7 +185,7 @@ ad_proc -public qfo_2g {
     # qtables field types declarations may point to different ::qdt::data_types
     # fields_arr overrides ::qdt::data_types
     # ::qdt::data_types defaults in qdt_types_arr
-    # This is largely done via feature of called procs.
+    # Blending is largely done via features of called procs.
 
     # qfi = qf input
     # form_ml = form markup (usually in html starting with FORM tag)
@@ -193,7 +193,7 @@ ad_proc -public qfo_2g {
     upvar 1 $fields_array fields_arr
     upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_varname form_m
-    # To obtain doctype, if modified:
+    # To obtain page's doctype, if customized:
     upvar 1 doc doc
     
     
@@ -294,6 +294,18 @@ ad_proc -public qfo_2g {
     set fields_ordered_list_len [llength $fields_ordered_list]
 
     # Make a list of available datatypes
+
+    ##code 
+    # Html SELECT tags present a discrete list, which is a
+    # set of specific data choices. 
+    # To validate against one (or more in case of MULTIPLE) SELECT choices
+    # either the choices must be rolled into a standardized validation proc
+    # such as a 'qf_days_of_week' or provide the choices in a list, which
+    # is required to build a form anyway.
+    #  So, a special datatype is needed for two dynamic cases:
+    #  select one / choice
+    #  select multiple / choices
+    # To be consistent, name datatyes: choice, choices
 
     set datatype_const "datatype"
     set tabindex_const "tabindex"
@@ -429,6 +441,8 @@ ad_proc -public qfo_2g {
         ## that require more complex values, such as checkboxes
         ## Make sure they work here as expected ie:
         ## Be consistent with qf_* api in passing field values
+        ##NOTE: if field_type is select?
+
 
         # Overwrite defaults with any inputs
         if { [info exists qfi_arr(${f})] } {
