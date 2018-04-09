@@ -109,11 +109,13 @@ ad_proc -public qfo_2g {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
     <code>fields_array</code> is an <strong>array name</strong>. 
-    Indexes are 'name' attributes for form elements. 
+    Indexes are 'name' attributes for form elements.
+    A form element is for example, an INPUT tag.
     Each indexed value is a list containing attribute/value pairs of form element. 
     <br><br>
-    Each form element is expected to have a 'datatype' in the list. 
-    'text' datatype is default. For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element. For html <code>SELECT</code> tags, a 'value' is expected to be a list of lists. See qf_select for usage.
+    Each form element is expected to have a 'datatype' in the list, 
+    unless special cases of 'choice' or 'choices' are used (and discussed later).
+    'text' datatype is default. For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element. For html <code>SELECT</code> tags and <code>INPUT</code> tags with <code>type</code> 'checkbox' or 'radio', the attribute <code>value</code>'s 'value' is expected to be a list of lists consistent with <code>qf_select</code>, <code>qf_choice</code> or <code>qf_choices</code>.
     <br><br>
     Form elements are displayed in order of attribute 'tabindex' values.
     Order defaults are supplied by <code>-fields_ordered_list</code> consisting
@@ -126,7 +128,6 @@ ad_proc -public qfo_2g {
     in sequential order according to relative tabindex value.
     Actual tabindex value is calculated, so that a sequence is contiguous
     even if supplied values are not.
-    
     <br><br>
     <code>field_types_lists</code> is a list of lists 
     as defined by ::qdt::data_types parameter 
@@ -175,6 +176,9 @@ ad_proc -public qfo_2g {
     @see util_user_message
     @see qf_get_inputs_as_array
     @see qfo::qtable_label_package_id
+    @see qf_select
+    @see qf_choice
+    @see qf_choices
 } {
     # Done: Verify negative numbers pass as values in ad_proc that uses
     # parameters passed starting with dash.. -for_example.
@@ -240,7 +244,7 @@ ad_proc -public qfo_2g {
         # Field definitions may point to different qdt_datatypes,
         # but cannot define new qdt_datatypes.
 
-        # Superimpose dynamic fields over default ones.
+        # Superimpose dynamic fields over default fields from fields_arr.
         # Remaps overwrite all associated attributes from fields_arr
         # which means, datatype assignments are also handled.
         set qt_field_names_list [array names qt_fields_larr]
@@ -294,12 +298,17 @@ ad_proc -public qfo_2g {
     set fields_ordered_list_len [llength $fields_ordered_list]
 
     # Make a list of available datatypes
-
-    ##code 
     # Html SELECT tags, and
     # INPUT tag with attribute type=radio or type=checkbox
     # present a discrete list, which is a
-    # set of specific data choices. 
+    # set of specific data choices.
+
+    # If validating input,
+    # these should be added to list as datatypes named:
+    #  choice-<value-of-name-attribute> (INPUT TYPE=radio, SELECT)
+    #  choices-<value-of-name-attribute> (INPUT TYPE=checkbox, SELECT MULTIPLE)
+
+    ##code 
     # To validate against one (or more in case of MULTIPLE) SELECT choices
     # either the choices must be rolled into a standardized validation proc
     # such as a 'qf_days_of_week' or provide the choices in a list, which
@@ -358,7 +367,7 @@ ad_proc -public qfo_2g {
     set tabindex_tail [expr { $fields_ordered_list_len + $field_ct } ]
 
     foreach f $qfi_fields_list {
-        set datatype_list $fields_arr(${f})
+        set field_list $fields_arr(${f})
         # fatts_arr($f,$attr) could reference just the custom values
         # but then double pointing against the default datatype values
         # pushes complexity to later on.
@@ -369,11 +378,14 @@ ad_proc -public qfo_2g {
         # A proc could be called that caches, with parameters:
         # $f and $attr, yet that is slower than just filling the array
         # to begin with, if every $f and $attr will be referenced.
-        set datatype_idx [lsearch -exact $datatype_list $datatype_const]
+        set datatype_idx [lsearch -exact $field_list $datatype_const]
         if { $datatype_idx > -1 } {
-            set datatype [lindex $datatype_list $datatype_idx+1]
+            set datatype [lindex $field_list $datatype_idx+1]
             set fatts_arr(${f},${datatype_const}) $datatype
         } else {
+            # This may be a qf_select/qf_choice/qf_choices field
+            ##code make the datatype
+
             ns_log Error "qfo_2g: datatype for field '${f}' not found."
             set error_p 1
         }
@@ -387,7 +399,7 @@ ad_proc -public qfo_2g {
                 ns_log Notice "qfo_2g.300 set fatts_arr(${f},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
             }
             
-            foreach {attr val} $datatype_list {
+            foreach {attr val} $field_list {
                 if { [string match -nocase $datatype_const $attr] } {
                     # Put datatypes in an array where value is list of
                     # fields using it.
