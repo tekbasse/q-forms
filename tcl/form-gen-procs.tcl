@@ -111,11 +111,17 @@ ad_proc -public qfo_2g {
     <code>fields_array</code> is an <strong>array name</strong>. 
     Indexes are 'name' attributes for form elements.
     A form element is for example, an INPUT tag.
-    Each indexed value is a list containing attribute/value pairs of form element. 
+    Each indexed value is a list containing attribute/value pairs of form element. The form element tag is determined by the data type.
     <br><br>
     Each form element is expected to have a 'datatype' in the list, 
     unless special cases of 'choice' or 'choices' are used (and discussed later).
-    'text' datatype is default. For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element. For html <code>SELECT</code> tags and <code>INPUT</code> tags with <code>type</code> 'checkbox' or 'radio', the attribute <code>value</code>'s 'value' is expected to be a list of lists consistent with <code>qf_select</code>, <code>qf_choice</code> or <code>qf_choices</code>.
+    'text' datatype is default.
+    <br><br>
+    For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element.
+    <br><br>
+    For html <code>SELECT</code> tags and <code>INPUT</code> tags with <code>type</code> 'checkbox' or 'radio', the attribute <code>value</code>'s 'value' is expected to be a list of lists consistent with <code>qf_select</code>, <code>qf_choice</code> or <code>qf_choices</code>.
+    <br><br>
+    Special cases 'choice' and 'choices' are reprepresented by supplying an attribute <code>type</code> with value 'checkbox' or 'radio' or 'select'. If 'select', a single value is assumed to be returned unless an attribute <code>multiple</code> is supplied with corresponding value set to '1'. Note: Supplying a name/value pair '<code>multiple</code> 0' is treated the same as not including a <code>multiple</code> attribute.
     <br><br>
     Form elements are displayed in order of attribute 'tabindex' values.
     Order defaults are supplied by <code>-fields_ordered_list</code> consisting
@@ -136,6 +142,8 @@ ad_proc -public qfo_2g {
     <br><br>
     <code>inputs_as_array</code> is an <strong>array name</strong>. 
     Array values follow convention of <code>qf_get_inputs_as_array</code>.
+    If <code>qf_get_inputs_as_array</code> is called before calling this proc,
+    supply the returned array name using this parameter.
     If passing the array, and <code>hash_check</code> is '1', be sure
     to pass <code>form_submitted_p</code> as well, where form_submitted_p is
     value returned by the proc <code>qf_get_inputs_as_array</code>
@@ -158,7 +166,8 @@ ad_proc -public qfo_2g {
     the generated form to. 
     The generated form is a text value containing markup language tags.
     <br><br>
-    Returns 1 if input is validated. 
+    Returns 1 if there is input, and the input is validated.
+    Otherwise returns 0.
     If there are no fields, input is validated by default.
     <br><br>
     Note: Validation may be accomplished external to this proc 
