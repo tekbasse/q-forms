@@ -119,7 +119,7 @@ ad_proc -public qfo_2g {
     <br><br>
     For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element.
     <br><br>
-    For html <code>SELECT</code> tags and <code>INPUT</code> tags with <code>type</code> 'checkbox' or 'radio', the attribute <code>value</code>'s 'value' is expected to be a list of lists consistent with <code>qf_select</code>, <code>qf_choice</code> or <code>qf_choices</code>.
+    For html <code>SELECT</code> tags and <code>INPUT</code> tags with <code>type</code> 'checkbox' or 'radio', the attribute <code>value</code>'s 'value' is expected to be a list of lists consistent with 'value' attributed supplied to <code>qf_select</code>, <code>qf_choice</code> or <code>qf_choices</code>.
     <br><br>
     Special cases 'choice' and 'choices' are reprepresented by supplying an attribute <code>type</code> with value 'checkbox' or 'radio' or 'select'. If 'select', a single value is assumed to be returned unless an attribute <code>multiple</code> is supplied with corresponding value set to '1'. Note: Supplying a name/value pair '<code>multiple</code> 0' is treated the same as not including a <code>multiple</code> attribute.
     <br><br>
@@ -352,6 +352,12 @@ ad_proc -public qfo_2g {
 
     set datatype_const "datatype"
     set tabindex_const "tabindex"
+    set select_const "select"
+    set type_const "type"
+    set value_const "value"
+    set name_const "name"
+    # Array for holding datatype 'sets' defined by select/choice/choices:
+    # fchoices_larr(name)
 
     set data_type_existing_list [list]
     foreach n [array names qdt_types_arr "*,label"] {
@@ -387,16 +393,47 @@ ad_proc -public qfo_2g {
         # A proc could be called that caches, with parameters:
         # $f and $attr, yet that is slower than just filling the array
         # to begin with, if every $f and $attr will be referenced.
-        set datatype_idx [lsearch -exact $field_list $datatype_const]
+        set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
         if { $datatype_idx > -1 } {
             set datatype [lindex $field_list $datatype_idx+1]
             set fatts_arr(${f},${datatype_const}) $datatype
         } else {
             # This may be a qf_select/qf_choice/qf_choices field
-            ##code make the datatype
+            ##code make and set the datatype
+            set type_idx -1
+            set select_idx -1
+            set multiple_idx -1
+            set tag_type ""
+            set multiple_value "0"
+            set type_idx [lsearch -exact -nocase $field_list $type_const]
+            if { $type_idx > -1 } {
+                set tag_type [lindex $field_list $type_idx+1]
+                switch -exact -nocase -- $tag_type {
+                    select {
+                        set multiple_idx [lsearch -exact -nocase $field_list $multiple_const]
+                        if { $multiple_idx > -1 } {
+                            set multiple_value [lindex $field_list $multiple_idx+1]
+                        }
 
-            ns_log Error "qfo_2g: datatype for field '${f}' not found."
-            set error_p 1
+                    }
+                    radio {
+                    }
+                    checkbox {
+                        set multiple_value 1
+                    }
+                    default {
+                        set error_p 1
+                    }
+                }
+                ##code define choice/choices datatype in fchoices_larr
+                set value_idx [lsearch -exact -nocase $field_list $value_const]
+
+            } else {
+                set error_p 1
+            }
+            if { $error_p } {
+                ns_log Error "qfo_2g: datatype for field '${f}' not found."
+            }
         }
         if { !$error_p } {
             # element "datatype" already exists, skip that loop:
