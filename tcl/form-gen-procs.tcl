@@ -399,7 +399,7 @@ ad_proc -public qfo_2g {
             set fatts_arr(${f},${datatype_const}) $datatype
         } else {
             # This may be a qf_select/qf_choice/qf_choices field
-            ##code make and set the datatype
+            # make and set the datatype using array fchoices_larr
             set type_idx -1
             set select_idx -1
             set multiple_idx -1
@@ -425,11 +425,38 @@ ad_proc -public qfo_2g {
                         set error_p 1
                     }
                 }
-                ##code define choice/choices datatype in fchoices_larr
+                ##code error not set right, 
+                ## is multiple_value necessary? no?
+                ## tag_type is legit if !$error_p...
+                # define choice(s) datatype in fchoices_larr for validation
                 set value_idx [lsearch -exact -nocase $field_list $value_const]
+                if { $value_idx > -1 } {
+                    set tag_value [lindex $field_list $value_idx+1]
+                    # Are choices treated differently than choice
+                    # for validation? No
+                    foreach tag_v_list $tag_value {
+                        array set fc_arr $tag_v_list
+                        if { [info exists fc_arr(name)] \
+                                 && [info exists fc_arr(value) ] } {
+                            # Use lappend because
+                            # the name may be the same, just different value
+                            lappend fchoices_larr($fc_arr(name)) $fc_arr(value)
+                        } else {
+                            set error_p 1
+                            ns_log Error "qfo_2g: name or value not found \
+ for field '${f}' value list-item  '[array get fc_arr]'"
+                        }
+                        array unset fc_arr
+                    }
 
+                } else {
+                    set error_p 1
+                    ns_log Error "qfo_2g: value for field '${f}' not found."
+                }
             } else {
                 set error_p 1
+                ns_log Error "qfo_2g: field '${f}': datatype not found \
+ and type not 'select', 'checkbox' or 'radio'."
             }
             if { $error_p } {
                 ns_log Error "qfo_2g: datatype for field '${f}' not found."
@@ -569,6 +596,14 @@ ad_proc -public qfo_2g {
                 set qfv_arr(${f}) $valid_p
                 if { !$valid_p } {
                     lappend invalid_field_val_list $f
+                }
+            } elseif { [info exists fchoices_larr(${f})  } {
+                # check for type=select,checkbox, or radio
+                ##code verify this works with qf_choices variants
+                if { [lsearch -exact $fchoices_larr(${f}) $qfv_arr(${f})] > -1 } {
+                    set valid_p 1
+                } else {
+                    set valid_p 0
                 }
             }
 
