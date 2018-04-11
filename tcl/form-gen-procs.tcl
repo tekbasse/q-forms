@@ -312,12 +312,6 @@ ad_proc -public qfo_2g {
     # present a discrete list, which is a
     # set of specific data choices.
 
-    # If validating input,
-    # these should be added to list as datatypes named:
-    #  choice-<value-of-name-attribute> (INPUT TYPE=radio, SELECT)
-    #  choices-<value-of-name-attribute> (INPUT TYPE=checkbox, SELECT MULTIPLE)
-
-    ##code 
     # To validate against one (or more in case of MULTIPLE) SELECT choices
     # either the choices must be rolled into a standardized validation proc
     # such as a 'qf_days_of_week' or provide the choices in a list, which
@@ -337,25 +331,16 @@ ad_proc -public qfo_2g {
     # Name datatypes: choice, choices?
     # No, because what if there are multiple sets of choices?
     # name is unique, so:
-    # datatype name:  value of name attribute appended to choice (or choices).
-    # Delimiter should avoid using comma, since that is used internally
-    # and could mess with tabled data, such as cvs format.
-    # Dash "-" is a common delmiter. Underscore another choice, but
-    # is expected as a fixed word artificial delimiter.
-    #
-    # External to this proc, datatype is 'choice' or 'choices'.
-    # In this proc, datatype is converted to:
-    # datatype name for choice:  choice-<value of attribute name>
-    # datatype name for choices: choices-<value of attribute name>
-    # Except that choices have to be validated per name, for each name.
+    # datatype is name. Name collision is avoided by using
+    # a separate array to store what is essentially custom lists.
 
 
     set datatype_const "datatype"
     set tabindex_const "tabindex"
-    set select_const "select"
     set type_const "type"
     set value_const "value"
     set name_const "name"
+    set choices_type_list [list "select" "checkbox" "radio"]
     # Array for holding datatype 'sets' defined by select/choice/choices:
     # fchoices_larr(name)
 
@@ -372,8 +357,6 @@ ad_proc -public qfo_2g {
     }
     ns_log Notice "qfo_2g: datatype_elements_list '${datatype_elements_list}'"
     
-    
-
     if { $qtable_enabled_p } {
         set tabindex_adj [expr { 0 - $field_ct - $fields_ordered_list_len } ]
     } else {
@@ -400,40 +383,25 @@ ad_proc -public qfo_2g {
         } else {
             # This may be a qf_select/qf_choice/qf_choices field
             # make and set the datatype using array fchoices_larr
-            set type_idx -1
-            set select_idx -1
-            set multiple_idx -1
+
             set tag_type ""
-            set multiple_value "0"
             set type_idx [lsearch -exact -nocase $field_list $type_const]
             if { $type_idx > -1 } {
                 set tag_type [lindex $field_list $type_idx+1]
-                switch -exact -nocase -- $tag_type {
-                    select {
-                        set multiple_idx [lsearch -exact -nocase $field_list $multiple_const]
-                        if { $multiple_idx > -1 } {
-                            set multiple_value [lindex $field_list $multiple_idx+1]
-                        }
-
-                    }
-                    radio {
-                    }
-                    checkbox {
-                        set multiple_value 1
-                    }
-                    default {
-                        set error_p 1
-                    }
+                if { [lsearch -exact -nocase $choices_type_list $tag_type] < 0 } {
+                    set error_p 1
+                    ns_log Error "qfo_2g: attribute TYPE '${tag_type}' \
+ is not 'select', 'radio', or 'checkbox'. Maybe missing datatype attribute?"
                 }
-                ##code error not set right, 
-                ## is multiple_value necessary? no?
-                ## tag_type is legit if !$error_p...
                 # define choice(s) datatype in fchoices_larr for validation
                 set value_idx [lsearch -exact -nocase $field_list $value_const]
                 if { $value_idx > -1 } {
                     set tag_value [lindex $field_list $value_idx+1]
                     # Are choices treated differently than choice
                     # for validation? No
+                    # Only difference is name is for all choices with 'choice'
+                    # whereas 'choices' has a different name for each choice.
+                    ##code ^ **important.. re-work this part of code again.
                     foreach tag_v_list $tag_value {
                         array set fc_arr $tag_v_list
                         if { [info exists fc_arr(name)] \
