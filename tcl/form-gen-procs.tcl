@@ -338,9 +338,11 @@ ad_proc -public qfo_2g {
     set datatype_const "datatype"
     set tabindex_const "tabindex"
     set type_const "type"
+    set select_const "select"
     set value_const "value"
     set name_const "name"
-    set choices_type_list [list "select" "checkbox" "radio"]
+    set multiple_const "multiple"
+    set choices_type_list [list $select_const "checkbox" "radio"]
     # Array for holding datatype 'sets' defined by select/choice/choices:
     # fchoices_larr(name)
 
@@ -383,16 +385,35 @@ ad_proc -public qfo_2g {
         } else {
             # This may be a qf_select/qf_choice/qf_choices field
             # make and set the datatype using array fchoices_larr
-
+            # No need to validate entry here.
+            # Entry is validated when making markup language for form.
+            # Just setup to validate input from form post/get.
             set tag_type ""
             set type_idx [lsearch -exact -nocase $field_list $type_const]
             if { $type_idx > -1 } {
                 set tag_type [lindex $field_list $type_idx+1]
-                if { [lsearch -exact -nocase $choices_type_list $tag_type] < 0 } {
-                    set error_p 1
-                    ns_log Error "qfo_2g: attribute TYPE '${tag_type}' \
- is not 'select', 'radio', or 'checkbox'. Maybe missing datatype attribute?"
+                switch -exact -nocase -- $tag_type {
+                    select {
+                        if { [lsearch -exact -nocase $field_list $multiple_const] } {
+                            set multiple_names_p 1
+                        } else {
+                            set multiple_names_p 0
+                        }
+                    }
+                    radio {
+                        set multiple_names_p 0
+                    }
+                    checkbox {
+                        set multiple_names_p 1
+                    }
+                    default {
+                        set error_p 1
+                        ns_log Error "qfo_2g: attribute TYPE '${tag_type}' \
+ is not 'select', 'radio', or 'checkbox'. \
+ Maybe '${f}' is missing 'datatype' attribute?"
+                    }
                 }
+
                 # define choice(s) datatype in fchoices_larr for validation
                 set value_idx [lsearch -exact -nocase $field_list $value_const]
                 if { $value_idx > -1 } {
@@ -401,20 +422,30 @@ ad_proc -public qfo_2g {
                     # for validation? No
                     # Only difference is name is for all choices with 'choice'
                     # whereas 'choices' has a different name for each choice.
-                    ##code ^ **important.. re-work this part of code again.
-                    foreach tag_v_list $tag_value {
-                        array set fc_arr $tag_v_list
-                        if { [info exists fc_arr(name)] \
-                                 && [info exists fc_arr(value) ] } {
-                            # Use lappend because
-                            # the name may be the same, just different value
-                            lappend fchoices_larr($fc_arr(name)) $fc_arr(value)
-                        } else {
-                            set error_p 1
-                            ns_log Error "qfo_2g: name or value not found \
- for field '${f}' value list-item  '[array get fc_arr]'"
+                    # For SELECT tag, need to know if has MULTIPLE attribute
+                    # to know if to expect Name attribute.
+                    if { $multiple_names_p } {
+                        foreach tag_v_list $tag_value {
+                            array set fc_arr $tag_v_list
+                            if { [info exists fc_arr(value) ] \
+                                     && [info exists fc_arr(name)] } {
+                                # Use lappend to collect validation values, 
+                                # because the name may be the same, 
+                                # just different value.
+                                lappend fchoices_larr($fc_arr(name)) $fc_arr(value)
+                            }
                         }
-                        array unset fc_arr
+                    } else {
+                        # Use lappend to collect validation values, 
+                        # because the name may be the same, 
+                        # just different value.
+                        foreach tag_v_list $tag_value {
+                            set v_idx [lsearch -exact -nocase $tag_v_list $value_const]
+                            if { $v_idx > -1 } {
+                                set v_val [lindex $tag_v_list $v_idx+1 ]
+                                lappend fchoices_larr(${f}) $v_val
+                            }
+                        }
                     }
 
                 } else {
