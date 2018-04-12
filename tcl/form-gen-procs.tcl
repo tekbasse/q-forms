@@ -278,6 +278,13 @@ ad_proc -public qfo_2g {
 
 
     set qfi_fields_list [array names fields_arr]
+    ##code Ideally, this is the names used for inputs, 
+    # This assumption breaks for 'input checkbox' and 'select multiple',
+    # where names are defined in the supplied value list of lists.
+    # How to handle?  These cases should be defined uniquely,
+    # using available data, so attribute 'id' if it exists,
+    # and parsed via flag identifing their variation from using 'name'
+
     ns_log Notice "qfo_2g.266: array get fields_arr '[array get fields_arr]'"
     ns_log Notice "qfo_2g.267: qfi_fields_list '${qfi_fields_list}'"
     set field_ct [llength $qfi_fields_list]
@@ -545,12 +552,12 @@ ad_proc -public qfo_2g {
 
     # qfv = field value
     foreach f $qfi_fields_list {
-        ##code This assumes and INPUT element, single value style for now.
+        ##code This assumes an INPUT element, single value style for now.
         ## Other form elements may have different defaults
         ## that require more complex values, such as checkboxes
         ## Make sure they work here as expected ie:
         ## Be consistent with qf_* api in passing field values
-        ##NOTE: if field_type is select?
+        ##NOTE: check for case if field_type is 'select' also
 
 
         # Overwrite defaults with any inputs

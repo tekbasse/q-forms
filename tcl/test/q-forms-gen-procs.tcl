@@ -11,12 +11,59 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
             #         -rollback \
             ns_log Notice "qf_form_gen_checks.12: Begin test"
 
-            array set fields_arr [list \
-                                      test1 [list \
-                                                 datatype text \
-                                                 name Test1 \
-                                                 default "okay!"]\
-                                  ]
+            set fd [list \
+                        [list \
+                             name test1_text \
+                             label Test1 \
+                             datatype text \
+                             tabindex 1 \
+                             default "okay!"]\
+                        [list \
+                             name test2integer \
+                             tabindex 2 \
+                             label Test2 \
+                             datatype integer \
+                             default "0"]\
+                        [list \
+                             label test_checkboxes \
+                             tabindex 3 \
+                             type checkbox \
+                             value [list \
+                                        [list \
+                                             name test_card1 \
+                                             label " label 1 " \
+                                             value visa1 \
+                                             selected 1] \
+                                        [list \
+                                             name test_card2 \
+                                             label " label 2 " \
+                                             value visa2 \
+                                             selected 0] \
+                                        [list \
+                                             name test_card3 \
+                                             label " label 3 " \
+                                             value visa3 ] \
+                                       ] ] \
+                        [list \
+                             label test_radios \
+                             name creditcard \
+                             type radio \
+                             tabindex 4 \
+                             value [list \
+                                        [list \
+                                             label " label 1 " \
+                                             value visa1 \
+                                             selected 1] \
+                                        [list \
+                                             label " label 2 " \
+                                             value visa2 \
+                                             selected 0] \
+                                        [list \
+                                             label " label 3 " \
+                                             value visa3 ] \
+                                       ] ] \
+                       ]
+            array set fields_arr $fd
             set validated_p [qfo_2g -fields_array fields_arr]
             aa_log "qfo_gen x = '${x}'"
         } 
