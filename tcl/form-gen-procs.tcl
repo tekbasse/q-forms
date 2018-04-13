@@ -109,8 +109,9 @@ ad_proc -public qfo_2g {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
     <code>fields_array</code> is an <strong>array name</strong>. 
-    Indexes are 'name' attributes for form elements.
     A form element is for example, an INPUT tag.
+    Values are name-value pairs representing attributes for form elements.
+
     Each indexed value is a list containing attribute/value pairs of form element. The form element tag is determined by the data type.
     <br><br>
     Each form element is expected to have a 'datatype' in the list, 
@@ -237,6 +238,8 @@ ad_proc -public qfo_2g {
     ns_log Notice "qfo_2g.217: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
+        ##code This part has not been tested, as it is
+        # a feature to add.
 
         # Add custom datatypes
         qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
@@ -264,13 +267,16 @@ ad_proc -public qfo_2g {
         # Remaps overwrite all associated attributes from fields_arr
         # which means, datatype assignments are also handled.
         set qt_field_names_list [array names qt_fields_larr]
+        ##code: this will not work for type:SELECT,Checkbox,or radio.
+        ## Will tips handle it these cases? May require a deeper
+        ## investigation.
         foreach n qt_field_names_list {
             set f_list $qt_fields_larr(${n})
             set datatype [lindex $f_list 4]
             set default [lindex $f_list 3]
             set label_nvl [list name ${n} datatype $datatype]
             # Every custom case needs 
-            if { "value" not in $f_list } {
+            if { [lsearch -exact -nocase $f_list "value"] < 0 } {
                 lappend label_nvl value $default
             }
 
@@ -279,18 +285,18 @@ ad_proc -public qfo_2g {
             # Build this array here that gets used later.
             set datatype_of_arr(${label}) $datatype
         }
-        
 
     }
 
 
     set qfi_fields_list [array names fields_arr]
-    ##code Ideally, this is the names used for inputs, 
+    # Ideally, this list is the names used for inputs, 
     # This assumption breaks for 'input checkbox' and 'select multiple',
     # where names are defined in the supplied value list of lists.
     # How to handle?  These cases should be defined uniquely,
     # using available data, so attribute 'id' if it exists,
-    # and parsed via flag identifing their variation from using 'name'
+    # and parsed via flag identifing their variation from using 'name'.
+    # In any case, do not assume field index is same as attribute name's value.
 
     ns_log Notice "qfo_2g.266: array get fields_arr '[array get fields_arr]'"
     ns_log Notice "qfo_2g.267: qfi_fields_list '${qfi_fields_list}'"
@@ -835,7 +841,15 @@ ad_proc -private qfo_form_list_def_to_array {
     as fields_array in qfo_2g, and provides a fields_ordered_list based on
     the order elements defined in the list.
     <br><br>
-    When <code>ignore_parse_issues_p</code> is '1', any list item that cannot be parsed as expeded will be ignored. When <code>ignore_parse_issues_p</code> is '0', any parsing issue will trigger an error posted to ns_log.
+    When <code>ignore_parse_issues_p</code> is '1', 
+    any list item that cannot be parsed as expected will be ignored. 
+    When <code>ignore_parse_issues_p</code> is '0', 
+    any parsing issue will trigger a warning posted to ns_log.
+    <br><br>
+    Indexes are assigned the same as it's element's name's attribute value, 
+    such as 'xyz' for &lt;input name="xyz" value=""&gt;. 
+    Cases with multiple choice use the value of an ID attribute if it exists,
+    otherwise a unique id is created.
 } {
     upvar 1 $array_name fields_arr
     upvar 1 $list_of_lists_name elements_lol
