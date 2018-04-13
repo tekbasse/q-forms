@@ -181,6 +181,8 @@ ad_proc -public qfo_2g {
     <code>hash_check</code>, and <br>
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
     <br><br>
+    Note: fieldset tag is not implemented in this paradigm.
+    <br><br>
     @see qdt::data_types
     @see util_user_message
     @see qf_get_inputs_as_array
@@ -199,6 +201,11 @@ ad_proc -public qfo_2g {
     # fields_arr overrides ::qdt::data_types
     # ::qdt::data_types defaults in qdt_types_arr
     # Blending is largely done via features of called procs.
+
+    # fieldset is not implemented in this paradigm, because
+    # it adds too much complexity to the code for the benefit.
+    # A question is, if there is a need for fieldset, maybe
+    # there is a need for a separate input page?
 
     # qfi = qf input
     # form_ml = form markup (usually in html starting with FORM tag)
@@ -816,4 +823,88 @@ ad_proc -private qf_validate_input {
         }
     }    
     return $valid_p
+}
+
+ad_proc -private qfo_form_list_def_to_array {
+    -array_name
+    -list_of_lists_name
+    {-fields_ordered_list_name "qf_fields_ordered_list"}
+    {-ignore_parse_issues_p "1"}
+} {
+    Converts a well formed list of lists into an array for input
+    as fields_array in qfo_2g, and provides a fields_ordered_list based on
+    the order elements defined in the list.
+    <br><br>
+    When <code>ignore_parse_issues_p</code> is '1', any list item that cannot be parsed as expeded will be ignored. When <code>ignore_parse_issues_p</code> is '0', any parsing issue will trigger an error posted to ns_log.
+} {
+    upvar 1 $array_name fields_arr
+    upvar 1 $list_of_lists_name elements_lol
+    upvar 1 $fields_ordered_list_name fields_ordered_list
+    set select_multiple_i 0
+    set select_const "select"
+    set checkbox_const "checkbox"
+    set checkbox_i 0
+    set fields_ordered_list [list ]
+    foreach element_nvl $elements_lol {
+        # array set e_arr $element_nvl, except convert names to lowercase
+        foreach {n v} $element_nvl {
+            set nlc [string tolower $n]
+            set v_arr(${nlc}) $v
+            set n_arr(${nlc}) $n
+        }
+        if { [info exists v_arr(name) ] } {
+            set fields_arr($v_arr(name)) $element_nvl
+            lappend fields_ordered_list $v_arr(name)
+        } elseif { [info exists v_arr(type) ] } {
+            switch -exact -- $n_arr(type) {
+                select {
+                    if { [info exists v_arr(multiple)] } {
+                        # This is a multiple.
+                        # if id exists, use it, or create one.
+                        if { [info exists v_arr(id) ] } {
+                            set select_ref $v_arr(id)
+                        } else {
+                            set select_ref $select_const
+                            append select $select_multiple_i
+                        }
+                        set fields_arr(${select_ref}) $element_nvl
+                        lappend fields_ordered_list $select_ref
+                        incr select_multiple_i
+                    } else {
+                        if { !$ignore_parse_issues_p } {
+                            ns_log Warning "qfo_form_list_def_to_array.866: \
+ No 'name' attribute found for element '${element_nvl}'"
+                        }
+                    }
+                }
+                checkbox {
+                    # if id exists, use it, or create one.
+                    if { [info exists v_arr(id) ] } {
+                        set checkbox_ref $v_arr(id)
+                    } else {
+                        set checkbox_ref $checkbox_const
+                        append checkbox_ref $checkbox_i
+                    }
+                    set fields_arr(${checkbox_ref}) $element_nvl
+                    lappend fields_ordered_list $checkbox_ref
+                    incr checkbox_i
+                }
+                default {
+                    if { !$ignore_parse_issues_p } {
+                        ns_log Warning "qfo_form_list_def_to_array.879: \
+ No 'name' attribute found, and type '$v_arr(type)' \
+ not of type 'checkbox' or 'select multiple' for element '${element_nvl}'"
+                    }
+                }
+            }
+        } else {
+            if { !$ignore_parse_issues_p } {
+                ns_log Warning "qfo_form_list_def_to_array.888: \
+ No 'name' or 'type' attribute found for element '${element_nvl}'"
+            }
+        }
+        array unset v_arr
+        array unset n_arr
+    }
+    return $fields_ordered_list
 }

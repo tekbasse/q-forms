@@ -63,7 +63,9 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
                                              value visa3 ] \
                                        ] ] \
                        ]
-            array set fields_arr $fd
+            qfo_form_list_def_to_array \
+                -array_name fields_arr \
+                -list_of_lists_name fd
             set validated_p [qfo_2g -fields_array fields_arr]
             aa_log "qfo_gen x = '${x}'"
         } 
