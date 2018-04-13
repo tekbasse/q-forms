@@ -274,13 +274,16 @@ ad_proc -public qfo_2g {
             set f_list $qt_fields_larr(${n})
             set datatype [lindex $f_list 4]
             set default [lindex $f_list 3]
-            set label_nvl [list name ${n} datatype $datatype]
-            # Every custom case needs 
-            if { [lsearch -exact -nocase $f_list "value"] < 0 } {
-                lappend label_nvl value $default
-            }
+            set name [lindex $f_list 2]
+            set label [lindex $f_list 1]
+            set label_nvl [list \
+                               name $name \
+                               datatype $datatype \
+                               label $label \
+                               default $default]
 
             # Apply customizations to fields_arr
+            ##code Use $n instead of $label on next two lines??
             set fields_arr(${label}) $label_nvl
             # Build this array here that gets used later.
             set datatype_of_arr(${label}) $datatype
@@ -289,14 +292,15 @@ ad_proc -public qfo_2g {
     }
 
 
-    set qfi_fields_list [array names fields_arr]
+    set qfi_field_idx_list [array names fields_arr]
+    # Do not assume field index is same as attribute name's value.
     # Ideally, this list is the names used for inputs, 
     # This assumption breaks for 'input checkbox' and 'select multiple',
     # where names are defined in the supplied value list of lists.
     # How to handle?  These cases should be defined uniquely,
     # using available data, so attribute 'id' if it exists,
     # and parsed via flag identifing their variation from using 'name'.
-    # In any case, do not assume field index is same as attribute name's value.
+
 
     ns_log Notice "qfo_2g.266: array get fields_arr '[array get fields_arr]'"
     ns_log Notice "qfo_2g.267: qfi_fields_list '${qfi_fields_list}'"
@@ -363,13 +367,15 @@ ad_proc -public qfo_2g {
     set name_const "name"
     set multiple_const "multiple"
     set choices_type_list [list $select_const "checkbox" "radio"]
+
     # Array for holding datatype 'sets' defined by select/choice/choices:
-    # fchoices_larr(name)
+    # fchoices_larr(element_name)
 
     set data_type_existing_list [list]
     foreach n [array names qdt_types_arr "*,label"] {
         lappend data_type_existing_list [string range $n 0 end-6]
     }
+
     # Make a list of datatype elements
     set datatype_dummy [lindex $data_type_existing_list 0]
     set datatype_elements_list [list]
@@ -379,6 +385,7 @@ ad_proc -public qfo_2g {
     }
     ns_log Notice "qfo_2g: datatype_elements_list '${datatype_elements_list}'"
     
+    # Determine adjustments to be applied to tabindex values
     if { $qtable_enabled_p } {
         set tabindex_adj [expr { 0 - $field_ct - $fields_ordered_list_len } ]
     } else {
@@ -386,22 +393,27 @@ ad_proc -public qfo_2g {
     }
     set tabindex_tail [expr { $fields_ordered_list_len + $field_ct } ]
 
-    foreach f $qfi_fields_list {
-        set field_list $fields_arr(${f})
+    # Parse fields
+    # Build validation arrays
+    # Build dataset for making form
+    foreach f_hash $qfi_fields_list {
+        set field_list $fields_arr(${f_hash})
+        # $f_hash is field_index not field name.
+
         # fatts_arr($f,$attr) could reference just the custom values
         # but then double pointing against the default datatype values
         # pushes complexity to later on.
         # Is lowest burden to get datatype first, load defaults,
         # then overwrite values supplied with field?  Yes.
         # What if case is a table with 100+ fields with same type?
-        # Doesn't matter, if every $f and $attr will be referenced:
+        # Doesn't matter, if every $f_hash and $attr will be referenced:
         # A proc could be called that caches, with parameters:
-        # $f and $attr, yet that is slower than just filling the array
-        # to begin with, if every $f and $attr will be referenced.
+        # $f_hash and $attr, yet that is slower than just filling the array
+        # to begin with, if every $f_hash and $attr will be referenced.
         set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
         if { $datatype_idx > -1 } {
             set datatype [lindex $field_list $datatype_idx+1]
-            set fatts_arr(${f},${datatype_const}) $datatype
+            set fatts_arr(${f_hash},${datatype_const}) $datatype
         } else {
             # This may be a qf_select/qf_choice/qf_choices field
             # make and set the datatype using array fchoices_larr
@@ -430,7 +442,7 @@ ad_proc -public qfo_2g {
                         set error_p 1
                         ns_log Error "qfo_2g: attribute TYPE '${tag_type}' \
  is not 'select', 'radio', or 'checkbox'. \
- Maybe '${f}' is missing 'datatype' attribute?"
+ Maybe '${f_hash}' is missing 'datatype' attribute?"
                     }
                 }
 
@@ -456,6 +468,9 @@ ad_proc -public qfo_2g {
                             }
                         }
                     } else {
+                        # Name is derived from tag:
+                        set name_idx [lsearch -exact -nocase $field_list $name_const]
+                        set name [lindex $field_list $name_idx+1]
                         # Use lappend to collect validation values, 
                         # because the name may be the same, 
                         # just different value.
@@ -463,32 +478,33 @@ ad_proc -public qfo_2g {
                             set v_idx [lsearch -exact -nocase $tag_v_list $value_const]
                             if { $v_idx > -1 } {
                                 set v_val [lindex $tag_v_list $v_idx+1 ]
-                                lappend fchoices_larr(${f}) $v_val
+                                lappend fchoices_larr(${name}) $v_val
                             }
                         }
                     }
 
                 } else {
                     set error_p 1
-                    ns_log Error "qfo_2g: value for field '${f}' not found."
+                    ns_log Error "qfo_2g: value for field '${f_hash}' not found."
                 }
             } else {
                 set error_p 1
-                ns_log Error "qfo_2g: field '${f}': datatype not found \
+                ns_log Error "qfo_2g: field '${f_hash}': datatype not found \
  and type not 'select', 'checkbox' or 'radio'."
             }
             if { $error_p } {
-                ns_log Error "qfo_2g: datatype for field '${f}' not found."
+                ns_log Error "qfo_2g: datatype for field '${f_hash}' not found."
             }
         }
         if { !$error_p } {
+
             # element "datatype" already exists, skip that loop:
             set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
             # e = element
             foreach e [lreplace $datatype_elements_list $dedt_idx $dedt_idx] {
                 # Set field data defaults according to datatype
-                set fatts_arr(${f},${e}) $qdt_types_arr(${datatype},${e})
-                ns_log Notice "qfo_2g.300 set fatts_arr(${f},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
+                set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
+                ns_log Notice "qfo_2g.300 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
             }
             
             foreach {attr val} $field_list {
@@ -497,22 +513,22 @@ ad_proc -public qfo_2g {
                     # fields using it.
                     lappend fields_w_datatypes_used_arr(${val}) $f
                     # We set type before adding default datatype elements
-                    #set fatts_arr(${f},${attr}) $val
+                    #set fatts_arr(${f_hash},${attr}) $val
                 } elseif { [string match -nocase $tabindex_const $attr] } {
                     if { [qf_is_integer $val] } {
                         set val [expr { $val + $tabindex_adj } ]
-                        set fatts_arr(${f},${attr}) $val
+                        set fatts_arr(${f_hash},${attr}) $val
                     } else {
                         ns_log Warning "qfo_2g.308: tabindex not integer for \
- tabindex attribute of field '${f}'. Value is '${val}'"
+ tabindex attribute of field '${f_hash}'. Value is '${val}'"
                     }
                 } else {
-                    set fatts_arr(${f},${attr}) $val
+                    set fatts_arr(${f_hash},${attr}) $val
                 }
             }
-            if { ![info exists fatts_arr(${f},tabindex) ] } {
+            if { ![info exists fatts_arr(${f_hash},tabindex) ] } {
                 # add it to the end 
-                set fatts_arr(${f},tabindex) $tabindex_tail
+                set fatts_arr(${f_hash},tabindex) $tabindex_tail
                 incr tabindex_tail
             }
         }
@@ -564,7 +580,7 @@ ad_proc -public qfo_2g {
     # by calling qf_get_inputs_as_array *before* qfo_2g
 
     # qfv = field value
-    foreach f $qfi_fields_list {
+    foreach f_hash $qfi_fields_list {
         ##code This assumes an INPUT element, single value style for now.
         ## Other form elements may have different defaults
         ## that require more complex values, such as checkboxes
@@ -574,9 +590,9 @@ ad_proc -public qfo_2g {
 
 
         # Overwrite defaults with any inputs
-        if { [info exists qfi_arr(${f})] } {
-            set qfv_arr(${f}) $qfi_arr(${f})
-        } elseif { [info exists fatts_arr(${f},value) ] } {
+        if { [info exists qfi_arr(${f_hash})] } {
+            set qfv_arr(${f_hash}) $qfi_arr(${f_hash})
+        } elseif { [info exists fatts_arr(${f_hash},value) ] } {
             # This value already sets default as that from
             # datatype, if one is not supplied:
 
@@ -593,33 +609,35 @@ ad_proc -public qfo_2g {
     set invalid_field_val_list [list ]
     set row_list [list ]
     if { $form_submitted_p } {
+
         # validate inputs
         
-        foreach f $qfi_fields_list {
-            if { ![info exists qfv_arr(${f})] } {
+        foreach f_hash $qfi_fields_list {
+            if { ![info exists qfv_arr(${f_hash})] } {
                 # Make sure variable exists.
-                if { [qf_is_true $fatts_arr(${f},empty_allowed_p) ] } {
-                    set qfv_arr(${f}) ""
+                if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
+                    set qfv_arr(${f_hash}) ""
                 } else {
                     # set variable to default
-                    set qfv_arr(${f}) [qf_default_val $fatts_arr(${f},default_proc) ]
+                    set qfv_arr(${f_hash}) [qf_default_val $fatts_arr(${f_hash},default_proc) ]
                 }
             }
             
             # validate
-            if { [info exists fatts_arr(${f},valida_proc)] } {
+            if { [info exists fatts_arr(${f_hash},valida_proc)] } {
                 set valid_p [qf_validate_input \
-                                 -input $qfv_arr(${f}) \
-                                 -proc_name $fatts_arr(${f},valida_proc) \
+                                 ##code not f_hash here, but element name:
+                                 -input $qfv_arr(${f_hash}) \
+                                 -proc_name $fatts_arr(${f_hash},valida_proc) \
                                  -q_tables_enabled_p $qtable_enabled_p ]
-                set qfv_arr(${f}) $valid_p
+                set qfv_arr(${f_hash}) $valid_p
                 if { !$valid_p } {
                     lappend invalid_field_val_list $f
                 }
-            } elseif { [info exists fchoices_larr(${f})  } {
+            } elseif { [info exists fchoices_larr(${f_hash})  } {
                 # check for type=select,checkbox, or radio
                 ##code verify this works with qf_choices variants
-                if { [lsearch -exact $fchoices_larr(${f}) $qfv_arr(${f})] > -1 } {
+                if { [lsearch -exact $fchoices_larr(${f_hash}) $qfv_arr(${f_hash})] > -1 } {
                     set valid_p 1
                 } else {
                     set valid_p 0
@@ -635,8 +653,8 @@ ad_proc -public qfo_2g {
         # form not submitted
 
         # Populate form values with defaults
-        foreach f $qfi_fields_list {
-            set qfv_arr(${f}) [qf_default_val $fatts_arr(${f},default_proc) ] 
+        foreach f_hash $qfi_fields_list {
+            set qfv_arr(${f_hash}) [qf_default_val $fatts_arr(${f_hash},default_proc) ] 
         }
     }
 
@@ -663,15 +681,15 @@ ad_proc -public qfo_2g {
         # or ommissions in sequence etc.
         # Create a new qfi_fields_list, sorted according to tabindex
         set qfi_fields_tabindex_lists [list ]
-        foreach f $qfi_fields_list {
-            set f_list [list $f $fatts_arr(${f},tabindex) ]
+        foreach f_hash $qfi_fields_list {
+            set f_list [list $f_hash $fatts_arr(${f_hash},tabindex) ]
             lappend qfi_fields_tabindex_lists $f_list
         }
         set qfi_fields_tabindex_sorted_lists [lsort -integer -index 1 \
                                                   $qfi_fields_tabindex_lists]
         set qfi_fields_sorted_list [list]
-        foreach f $qfi_fields_tabindex_sorted_lists {
-            lappend qfi_fields_sorted_list [lindex $f 0]
+        foreach f_hash $qfi_fields_tabindex_sorted_lists {
+            lappend qfi_fields_sorted_list [lindex $f_hash 0]
         }
 
         # build form using qf_* api
@@ -682,8 +700,8 @@ ad_proc -public qfo_2g {
         set form_id [qf_form form_id $form_id]
 
         # Use qfi_fields_sorted_list to generate an ordered list of inputs
-        foreach f $qfi_fields_sorted_list {
-            switch -- $fatts_arr(${f},form_tag_type) {
+        foreach f_hash $qfi_fields_sorted_list {
+            switch -- $fatts_arr(${f_hash},form_tag_type) {
                 ##code
             }
         }
