@@ -856,7 +856,7 @@ ad_proc -private qfo_form_list_def_to_array {
             set fields_arr($v_arr(name)) $element_nvl
             lappend fields_ordered_list $v_arr(name)
         } elseif { [info exists v_arr(type) ] } {
-            switch -exact -- $n_arr(type) {
+            switch -exact -nocase -- $v_arr(type) {
                 select {
                     if { [info exists v_arr(multiple)] } {
                         # This is a multiple.
