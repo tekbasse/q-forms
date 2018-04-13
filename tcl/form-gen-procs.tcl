@@ -292,7 +292,7 @@ ad_proc -public qfo_2g {
     }
 
 
-    set qfi_field_idx_list [array names fields_arr]
+    set qfi_fields_list [array names fields_arr]
     # Do not assume field index is same as attribute name's value.
     # Ideally, this list is the names used for inputs, 
     # This assumption breaks for 'input checkbox' and 'select multiple',
@@ -384,6 +384,7 @@ ad_proc -public qfo_2g {
         lappend datatype_elements_list [string range $n $datatype_dummy_len+1 end]
     }
     ns_log Notice "qfo_2g: datatype_elements_list '${datatype_elements_list}'"
+
     
     # Determine adjustments to be applied to tabindex values
     if { $qtable_enabled_p } {
@@ -393,14 +394,23 @@ ad_proc -public qfo_2g {
     }
     set tabindex_tail [expr { $fields_ordered_list_len + $field_ct } ]
 
+
     # Parse fields
-    # Build validation arrays
-    # Build dataset for making form
+    # Build dataset validation and making a form
     foreach f_hash $qfi_fields_list {
         set field_list $fields_arr(${f_hash})
         # $f_hash is field_index not field name.
 
-        # fatts_arr($f,$attr) could reference just the custom values
+        # This loop fills fatts_arr(${f_hash},${datatype_element}),
+        # where datatype elements are:
+        # label xml_format default_proc tcl_format_str tcl_type tcl_clock_format_str abbrev_proc valida_proc input_hint max_length css_abbrev empty_allowed_p html_style text_format_proc css_span form_tag_attrs css_div form_tag_type filter_proc
+        # Additionally,
+        # fatts_arr(${f_hash},names) lists the name (or names in the case of
+        # multiple associated with form element) associated with f_hash.
+        # This is a f_hash <--> name map, 
+        # where name is a list of 1 or more form elements.
+
+        # fatts_arr(${f_hash},$attr) could reference just the custom values
         # but then double pointing against the default datatype values
         # pushes complexity to later on.
         # Is lowest burden to get datatype first, load defaults,
@@ -409,12 +419,23 @@ ad_proc -public qfo_2g {
         # Doesn't matter, if every $f_hash and $attr will be referenced:
         # A proc could be called that caches, with parameters:
         # $f_hash and $attr, yet that is slower than just filling the array
-        # to begin with, if every $f_hash and $attr will be referenced.
+        # to begin with, since every $f_hash will be referenced.
+
         set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
         if { $datatype_idx > -1 } {
             set datatype [lindex $field_list $datatype_idx+1]
             set fatts_arr(${f_hash},${datatype_const}) $datatype
+
+            set name_idx [lsearch -exact -nocase $field_list $name_const]
+            set name [lindex $field_list $name_idx+1]
+            set fatts_arr(${f_hash},names) $name
+
         } else {
+
+            # When fatts_arr($f_hash,datatype), is not created,
+            # validation checks the set of elements in
+            # fchoices_larr(form_name) list of choice1 choice2 choice3..
+
             # This may be a qf_select/qf_choice/qf_choices field
             # make and set the datatype using array fchoices_larr
             # No need to validate entry here.
@@ -458,19 +479,29 @@ ad_proc -public qfo_2g {
                     # to know if to expect Name attribute.
                     if { $multiple_names_p } {
                         foreach tag_v_list $tag_value {
-                            array set fc_arr $tag_v_list
-                            if { [info exists fc_arr(value) ] \
-                                     && [info exists fc_arr(name)] } {
+                            #array set fc_arr $tag_v_list
+                            # Re-written to consider uppercase/lowercase refs
+                            foreach {n v} $tag_v_list {
+                                set nlc [string tolower $n]
+                                #set fn_arr($nlc) $n
+                                set fv_arr(${nlc}) $v
+                            }
+                            if { [info exists fv_arr(value) ] \
+                                     && [info exists fv_arr(name)] } {
                                 # Use lappend to collect validation values, 
                                 # because the name may be the same, 
                                 # just different value.
-                                lappend fchoices_larr($fc_arr(name)) $fc_arr(value)
+                                lappend fchoices_larr($fv_arr(name)) $fv_arr(value)
+                                lappend fatts_arr(${f_hash},names) $fv_arr(name)
                             }
                         }
+                        array unset fv_arr
                     } else {
                         # Name is derived from tag:
                         set name_idx [lsearch -exact -nocase $field_list $name_const]
                         set name [lindex $field_list $name_idx+1]
+                        set fatts_arr(${f_hash},names) $name
+
                         # Use lappend to collect validation values, 
                         # because the name may be the same, 
                         # just different value.
@@ -581,13 +612,12 @@ ad_proc -public qfo_2g {
 
     # qfv = field value
     foreach f_hash $qfi_fields_list {
-        ##code This assumes an INPUT element, single value style for now.
-        ## Other form elements may have different defaults
-        ## that require more complex values, such as checkboxes
-        ## Make sure they work here as expected ie:
-        ## Be consistent with qf_* api in passing field values
-        ##NOTE: check for case if field_type is 'select' also
 
+        # Some form elements have different defaults
+        # that require more complex values, such as checkboxes.
+        # Make sure they work here as expected ie:
+        # Be consistent with qf_* api in passing field values
+        #NOTE: check for case if field_type is 'select' also.
 
         # Overwrite defaults with any inputs
         if { [info exists qfi_arr(${f_hash})] } {
