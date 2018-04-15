@@ -562,7 +562,7 @@ ad_proc -public qfo_2g {
                 set fatts_arr(${f_hash},tabindex) $tabindex_tail
                 incr tabindex_tail
             }
-        }
+       } 
         ns_log Notice "qfo_2g.324: array get fatts_arr '[array get fatts_arr]'"
     } else {
         ns_log Notice "qfo_2g.375: data_type_existing_list '${data_type_existing_list}'"
@@ -620,13 +620,11 @@ ad_proc -public qfo_2g {
         #NOTE: check for case if field_type is 'select' also.
 
         # Overwrite defaults with any inputs
-        if { [info exists qfi_arr(${f_hash})] } {
-            set qfv_arr(${f_hash}) $qfi_arr(${f_hash})
-        } elseif { [info exists fatts_arr(${f_hash},value) ] } {
-            # This value already sets default as that from
-            # datatype, if one is not supplied:
-
-
+        foreach name $fatts_arr(${f_hash},names) {
+            if { [info exists qfi_arr(${name})] } {
+                set qfv_arr(${name}) $qfi_arr(${name})
+            } 
+            # Do not set default value if there isn't any value
         }
     } 
     # Don't use qfi_arr anymore, as it may contain extraneous input
@@ -643,9 +641,12 @@ ad_proc -public qfo_2g {
         # validate inputs
         
         foreach f_hash $qfi_fields_list {
-            if { ![info exists qfv_arr(${f_hash})] } {
-                # Make sure variable exists.
-                if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
+            foreach name $fatts_arr(${f_hash},names) {
+                if { ![info exists qfv_arr(${name})] } {
+                    # Make sure variable exists.
+                    ##code.. don't create if llength fatts_arr(f_hash,names) > 1,
+                    # because this is a multiple choice..
+                    if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
                     set qfv_arr(${f_hash}) ""
                 } else {
                     # set variable to default
