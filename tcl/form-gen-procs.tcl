@@ -239,7 +239,7 @@ ad_proc -public qfo_2g {
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
         ##code This part has not been tested, as it is
-        # a feature to add.
+        # pseudo code for a feature to add.
 
         # Add custom datatypes
         qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
@@ -268,8 +268,10 @@ ad_proc -public qfo_2g {
         # which means, datatype assignments are also handled.
         set qt_field_names_list [array names qt_fields_larr]
         ##code: this will not work for type:SELECT,Checkbox,or radio.
-        ## Will tips handle it these cases? May require a deeper
+        ## Will q-tables paradigm handle these cases? May require a deeper
         ## investigation.
+        ## Perhaps adding an additional datatype "set of elements"
+        ## where  set of elements are defined as entries in another table..
         foreach n qt_field_names_list {
             set f_list $qt_fields_larr(${n})
             set datatype [lindex $f_list 4]
@@ -600,10 +602,12 @@ ad_proc -public qfo_2g {
     # maybe allow dynamically generated fields to allow
     # this following exception:
     # Except, we don't want a filter process
-    #   to lose dynamically generated fields, such as used in
-    #   forms in spreadsheet apps.
+    #   to lose dynamically generated form fields, such as used in
+    #   forms that pass N number of cells in a spreadsheet.
     # So, don't optimize with: array set qfv_arr /array get qfi_arr/
-    # Yet, provide a mechanism to allow it via a glob like so:
+    # Yet, provide a mechanism to allow 
+    # batch process of a set of dynamic fields
+    # by selecting the fields via a glob that uniquely identifes them like so:
     #  array set qfv_arr /array get qfi_arr "{glob1}"
     #  array set qfv_arr /array get qfi_arr "glob2"
     # 
@@ -617,7 +621,7 @@ ad_proc -public qfo_2g {
         # that require more complex values, such as checkboxes.
         # Make sure they work here as expected ie:
         # Be consistent with qf_* api in passing field values
-        #NOTE: check for case if field_type is 'select' also.
+        # NOTE: check for case if field_type is 'select' also.
 
         # Overwrite defaults with any inputs
         foreach name $fatts_arr(${f_hash},names) {
@@ -625,6 +629,7 @@ ad_proc -public qfo_2g {
                 set qfv_arr(${name}) $qfi_arr(${name})
             } 
             # Do not set default value if there isn't any value
+            # These cases will be caught during validation further on.
         }
     } 
     # Don't use qfi_arr anymore, as it may contain extraneous input
@@ -641,16 +646,19 @@ ad_proc -public qfo_2g {
         # validate inputs
         
         foreach f_hash $qfi_fields_list {
-            foreach name $fatts_arr(${f_hash},names) {
+
+            # Don't create var if llength fatts_arr(f_hash,names) > 1,
+            # because multiple choices only pass selected values.
+            if { [llength $fatts_arr(${f_hash},names) ] eq 1 } {
+                set name $fatts_arr(${f_hash},names)
                 if { ![info exists qfv_arr(${name})] } {
                     # Make sure variable exists.
-                    ##code.. don't create if llength fatts_arr(f_hash,names) > 1,
-                    # because this is a multiple choice..
                     if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
-                    set qfv_arr(${f_hash}) ""
-                } else {
-                    # set variable to default
-                    set qfv_arr(${f_hash}) [qf_default_val $fatts_arr(${f_hash},default_proc) ]
+                        set qfv_arr(${name}) ""
+                    } else {
+                        # set variable to default
+                        set qfv_arr(${name}) [qf_default_val $fatts_arr(${f_hash},default_proc) ]
+                    }
                 }
             }
             
@@ -663,19 +671,30 @@ ad_proc -public qfo_2g {
                                  -q_tables_enabled_p $qtable_enabled_p ]
                 set qfv_arr(${f_hash}) $valid_p
                 if { !$valid_p } {
-                    lappend invalid_field_val_list $f
+                    lappend invalid_field_val_list $f_hash
                 }
-            } elseif { [info exists fchoices_larr(${f_hash})  } {
-                # check for type=select,checkbox, or radio
-                ##code verify this works with qf_choices variants
-                if { [lsearch -exact $fchoices_larr(${f_hash}) $qfv_arr(${f_hash})] > -1 } {
-                    set valid_p 1
-                } else {
-                    set valid_p 0
+            } else {
+                set valid_p 1
+                if { [llength $fatts_arr(${f_hash},names) ] > 1 } {
+                    foreach name $fatts_arr(${f_hash},names) {
+                        if { [info exists fchoices_larr(name) ] } {
+                            # check for type=select,checkbox, or radio
+                            ##code verify this works with qf_choices variants
+                            if { [lsearch -exact $fchoices_larr(${name}) $name] > -1 } {
+                                ##code We need to validate the value
+                                # that cooresponds to the name as well
+                                # as the name
+                                set valid_multi_p 1
+                            }
+                        }
+                        set valid_p
+                    } else {
+                        ##code Here, the name must exist and be one of the
+                        # selected values
+                    }
                 }
             }
-
-    # keep track of each invalid field.
+            # keep track of each invalid field.
             set all_valid_p [expr { $all_valid_p && $valid_p } ]
         }
         set validated_p $all_valid_p
