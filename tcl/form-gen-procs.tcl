@@ -239,7 +239,9 @@ ad_proc -public qfo_2g {
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
         ##code This part has not been tested, as it is
-        # pseudo code for a feature to add.
+        # pseudo code for a feature to add after 
+        # 'hardcoded' deployment is proven to work, and testable
+        # for this.
 
         # Add custom datatypes
         qt_tdt_data_types_to_qdt qdt_types_arr qdt_types_arr
@@ -657,10 +659,10 @@ ad_proc -public qfo_2g {
     foreach f_hash $qfi_fields_list {
 
         # Some form elements have different defaults
-        # that require more complex values, such as checkboxes.
+        # that require more complex values: 
+        # fieldtype is checkboxes, radio, or select.
         # Make sure they work here as expected ie:
         # Be consistent with qf_* api in passing field values
-        # NOTE: check for case if field_type is 'select' also.
 
         # Overwrite defaults with any inputs
         foreach name $fatts_arr(${f_hash},names) {
@@ -719,23 +721,22 @@ ad_proc -public qfo_2g {
                 }
 
             } else {
-                # not is_datatyped_p ie is select, checkbox, or radio input
+                # not is_datatyped_p: type is select, checkbox, or radio input
                 set valid_p 1
-                foreach name $fatts_arr(${f_hash},names) {
-                    if { [info exists fchoices_larr(name) ] } {
+                set names_len [llength $fatts_arr(${f_hash},names)]
+                set n_idx 0
+                while { $n_idx < $names_len && $valid_p } {
+                    set name $fatts_arr(${f_hash},names)
+                    if { [info exists qfv_arr(${name}) ] } {
                         # check for type=select,checkbox, or radio
-                        ##code verify this works with qf_choices variants
-                        if { [lsearch -exact $fchoices_larr(${name}) $name] > -1 } {
-                            ##code We need to validate the value
-                            # that cooresponds to the name as well
-                            # as the name
-                            set valid_multi_p 1
+                        if { [lsearch -exact $fchoices_larr(${name}) $qfv_arr(${name})] < 0 } {
+                            # name exists, value not found
+                            set valid_p 0
+                            ns_log Notice "qfo_2g.735: name '${name}' \
+ has not valid value '$qfv_arr(${name})'"
                         }
                     }
-                    set valid_p
-                } else {
-                    ##code Here, the name must exist and be one of the
-                    # selected values
+                    incr n_idx
                 }
             }
             # keep track of each invalid field.
