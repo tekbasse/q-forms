@@ -423,6 +423,70 @@ ad_proc -public qfo_2g {
         # $f_hash and $attr, yet that is slower than just filling the array
         # to begin with, since every $f_hash will be referenced.
 
+        # The following logical split of datatype handling
+        # should not rely on a datatype value,
+        # which is a proc-based artificial requirement,
+        # but instead rely on value of tag_type.
+        # If there is no tag_type, the default is 'text'
+        # which requires a datatype that defaults to 'text'.
+        # The value is used to branch at various points in code,
+        # so add an index with a logical value to speed up
+        # parsing at these logical branches:  is_datatyped_p
+
+        set tag_type ""
+        set type_idx [lsearch -exact -nocase $field_list $type_const]
+        if { $type_idx > -1 } {
+            set tag_type [lindex $field_list $type_idx+1]
+            switch -exact -nocase -- $tag_type {
+                select {
+                    if { [lsearch -exact -nocase $field_list $multiple_const] } {
+                        set multiple_names_p 1
+                    } else {
+                        set multiple_names_p 0
+                    }
+                }
+                radio {
+                    set multiple_names_p 0
+                }
+                checkbox {
+                    set multiple_names_p 1
+                }
+                button -
+                color -
+                date -
+                datetime-local -
+                email -
+                file -
+                hidden -
+                image -
+                month -
+                number -
+                password -
+                range -
+                reset -
+                search -
+                submit -
+                tel -
+                text -
+                time -
+                url -
+                week {
+                    # Check of attribute against doctype occurs later.
+                    # tag_type already set.
+                    set multiple_names_p ""
+                }
+                default {
+                    ns_log Notice "qfo_2g.479: field '${f_hash}' \
+'type' attribute not recognized '${tag_type}'. Setting to 'text'"
+                    set tag_type "text"
+                }
+            }
+        } else {
+            ns_log Notice "qfo_2g.485: field '${f_hash}' \
+'type' attribute not found. Setting to 'text'"
+            set tag_type "text"
+        }
+
         set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
         if { $datatype_idx > -1 } {
             set datatype [lindex $field_list $datatype_idx+1]
@@ -662,16 +726,27 @@ ad_proc -public qfo_2g {
                 }
             }
             
-            # validate
+            # validate. This first switch should be based on type..
             if { [info exists fatts_arr(${f_hash},valida_proc)] } {
-                set valid_p [qf_validate_input \
-                                 ##code not f_hash here, but element name:
-                                 -input $qfv_arr(${f_hash}) \
-                                 -proc_name $fatts_arr(${f_hash},valida_proc) \
-                                 -q_tables_enabled_p $qtable_enabled_p ]
-                set qfv_arr(${f_hash}) $valid_p
-                if { !$valid_p } {
-                    lappend invalid_field_val_list $f_hash
+                if { [llength $fatts_arr(${f_hash},names) ] > 1 } {
+                    # This is a multiple choice answer
+                    # Which shouldn't get passed here,
+                    # since valida_proc is not part of 
+                    # multiple choice answer validation paradigm.
+                    foreach name $fatts_arr(${f_hash},names) {
+                        ##code Remove type
+                    }
+                } else {
+                    
+                    set name $fatts_arr(${f_hash},names)
+                    set valid_p [qf_validate_input \
+                                     -input $qfv_arr(${name}) \
+                                     -proc_name $fatts_arr(${f_hash},valida_proc) \
+                                     -q_tables_enabled_p $qtable_enabled_p ]
+                    set qfv_arr(${f_hash}) $valid_p
+                    if { !$valid_p } {
+                        lappend invalid_field_val_list $name
+                    }
                 }
             } else {
                 set valid_p 1
