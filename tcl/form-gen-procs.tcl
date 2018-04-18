@@ -444,12 +444,15 @@ ad_proc -public qfo_2g {
                     } else {
                         set multiple_names_p 0
                     }
+                    set fatts_arr(${f_hash},is_datatyped_p) 0
                 }
                 radio {
                     set multiple_names_p 0
+                    set fatts_arr(${f_hash},is_datatyped_p) 0
                 }
                 checkbox {
                     set multiple_names_p 1
+                    set fatts_arr(${f_hash},is_datatyped_p) 0
                 }
                 button -
                 color -
@@ -474,24 +477,31 @@ ad_proc -public qfo_2g {
                     # Check of attribute against doctype occurs later.
                     # tag_type already set.
                     set multiple_names_p ""
+                    set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
                 default {
                     ns_log Notice "qfo_2g.479: field '${f_hash}' \
 'type' attribute not recognized '${tag_type}'. Setting to 'text'"
                     set tag_type "text"
+                    set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
             }
         } else {
             ns_log Notice "qfo_2g.485: field '${f_hash}' \
 'type' attribute not found. Setting to 'text'"
             set tag_type "text"
+            set fatts_arr(${f_hash},is_datatyped_p) 1
         }
 
-        set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
-        if { $datatype_idx > -1 } {
-            set datatype [lindex $field_list $datatype_idx+1]
-            set fatts_arr(${f_hash},${datatype_const}) $datatype
-
+        if { $fatts_arr(${f_hash},is_datatyped_p) } {
+            set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
+            if { $datatype_idx > -1 } {
+                set datatype [lindex $field_list $datatype_idx+1]
+                set fatts_arr(${f_hash},${datatype_const}) $datatype
+            } else {
+                set datatype "text"
+                set fatts_arr(${f_hash},${datatype_const}) "text"
+            }
             set name_idx [lsearch -exact -nocase $field_list $name_const]
             set name [lindex $field_list $name_idx+1]
             set fatts_arr(${f_hash},names) $name
@@ -507,94 +517,61 @@ ad_proc -public qfo_2g {
             # No need to validate entry here.
             # Entry is validated when making markup language for form.
             # Just setup to validate input from form post/get.
-            set tag_type ""
-            set type_idx [lsearch -exact -nocase $field_list $type_const]
-            if { $type_idx > -1 } {
-                set tag_type [lindex $field_list $type_idx+1]
-                switch -exact -nocase -- $tag_type {
-                    select {
-                        if { [lsearch -exact -nocase $field_list $multiple_const] } {
-                            set multiple_names_p 1
-                        } else {
-                            set multiple_names_p 0
+
+            # define choice(s) datatype in fchoices_larr for validation
+            set value_idx [lsearch -exact -nocase $field_list $value_const]
+            if { $value_idx > -1 } {
+                set tag_value [lindex $field_list $value_idx+1]
+                # Are choices treated differently than choice
+                # for validation? No
+                # Only difference is name is for all choices with 'choice'
+                # whereas 'choices' has a different name for each choice.
+                # For SELECT tag, need to know if has MULTIPLE attribute
+                # to know if to expect Name attribute.
+                if { $multiple_names_p } {
+                    foreach tag_v_list $tag_value {
+                        #array set fc_arr $tag_v_list
+                        # Re-written to consider uppercase/lowercase refs
+                        foreach {n v} $tag_v_list {
+                            set nlc [string tolower $n]
+                            #set fn_arr($nlc) $n
+                            set fv_arr(${nlc}) $v
+                        }
+                        if { [info exists fv_arr(value) ] \
+                                 && [info exists fv_arr(name)] } {
+                            # Use lappend to collect validation values, 
+                            # because the name may be the same, 
+                            # just different value.
+                            lappend fchoices_larr($fv_arr(name)) $fv_arr(value)
+                            lappend fatts_arr(${f_hash},names) $fv_arr(name)
                         }
                     }
-                    radio {
-                        set multiple_names_p 0
-                    }
-                    checkbox {
-                        set multiple_names_p 1
-                    }
-                    default {
-                        set error_p 1
-                        ns_log Error "qfo_2g: attribute TYPE '${tag_type}' \
- is not 'select', 'radio', or 'checkbox'. \
- Maybe '${f_hash}' is missing 'datatype' attribute?"
-                    }
-                }
-
-                # define choice(s) datatype in fchoices_larr for validation
-                set value_idx [lsearch -exact -nocase $field_list $value_const]
-                if { $value_idx > -1 } {
-                    set tag_value [lindex $field_list $value_idx+1]
-                    # Are choices treated differently than choice
-                    # for validation? No
-                    # Only difference is name is for all choices with 'choice'
-                    # whereas 'choices' has a different name for each choice.
-                    # For SELECT tag, need to know if has MULTIPLE attribute
-                    # to know if to expect Name attribute.
-                    if { $multiple_names_p } {
-                        foreach tag_v_list $tag_value {
-                            #array set fc_arr $tag_v_list
-                            # Re-written to consider uppercase/lowercase refs
-                            foreach {n v} $tag_v_list {
-                                set nlc [string tolower $n]
-                                #set fn_arr($nlc) $n
-                                set fv_arr(${nlc}) $v
-                            }
-                            if { [info exists fv_arr(value) ] \
-                                     && [info exists fv_arr(name)] } {
-                                # Use lappend to collect validation values, 
-                                # because the name may be the same, 
-                                # just different value.
-                                lappend fchoices_larr($fv_arr(name)) $fv_arr(value)
-                                lappend fatts_arr(${f_hash},names) $fv_arr(name)
-                            }
-                        }
-                        array unset fv_arr
-                    } else {
-                        # Name is derived from tag:
-                        set name_idx [lsearch -exact -nocase $field_list $name_const]
-                        set name [lindex $field_list $name_idx+1]
-                        set fatts_arr(${f_hash},names) $name
-
-                        # Use lappend to collect validation values, 
-                        # because the name may be the same, 
-                        # just different value.
-                        foreach tag_v_list $tag_value {
-                            set v_idx [lsearch -exact -nocase $tag_v_list $value_const]
-                            if { $v_idx > -1 } {
-                                set v_val [lindex $tag_v_list $v_idx+1 ]
-                                lappend fchoices_larr(${name}) $v_val
-                            }
-                        }
-                    }
-
+                    array unset fv_arr
                 } else {
-                    set error_p 1
-                    ns_log Error "qfo_2g: value for field '${f_hash}' not found."
+                    # Name is derived from tag:
+                    set name_idx [lsearch -exact -nocase $field_list $name_const]
+                    set name [lindex $field_list $name_idx+1]
+                    set fatts_arr(${f_hash},names) $name
+                    
+                    # Use lappend to collect validation values, 
+                    # because the name may be the same, 
+                    # just different value.
+                    foreach tag_v_list $tag_value {
+                        set v_idx [lsearch -exact -nocase $tag_v_list $value_const]
+                        if { $v_idx > -1 } {
+                            set v_val [lindex $tag_v_list $v_idx+1 ]
+                            lappend fchoices_larr(${name}) $v_val
+                        }
+                    }
                 }
+                
             } else {
                 set error_p 1
-                ns_log Error "qfo_2g: field '${f_hash}': datatype not found \
- and type not 'select', 'checkbox' or 'radio'."
-            }
-            if { $error_p } {
-                ns_log Error "qfo_2g: datatype for field '${f_hash}' not found."
+                ns_log Error "qfo_2g: value for field '${f_hash}' not found."
             }
         }
         if { !$error_p } {
-
+            
             # element "datatype" already exists, skip that loop:
             set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
             # e = element
@@ -628,12 +605,10 @@ ad_proc -public qfo_2g {
                 set fatts_arr(${f_hash},tabindex) $tabindex_tail
                 incr tabindex_tail
             }
-       } 
+        }
         ns_log Notice "qfo_2g.324: array get fatts_arr '[array get fatts_arr]'"
-    } else {
         ns_log Notice "qfo_2g.375: data_type_existing_list '${data_type_existing_list}'"
     }
-
 
     # All the fields and datatypes are known.
     # Proceed with form building and UI stuff
