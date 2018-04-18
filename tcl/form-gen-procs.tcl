@@ -688,7 +688,7 @@ ad_proc -public qfo_2g {
 
             # Don't create var if llength fatts_arr(f_hash,names) > 1,
             # because multiple choices only pass selected values.
-            if { [llength $fatts_arr(${f_hash},names) ] eq 1 } {
+            if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 set name $fatts_arr(${f_hash},names)
                 if { ![info exists qfv_arr(${name})] } {
                     # Make sure variable exists.
@@ -701,18 +701,9 @@ ad_proc -public qfo_2g {
                 }
             }
             
-            # validate. This first switch should be based on type..
-            if { [info exists fatts_arr(${f_hash},valida_proc)] } {
-                if { [llength $fatts_arr(${f_hash},names) ] > 1 } {
-                    # This is a multiple choice answer
-                    # Which shouldn't get passed here,
-                    # since valida_proc is not part of 
-                    # multiple choice answer validation paradigm.
-                    foreach name $fatts_arr(${f_hash},names) {
-                        ##code Remove type
-                    }
-                } else {
-                    
+            # validate. 
+            if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                if { [info exists fatts_arr(${f_hash},valida_proc)] } {
                     set name $fatts_arr(${f_hash},names)
                     set valid_p [qf_validate_input \
                                      -input $qfv_arr(${name}) \
@@ -722,26 +713,29 @@ ad_proc -public qfo_2g {
                     if { !$valid_p } {
                         lappend invalid_field_val_list $name
                     }
+                } else {
+                    ns_log Notice "qfo_2g.717: field '${f_hash}' \
+ no validation proc. found"
                 }
+
             } else {
+                # not is_datatyped_p ie is select, checkbox, or radio input
                 set valid_p 1
-                if { [llength $fatts_arr(${f_hash},names) ] > 1 } {
-                    foreach name $fatts_arr(${f_hash},names) {
-                        if { [info exists fchoices_larr(name) ] } {
-                            # check for type=select,checkbox, or radio
-                            ##code verify this works with qf_choices variants
-                            if { [lsearch -exact $fchoices_larr(${name}) $name] > -1 } {
-                                ##code We need to validate the value
-                                # that cooresponds to the name as well
-                                # as the name
-                                set valid_multi_p 1
-                            }
+                foreach name $fatts_arr(${f_hash},names) {
+                    if { [info exists fchoices_larr(name) ] } {
+                        # check for type=select,checkbox, or radio
+                        ##code verify this works with qf_choices variants
+                        if { [lsearch -exact $fchoices_larr(${name}) $name] > -1 } {
+                            ##code We need to validate the value
+                            # that cooresponds to the name as well
+                            # as the name
+                            set valid_multi_p 1
                         }
-                        set valid_p
-                    } else {
-                        ##code Here, the name must exist and be one of the
-                        # selected values
                     }
+                    set valid_p
+                } else {
+                    ##code Here, the name must exist and be one of the
+                    # selected values
                 }
             }
             # keep track of each invalid field.
