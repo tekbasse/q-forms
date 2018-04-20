@@ -639,7 +639,7 @@ ad_proc -public qfo_2g {
     # into an array and then overwrite the array with qfi_arr
     # Except, we don't want any extraneous input inserted unexpectedly in code.
 
-    ##code In a new proc, qfo_3g, 
+    ##code Future feature comment. In a new proc, qfo_3g, 
     # maybe allow dynamically generated fields to allow
     # this following exception:
     # Except, we don't want a filter process
@@ -652,11 +652,9 @@ ad_proc -public qfo_2g {
     #  array set qfv_arr /array get qfi_arr "{glob1}"
     #  array set qfv_arr /array get qfi_arr "glob2"
     # 
-    # For now, dynamically generated fields need to be detected and filtered
+    # For now, dynamically generated fields need to be 
+    # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
-    # Actually, dynamically generated fields *should* be defined 
-    # individually via fields_array anyway, so not a super significant issue
-    # yet.
 
     # qfv = field value
     foreach f_hash $qfi_fields_list {
@@ -790,6 +788,7 @@ ad_proc -public qfo_2g {
             lappend qfi_fields_sorted_list [lindex $f_list 0]
         }
 
+
         # build form using qf_* api
         set form_m ""
 
@@ -797,19 +796,40 @@ ad_proc -public qfo_2g {
         set doctype [qf_doctype $doc_type]
         set form_id [qf_form form_id $form_id]
 
-        # Use qfi_fields_sorted_list to generate an ordered list of inputs
+        # Use qfi_fields_sorted_list to generate 
+        # an ordered list of form elements
+
+        if { !$validated_p && $form_submitted_p } {
+            ##code
+            ## set input values from qfv_arr
+            # they need to be unquoted..
+            # if value eq "" && !$empty_allowed_p, set default
+        }
         foreach f_hash $qfi_fields_sorted_list {
-            switch -- $fatts_arr(${f_hash},form_tag_type) {
-                input {
-                    ##code
+            if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                switch -- $fatts_arr(${f_hash},form_tag_type) {
+                    input {
+                        qf_input $fatts_arr(${f_hash},form_tag_attrs)
+                    }
+                    textarea {
+                        qf_textarea $fatts_arr(${f_hash},form_tag_attrs)
+                    }
+                    default {
+                        # this is not a form_tag_type
+                        # tag attribute 'type' determines if this
+                        # is checkbox, radio, select, or select/multiple
+                        # This should not happen, because
+                        # fatts_arr(${f_hash},is_datatyped_p) is false for 
+                        # these cases.
+                        ns_log Warning "qfo_2g.818: Unexpected form element: \
+ f_hash '${f_hash}' ignored. \
+ fatts_arr(${f_hash},form_tag_type) '$fatts_arr(${f_hash},form_tag_type)'"
+                    }
                 }
-                choice -
-                choices -
-                default {
-                    # this is not a form_tag_type
-                    # tag attribute 'type' determines if this
-                    # is checkbox, radio, select, or select/multiple
-                }
+            } else {
+                # choice/choices
+                ##code
+
             }
         }
         qf_close $form_id
