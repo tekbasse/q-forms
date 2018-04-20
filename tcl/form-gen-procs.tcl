@@ -587,7 +587,7 @@ ad_proc -public qfo_2g {
                 if { [string match -nocase $datatype_const $attr] } {
                     # Put datatypes in an array where value is list of
                     # fields using it.
-                    lappend fields_w_datatypes_used_arr(${val}) $f
+                    lappend fields_w_datatypes_used_arr(${val}) $f_hash
                     # We set type before adding default datatype elements
                     #set fatts_arr(${f_hash},${attr}) $val
                 } elseif { [string match -nocase $tabindex_const $attr] } {
@@ -654,6 +654,9 @@ ad_proc -public qfo_2g {
     # 
     # For now, dynamically generated fields need to be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
+    # Actually, dynamically generated fields *should* be defined 
+    # individually via fields_array anyway, so not a super significant issue
+    # yet.
 
     # qfv = field value
     foreach f_hash $qfi_fields_list {
@@ -783,8 +786,8 @@ ad_proc -public qfo_2g {
         set qfi_fields_tabindex_sorted_lists [lsort -integer -index 1 \
                                                   $qfi_fields_tabindex_lists]
         set qfi_fields_sorted_list [list]
-        foreach f_hash $qfi_fields_tabindex_sorted_lists {
-            lappend qfi_fields_sorted_list [lindex $f_hash 0]
+        foreach f_list $qfi_fields_tabindex_sorted_lists {
+            lappend qfi_fields_sorted_list [lindex $f_list 0]
         }
 
         # build form using qf_* api
@@ -797,7 +800,16 @@ ad_proc -public qfo_2g {
         # Use qfi_fields_sorted_list to generate an ordered list of inputs
         foreach f_hash $qfi_fields_sorted_list {
             switch -- $fatts_arr(${f_hash},form_tag_type) {
-                ##code
+                input {
+                    ##code
+                }
+                choice -
+                choices -
+                default {
+                    # this is not a form_tag_type
+                    # tag attribute 'type' determines if this
+                    # is checkbox, radio, select, or select/multiple
+                }
             }
         }
         qf_close $form_id
