@@ -1,4 +1,4 @@
-ad_library {
+>ad_library {
 
     routines for creating, managing customizable forms
     for adapting package applications to site specific requirements
@@ -801,9 +801,13 @@ ad_proc -public qfo_2g {
 
         if { !$validated_p && $form_submitted_p } {
             ##code
+
+            set value_idx [lsearch -exact -nocase $fatts_arr(${f_hash},form_tag_attrs) $value_const]
+
             ## set input values from qfv_arr
             # they need to be unquoted..
             # if value eq "" && !$empty_allowed_p, set default
+            # choice/choices needs to reflect "selected status"
         }
         foreach f_hash $qfi_fields_sorted_list {
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
@@ -828,7 +832,12 @@ ad_proc -public qfo_2g {
                 }
             } else {
                 # choice/choices
-                ##code
+
+                if { [llength $fatts_arr(${f_hash},names) ] > 1 } {
+                    qf_choices $fatts_arr(${f_hash},form_tag_type)
+                } else {
+                    qf_choice $fatts_arr(${f_hash},form_tag_type)
+                }
 
             }
         }
