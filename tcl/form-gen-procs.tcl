@@ -53,6 +53,23 @@ ad_proc -private ::qfo::qtable_label_package_id {
 }
 
 
+ad_proc -private ::qfo::larr_replace {
+    -array_name
+    -index
+    -attribute_name_index
+    -new_value
+} {
+    Replaces the value in a name/value paired list that is indexed by 'index' 
+    in array 'array_name'.
+    Returns 1.
+    This proc essentially breaks up a long line in to many, more legible ones.
+} { 
+    upvar 1 $array_name a_larr
+    set i $attribute_name_index
+    set a_larr(${index}) [lreplace $a_larr(${index}) $i+1 $i+1 $new_value]
+    return 1
+}
+
 #ad_proc qfo_form_fields_prepare {
 #    {-form_fields_larr_name}
 #} {
@@ -447,14 +464,17 @@ ad_proc -public qfo_2g {
                         set multiple_names_p 0
                     }
                     set fatts_arr(${f_hash},is_datatyped_p) 0
+                    set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
                 }
                 radio {
                     set multiple_names_p 0
                     set fatts_arr(${f_hash},is_datatyped_p) 0
+                    set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
                 }
                 checkbox {
                     set multiple_names_p 1
                     set fatts_arr(${f_hash},is_datatyped_p) 0
+                    set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
                 }
                 button -
                 color -
@@ -800,15 +820,34 @@ ad_proc -public qfo_2g {
         # an ordered list of form elements
 
         if { !$validated_p && $form_submitted_p } {
-            ##code
+            # update value of 'value' attribute to one from qfv_arr
+            # Every f_hash element has a value at this point.
+            set form_tag_attrs_const ",form_tag_attrs"
+            foreach f_hash $qfi_fields_sorted_list {
 
-            set value_idx [lsearch -exact -nocase $fatts_arr(${f_hash},form_tag_attrs) $value_const]
-
+                set value_idx [lsearch -exact -nocase \
+                                   $fatts_arr(${f_hash},form_tag_attrs) \
+                                   $value_const ]
+                if { $fatts_arr(${f_hash},multiple_names_p) } {
+                    # Not every name exists in qfv_arr
+                    # And the value's value is a list of name/value pair lists.
+                ##code
+                } else {
+                    set index $f_hash
+                    append index $form_tag_attrs_const
+                    ::qfo::larr_replace \
+                        -array_name fatts_arr \
+                        -index $index \
+                        -attribute_name_index $value_idx \
+                        -new_value $qfv_arr($fatts_arr(${f_hash},names))
+                }
             ## set input values from qfv_arr
             # they need to be unquoted..
             # if value eq "" && !$empty_allowed_p, set default
             # choice/choices needs to reflect "selected status"
+            }
         }
+
         foreach f_hash $qfi_fields_sorted_list {
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 switch -- $fatts_arr(${f_hash},form_tag_type) {
