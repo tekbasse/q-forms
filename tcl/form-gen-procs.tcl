@@ -70,6 +70,50 @@ ad_proc -private ::qfo::larr_replace {
     return 1
 }
 
+ad_proc -private ::qfo::lol_replace {
+    -fatts_array_name
+    -fatts_array_index
+    -fatts_arr_list_index
+    -tag_type
+    -qfv_array_name
+    -qfv_array_indexes
+} {
+    Similar to <code>::qfo::larr_replace</code>
+    except, instead of an array containing a list,
+    the array contains a list, where the target value is a list of lists.
+    Replaces the values in a name/value paired list of lists
+    that is indexed by 'fatts_array_index' 
+    in array 'fatts_array_name'.
+    Returns 1.
+} { 
+    upvar 1 $fatts_array_name f_larr
+    upvar 1 $fatts_array_index f_idx
+    upvar 1 $qvf_array_name qvf_arr
+
+                switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
+                    # The value's value is a list of name/value pair lists.
+                    set old_value_lol [lindex \
+                                           $fatts_arr(${f_hash},form_tag_attrs) \
+                                           $value_idx+1 ]
+                    set new_value_lol [list ]
+
+                        select {
+                            foreach row_nvl $old_value_lol {
+                        }
+
+                        checkbox {
+                        }
+                    }
+
+                        # Not every name exists in qfv_arr
+
+
+
+    return 1
+}
+
+
+
 #ad_proc qfo_form_fields_prepare {
 #    {-form_fields_larr_name}
 #} {
@@ -465,16 +509,19 @@ ad_proc -public qfo_2g {
                     }
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
+                    set fatts_arr(${f_hash},tag_type) $tag_type
                 }
                 radio {
                     set multiple_names_p 0
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
+                    set fatts_arr(${f_hash},tag_type) $tag_type
                 }
                 checkbox {
                     set multiple_names_p 1
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
+                    set fatts_arr(${f_hash},tag_type) $tag_type
                 }
                 button -
                 color -
@@ -828,19 +875,31 @@ ad_proc -public qfo_2g {
                 set value_idx [lsearch -exact -nocase \
                                    $fatts_arr(${f_hash},form_tag_attrs) \
                                    $value_const ]
-                if { $fatts_arr(${f_hash},multiple_names_p) } {
-                    # Not every name exists in qfv_arr
-                    # And the value's value is a list of name/value pair lists.
-                ##code
-                } else {
-                    set index $f_hash
-                    append index $form_tag_attrs_const
-                    ::qfo::larr_replace \
-                        -array_name fatts_arr \
-                        -index $index \
-                        -attribute_name_index $value_idx \
-                        -new_value $qfv_arr($fatts_arr(${f_hash},names))
+                switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
+                    radio -
+                    checkbox -
+                    select {
+                        ##code
+                        ::qfo::lol_replace \
+                            -fatts_array_name $ \
+                            -fatts_array_index $ \
+                            -fatts_arr_list_index \
+                            -tag_type \
+                            -qfv_array_name \
+                            -qfv_array_indexes \
+                    }
+                    default {
+                        set index $f_hash
+                        set v2 [qf_unquote $qfv_arr($fatts_arr(${f_hash},names)) ]
+                        append index $form_tag_attrs_const
+                        ::qfo::larr_replace \
+                            -array_name fatts_arr \
+                            -index $index \
+                            -attribute_name_index $value_idx \
+                            -new_value $v2
+                    }
                 }
+
             ## set input values from qfv_arr
             # they need to be unquoted..
             # if value eq "" && !$empty_allowed_p, set default
