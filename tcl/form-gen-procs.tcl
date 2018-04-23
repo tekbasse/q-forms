@@ -102,27 +102,68 @@ ad_proc -private ::qfo::lol_replace {
         # Not every name exists in qfv_arr
 
         set name_const "name"
+        set value_const "value"
         foreach row_nvl $old_value_lol {
             array set row_arr $row_nvl
             # index may be upper or lower case
             set n_list [array names row_arr]
-            set selected_idx [lsearch -exact -nocase $n_list $selected_const]
-            if { $selected_idx > -1 } {
-                # found in original declaration
-                set selected_n [lindex $n_list $selected_idx]
-                ##code row_arr(${selected_n})
+            set name_idx [lsearch -exact -nocase $n_list $name_const]
+            if { $name_idx > -1 } {
                 # Does the input case exist?
+                set name_n [lindex $n_list $name_idx]
+                # Is name set to value of this choice?
+                set value_idx [lsearch -exact -nocase $n_list $value_const]
+                set value_n [lindex $n_list $value_idx]
+                if { [info exists qfv_arr(${name_n}) ] } {
+                    if { $qfv_arr(${name_n}) eq $row_arr(${value_n}) } {
+                        ##code
+                    }
+                }
+                         
 
-                if 
+                # Is 'selected' an attribute in original declaration?
+                set s_idx [lsearch -exact -nocase $n_list $selected_const]
+                if { $s_idx > -1 } {
+                    # found in original declaration
+                    set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
+                } else { $selected_p } {
+                    set new_row_nvl $row_nvl
+                    lappend new_row_nvl $selected_const $selected_p
+                }
+
             } else {
-                # not found in declaration, default is "selected 0"
-
+                # selection must be a separator or the like.
+                lappend new_value_lol $row_nvl
             }
         }
+
     } else {
         # Name is a part of tag attributes,
         # so there is only one name to check.
         foreach row_nvl $old_value_lol {
+            array set row_arr $row_nvl
+            # index may be upper or lower case
+            set n_list [array names row_arr]
+            set name_idx [lsearch -exact -nocase $n_list $name_const]
+            if { $name_idx > -1 } {
+                # Does the input case exist?
+                set name_n [lindex $n_list $name_idx]
+                set selected_p [info exists qfv_arr(${name_n}) ]
+
+                # Is 'selected' an attribute in original declaration?
+                set s_idx [lsearch -exact -nocase $n_list $selected_const]
+                if { $s_idx > -1 } {
+                    # found in original declaration
+                    set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
+                } else { $selected_p } {
+                    set new_row_nvl $row_nvl
+                    lappend new_row_nvl $selected_const $selected_p
+                }
+
+            } else {
+                # selection must be a separator or the like.
+                lappend new_value_lol $row_nvl
+            }
     
         }
     }
