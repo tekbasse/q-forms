@@ -75,13 +75,18 @@ ad_proc -private ::qfo::lol_replace {
     -fatts_array_index
     -fatts_arr_list_index
     -is_multiple_p
-    -tag_type
     -qfv_array_name
-    -qfv_array_indexes
 } {
+    <code>fatts_array_index</code> is the index of the array where the list is.
+    <br><br>
+    <code>fatts_arr_list_index</code> is the index of the attribute 'value' 
+    in the list referenced by fatts_array_index.
+    <br><br>
+
     Similar to <code>::qfo::larr_replace</code>
     except, instead of an array containing a list,
-    the array contains a list, where the target value is a list of lists.
+    the array contains a list, 
+    where the target 'value' attribute is a list of lists.
     Replaces the values in a name/value paired list of lists
     that is indexed by 'fatts_array_index' 
     in array 'fatts_array_name'.
@@ -91,10 +96,12 @@ ad_proc -private ::qfo::lol_replace {
     upvar 1 $fatts_array_index fa_index
     upvar 1 $fatts_arr_list_index fal_idx
     upvar 1 $qfv_array_name qfv_arr
-    upvar 1 $qfv_array_indexes qfv_index_list
 
     # The value's value is a list of name/value pair lists.
-    set old_value_lol [lindex $fa_arr(${fa_index}) $fal_idx+1 ]
+    set x $fal_idx
+    incr x
+    set old_lol $fa_arr(${fa_index})
+    set old_value_lol [lindex $old_lol $x ]
     set new_value_lol [list ]
     set selected_const "selected"
     if { $is_multiple_p } {
@@ -111,15 +118,19 @@ ad_proc -private ::qfo::lol_replace {
             if { $name_idx > -1 } {
                 # Does the input case exist?
                 set name_n [lindex $n_list $name_idx]
-                # Is name set to value of this choice?
+
                 set value_idx [lsearch -exact -nocase $n_list $value_const]
                 set value_n [lindex $n_list $value_idx]
+
+                # Is qvf_arr(name) set to the value of this choice?
+                set selected_p 0
                 if { [info exists qfv_arr(${name_n}) ] } {
-                    if { $qfv_arr(${name_n}) eq $row_arr(${value_n}) } {
-                        ##code
+                    # unqoute qfv_arr first
+                    set input_unquoted [qf_unquote $qfv_arr(${name_n}) ]
+                    if { $input_unquoted eq $row_arr(${value_n}) } {
+                        set selected_p 1
                     }
                 }
-                         
 
                 # Is 'selected' an attribute in original declaration?
                 set s_idx [lsearch -exact -nocase $n_list $selected_const]
@@ -133,40 +144,54 @@ ad_proc -private ::qfo::lol_replace {
 
             } else {
                 # selection must be a separator or the like.
-                lappend new_value_lol $row_nvl
+                set new_row_lol $row_nvl
             }
+            lappend new_value_lol $new_row_lol
         }
 
     } else {
         # Name is a part of tag attributes,
         # so there is only one name to check.
-        foreach row_nvl $old_value_lol {
-            array set row_arr $row_nvl
-            # index may be upper or lower case
-            set n_list [array names row_arr]
-            set name_idx [lsearch -exact -nocase $n_list $name_const]
-            if { $name_idx > -1 } {
-                # Does the input case exist?
-                set name_n [lindex $n_list $name_idx]
-                set selected_p [info exists qfv_arr(${name_n}) ]
 
-                # Is 'selected' an attribute in original declaration?
-                set s_idx [lsearch -exact -nocase $n_list $selected_const]
-                if { $s_idx > -1 } {
-                    # found in original declaration
-                    set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
-                } else { $selected_p } {
+        # index may be upper or lower case
+        set n_list [array names row_arr]
+        set name_idx [lsearch -exact -nocase $n_list $name_const]
+        if { $name_idx > -1 } {
+
+
+            foreach row_nvl $old_value_lol {
+                array set row_arr $row_nvl
+                # index may be upper or lower case
+                set n_list [array names row_arr]
+                set name_idx [lsearch -exact -nocase $n_list $name_const]
+                if { $name_idx > -1 } {
+                    # Does the input case exist?
+                    set name_n [lindex $n_list $name_idx]
+                    set selected_p [info exists qfv_arr(${name_n}) ]
+
+                    # Is 'selected' an attribute in original declaration?
+                    set s_idx [lsearch -exact -nocase $n_list $selected_const]
+                    if { $s_idx > -1 } {
+                        # found in original declaration
+                        set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
+                    } else { $selected_p } {
+                        set new_row_nvl $row_nvl
+                        lappend new_row_nvl $selected_const $selected_p
+                    }
+
+                } else {
+                    # selection must be a separator or the like.
                     set new_row_nvl $row_nvl
-                    lappend new_row_nvl $selected_const $selected_p
                 }
-
-            } else {
-                # selection must be a separator or the like.
-                lappend new_value_lol $row_nvl
+                lappend new_value_lol $new_row_nvl
             }
-    
         }
     }
+    if { [llength $new_value_lol ] > 0 } {
+        # replace the default choice selections with the ones from input
+        set fa_arr(${fa_index}) [lreplace $old_lol $x $x $new_value_lol]
+    } 
+    # else, use defaults
     return 1
 }
 
