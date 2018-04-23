@@ -1050,8 +1050,6 @@ ad_proc -private qf_validate_input {
     -input 
     -proc_name
     {-q_tables_enabled_p "0"}
-
-
 } {
     Returns '1' if value is validated. Otherwise returns '0'.
 } {
@@ -1127,23 +1125,23 @@ ad_proc -private qf_validate_input {
             # Is default_proc allowed?
             set allowed_p 0
             set procs_list [parameter::get \
-                                -package_id $instance_id \
+                                -package_id [ad_conn package_id] \
                                 -parameter AllowedValidationProcs \
-                                -default $default_val]
+                                -default ""]
 
             if { [lsearch -exact $procs_list $proc_name ] > -1 } {
                 set allowed_p 1
             }
-            if { !$allowed_p && $qtable_enabled_p } {
+            if { !$allowed_p && $q_tables_enabled_p } {
                 # Check for custom cases
+                set default_val ""
                 if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
                     # more than one q-tables exist
                     # Maybe change this to find one in a subsite.
                     # something like qc_set_instance_id from q-control
-                    set default_val ""
                 }
                 set custom_procs [parameter::get \
-                                      -package_id $instance_id \
+                                      -package_id [ad_conn package_id] \
                                       -parameter AllowedValidationProcs \
                                       -default $default_val]
                 foreach p $custom_procs {
