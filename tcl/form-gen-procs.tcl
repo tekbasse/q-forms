@@ -379,7 +379,7 @@ ad_proc -public qfo_2g {
 
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
-    ns_log Notice "qfo_2g.217: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
+    ns_log Notice "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
         ##code This part has not been tested, as it is
@@ -450,8 +450,8 @@ ad_proc -public qfo_2g {
     # and parsed via flag identifing their variation from using 'name'.
 
 
-    ns_log Notice "qfo_2g.266: array get fields_arr '[array get fields_arr]'"
-    ns_log Notice "qfo_2g.267: qfi_fields_list '${qfi_fields_list}'"
+    ns_log Notice "qfo_2g.453: array get fields_arr '[array get fields_arr]'"
+    ns_log Notice "qfo_2g.454: qfi_fields_list '${qfi_fields_list}'"
     set field_ct [llength $qfi_fields_list]
     # Create a field attributes array
     # fatts = field attributes
@@ -531,7 +531,7 @@ ad_proc -public qfo_2g {
     foreach n [array names qdt_types_arr "${datatype_dummy},*"] {
         lappend datatype_elements_list [string range $n $datatype_dummy_len+1 end]
     }
-    ns_log Notice "qfo_2g: datatype_elements_list '${datatype_elements_list}'"
+    ns_log Notice "qfo_2g.534: datatype_elements_list '${datatype_elements_list}'"
 
     
     # Determine adjustments to be applied to tabindex values
@@ -632,14 +632,14 @@ ad_proc -public qfo_2g {
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
                 default {
-                    ns_log Notice "qfo_2g.479: field '${f_hash}' \
+                    ns_log Notice "qfo_2g.635: field '${f_hash}' \
 'type' attribute not recognized '${tag_type}'. Setting to 'text'"
                     set tag_type "text"
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
             }
         } else {
-            ns_log Notice "qfo_2g.485: field '${f_hash}' \
+            ns_log Notice "qfo_2g.642: field '${f_hash}' \
 'type' attribute not found. Setting to 'text'"
             set tag_type "text"
             set fatts_arr(${f_hash},is_datatyped_p) 1
@@ -719,7 +719,7 @@ ad_proc -public qfo_2g {
                 
             } else {
                 set error_p 1
-                ns_log Error "qfo_2g: value for field '${f_hash}' not found."
+                ns_log Error "qfo_2g.722: value for field '${f_hash}' not found."
             }
         }
         if { !$error_p } {
@@ -730,7 +730,7 @@ ad_proc -public qfo_2g {
             foreach e [lreplace $datatype_elements_list $dedt_idx $dedt_idx] {
                 # Set field data defaults according to datatype
                 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
-                ns_log Notice "qfo_2g.300 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
+                ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
             }
             
             foreach {attr val} $field_list {
@@ -745,7 +745,7 @@ ad_proc -public qfo_2g {
                         set val [expr { $val + $tabindex_adj } ]
                         set fatts_arr(${f_hash},${attr}) $val
                     } else {
-                        ns_log Warning "qfo_2g.308: tabindex not integer for \
+                        ns_log Warning "qfo_2g.748: tabindex not integer for \
  tabindex attribute of field '${f_hash}'. Value is '${val}'"
                     }
                 } else {
@@ -758,8 +758,8 @@ ad_proc -public qfo_2g {
                 incr tabindex_tail
             }
         }
-        ns_log Notice "qfo_2g.324: array get fatts_arr '[array get fatts_arr]'"
-        ns_log Notice "qfo_2g.375: data_type_existing_list '${data_type_existing_list}'"
+        ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
+        ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
     }
 
     # All the fields and datatypes are known.
@@ -867,7 +867,7 @@ ad_proc -public qfo_2g {
                         lappend invalid_field_val_list $name
                     }
                 } else {
-                    ns_log Notice "qfo_2g.717: field '${f_hash}' \
+                    ns_log Notice "qfo_2g.870: field '${f_hash}' \
  no validation proc. found"
                 }
 
@@ -883,7 +883,7 @@ ad_proc -public qfo_2g {
                         if { [lsearch -exact $fchoices_larr(${name}) $qfv_arr(${name})] < 0 } {
                             # name exists, value not found
                             set valid_p 0
-                            ns_log Notice "qfo_2g.735: name '${name}' \
+                            ns_log Notice "qfo_2g.886: name '${name}' \
  has not valid value '$qfv_arr(${name})'"
                         }
                     }
@@ -1006,7 +1006,7 @@ ad_proc -public qfo_2g {
                         # This should not happen, because
                         # fatts_arr(${f_hash},is_datatyped_p) is false for 
                         # these cases.
-                        ns_log Warning "qfo_2g.818: Unexpected form element: \
+                        ns_log Warning "qfo_2g.1009: Unexpected form element: \
  f_hash '${f_hash}' ignored. \
  fatts_arr(${f_hash},form_tag_type) '$fatts_arr(${f_hash},form_tag_type)'"
                     }
@@ -1150,12 +1150,12 @@ ad_proc -private qf_validate_input {
                     }
                 }
                 if { !$allowed_p } {
-                    ns_log Warning "qf_validate_input: Broken UI. \
+                    ns_log Warning "qf_validate_input.1153: Broken UI. \
  Unknown validation proc '${proc_name}' proc_params_list '${proc_params_list}'"
 
 
                 } else {
-                    ns_log Notice "qf_validate_input: processing safe_eval '${proc_params_list}'"
+                    ns_log Notice "qf_validate_input.1158: processing safe_eval '${proc_params_list}'"
                     set valid_p [safe_eval $proc_params_list]
                 }
             }
@@ -1219,7 +1219,7 @@ ad_proc -private qfo_form_list_def_to_array {
                         incr select_multiple_i
                     } else {
                         if { !$ignore_parse_issues_p } {
-                            ns_log Warning "qfo_form_list_def_to_array.866: \
+                            ns_log Warning "qfo_form_list_def_to_array.1222: \
  No 'name' attribute found for element '${element_nvl}'"
                         }
                     }
@@ -1238,7 +1238,7 @@ ad_proc -private qfo_form_list_def_to_array {
                 }
                 default {
                     if { !$ignore_parse_issues_p } {
-                        ns_log Warning "qfo_form_list_def_to_array.879: \
+                        ns_log Warning "qfo_form_list_def_to_array.1241: \
  No 'name' attribute found, and type '$v_arr(type)' \
  not of type 'checkbox' or 'select multiple' for element '${element_nvl}'"
                     }
@@ -1246,7 +1246,7 @@ ad_proc -private qfo_form_list_def_to_array {
             }
         } else {
             if { !$ignore_parse_issues_p } {
-                ns_log Warning "qfo_form_list_def_to_array.888: \
+                ns_log Warning "qfo_form_list_def_to_array.1249: \
  No 'name' or 'type' attribute found for element '${element_nvl}'"
             }
         }
