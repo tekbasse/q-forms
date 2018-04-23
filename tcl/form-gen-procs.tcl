@@ -1,4 +1,4 @@
->ad_library {
+ad_library {
 
     routines for creating, managing customizable forms
     for adapting package applications to site specific requirements
@@ -74,6 +74,7 @@ ad_proc -private ::qfo::lol_replace {
     -fatts_array_name
     -fatts_array_index
     -fatts_arr_list_index
+    -is_multiple_p
     -tag_type
     -qfv_array_name
     -qfv_array_indexes
@@ -86,29 +87,45 @@ ad_proc -private ::qfo::lol_replace {
     in array 'fatts_array_name'.
     Returns 1.
 } { 
-    upvar 1 $fatts_array_name f_larr
-    upvar 1 $fatts_array_index f_idx
-    upvar 1 $qvf_array_name qvf_arr
+    upvar 1 $fatts_array_name fa_larr
+    upvar 1 $fatts_array_index fa_index
+    upvar 1 $fatts_arr_list_index fal_idx
+    upvar 1 $qfv_array_name qfv_arr
+    upvar 1 $qfv_array_indexes qfv_index_list
 
-                switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
-                    # The value's value is a list of name/value pair lists.
-                    set old_value_lol [lindex \
-                                           $fatts_arr(${f_hash},form_tag_attrs) \
-                                           $value_idx+1 ]
-                    set new_value_lol [list ]
+    # The value's value is a list of name/value pair lists.
+    set old_value_lol [lindex $fa_arr(${fa_index}) $fal_idx+1 ]
+    set new_value_lol [list ]
+    set selected_const "selected"
+    if { $is_multiple_p } {
 
-                        select {
-                            foreach row_nvl $old_value_lol {
-                        }
+        # Not every name exists in qfv_arr
 
-                        checkbox {
-                        }
-                    }
+        set name_const "name"
+        foreach row_nvl $old_value_lol {
+            array set row_arr $row_nvl
+            # index may be upper or lower case
+            set n_list [array names row_arr]
+            set selected_idx [lsearch -exact -nocase $n_list $selected_const]
+            if { $selected_idx > -1 } {
+                # found in original declaration
+                set selected_n [lindex $n_list $selected_idx]
+                ##code row_arr(${selected_n})
+                # Does the input case exist?
 
-                        # Not every name exists in qfv_arr
+                if 
+            } else {
+                # not found in declaration, default is "selected 0"
 
-
-
+            }
+        }
+    } else {
+        # Name is a part of tag attributes,
+        # so there is only one name to check.
+        foreach row_nvl $old_value_lol {
+    
+        }
+    }
     return 1
 }
 
