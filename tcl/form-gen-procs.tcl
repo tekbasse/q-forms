@@ -94,15 +94,14 @@ ad_proc -private ::qfo::lol_replace {
 } { 
     upvar 1 $fatts_array_name fa_larr
     upvar 1 $fatts_array_index fa_index
-    upvar 1 $fatts_arr_list_index fal_idx
     upvar 1 $qfv_array_name qfv_arr
 
     # The value's value is a list of name/value pair lists.
-    set x $fal_idx
+    set x $fatts_arr_list_index
     incr x
-    set old_lol $fa_arr(${fa_index})
-    set old_value_lol [lindex $old_lol $x ]
-    set new_value_lol [list ]
+    set old_lol $fa_arr(${fatts_array_index})
+    set old_val_lol [lindex $old_lol $x ]
+    set new_val_lol [list ]
     set selected_const "selected"
     if { $is_multiple_p } {
 
@@ -110,7 +109,8 @@ ad_proc -private ::qfo::lol_replace {
 
         set name_const "name"
         set value_const "value"
-        foreach row_nvl $old_value_lol {
+        # val = value, as in attribute 'value'
+        foreach row_nvl $old_val_lol {
             array set row_arr $row_nvl
             # index may be upper or lower case
             set n_list [array names row_arr]
@@ -146,7 +146,7 @@ ad_proc -private ::qfo::lol_replace {
                 # selection must be a separator or the like.
                 set new_row_lol $row_nvl
             }
-            lappend new_value_lol $new_row_lol
+            lappend new_val_lol $new_row_lol
         }
 
     } else {
@@ -159,7 +159,7 @@ ad_proc -private ::qfo::lol_replace {
         if { $name_idx > -1 } {
 
 
-            foreach row_nvl $old_value_lol {
+            foreach row_nvl $old_val_lol {
                 array set row_arr $row_nvl
                 # index may be upper or lower case
                 set n_list [array names row_arr]
@@ -183,13 +183,13 @@ ad_proc -private ::qfo::lol_replace {
                     # selection must be a separator or the like.
                     set new_row_nvl $row_nvl
                 }
-                lappend new_value_lol $new_row_nvl
+                lappend new_val_lol $new_row_nvl
             }
         }
     }
-    if { [llength $new_value_lol ] > 0 } {
+    if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
-        set fa_arr(${fa_index}) [lreplace $old_lol $x $x $new_value_lol]
+        set fa_arr(${fatts_array_index}) [lreplace $old_lol $x $x $new_val_lol]
     } 
     # else, use defaults
     return 1
@@ -544,6 +544,7 @@ ad_proc -public qfo_2g {
 
 
     # Parse fields
+    set default_tag_type "text"
     # Build dataset validation and making a form
     foreach f_hash $qfi_fields_list {
         set field_list $fields_arr(${f_hash})
@@ -579,7 +580,9 @@ ad_proc -public qfo_2g {
         # so add an index with a logical value to speed up
         # parsing at these logical branches:  is_datatyped_p
 
-        set tag_type ""
+        # default tag_type
+
+        set tag_type $default_tag_type
         set type_idx [lsearch -exact -nocase $field_list $type_const]
         if { $type_idx > -1 } {
             set tag_type [lindex $field_list $type_idx+1]
@@ -624,24 +627,26 @@ ad_proc -public qfo_2g {
                 url -
                 week {
                     # Check of attribute against doctype occurs later.
-                    # tag_type already set.
+                    # tag_type set to default_tag_type
                     set multiple_names_p ""
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
                 default {
                     ns_log Notice "qfo_2g.635: field '${f_hash}' \
 'type' attribute not recognized '${tag_type}'. Setting to 'text'"
-                    set tag_type "text"
+                    # tag_type set to default_tag_type
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
             }
-            set fatts_arr(${f_hash},tag_type) $tag_type
+            #set fatts_arr(${f_hash},tag_type) $tag_type
         } else {
             ns_log Notice "qfo_2g.642: field '${f_hash}' \
 'type' attribute not found. Setting to 'text'"
-            set tag_type "text"
+            # tag_type set to default_tag_type
+            #set fatts_arr(${f_hash},tag_type) $tag_type
             set fatts_arr(${f_hash},is_datatyped_p) 1
         }
+        set fatts_arr(${f_hash},tag_type) $tag_type
 
         if { $fatts_arr(${f_hash},is_datatyped_p) } {
             set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
@@ -966,7 +971,7 @@ ad_proc -public qfo_2g {
                             -fatts_array_name fatts_arr \
                             -fatts_array_index  $fatts_arr_index \
                             -fatts_arr_list_index $value_idx \
-                            -is_multiple_p $fatts_arr(${f_hash},is_multiple_p) \
+                            -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
                             -qfv_array_name qfv_arr
                     }
                     default {
