@@ -99,16 +99,17 @@ ad_proc -private ::qfo::lol_replace {
     # The value's value is a list of name/value pair lists.
     set x $fatts_arr_list_index
     incr x
-    set old_lol $fa_arr(${fatts_array_index})
+    set old_lol $fa_larr(${fatts_array_index})
     set old_val_lol [lindex $old_lol $x ]
     set new_val_lol [list ]
     set selected_const "selected"
+    set name_const "name"
+    set value_const "value"
+
     if { $is_multiple_p } {
 
         # Not every name exists in qfv_arr
 
-        set name_const "name"
-        set value_const "value"
         # val = value, as in attribute 'value'
         foreach row_nvl $old_val_lol {
             array set row_arr $row_nvl
@@ -189,7 +190,7 @@ ad_proc -private ::qfo::lol_replace {
     }
     if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
-        set fa_arr(${fatts_array_index}) [lreplace $old_lol $x $x $new_val_lol]
+        set fa_larr(${fatts_array_index}) [lreplace $old_lol $x $x $new_val_lol]
     } 
     # else, use defaults
     return 1
