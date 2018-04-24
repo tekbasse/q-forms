@@ -592,19 +592,16 @@ ad_proc -public qfo_2g {
                     }
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
-                    set fatts_arr(${f_hash},tag_type) $tag_type
                 }
                 radio {
                     set multiple_names_p 0
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
-                    set fatts_arr(${f_hash},tag_type) $tag_type
                 }
                 checkbox {
                     set multiple_names_p 1
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
-                    set fatts_arr(${f_hash},tag_type) $tag_type
                 }
                 button -
                 color -
@@ -638,6 +635,7 @@ ad_proc -public qfo_2g {
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
             }
+            set fatts_arr(${f_hash},tag_type) $tag_type
         } else {
             ns_log Notice "qfo_2g.642: field '${f_hash}' \
 'type' attribute not found. Setting to 'text'"
@@ -954,27 +952,27 @@ ad_proc -public qfo_2g {
             # Every f_hash element has a value at this point.
             set form_tag_attrs_const ",form_tag_attrs"
             foreach f_hash $qfi_fields_sorted_list {
-
+                set fatts_arr_index $f_hash
+                append fatts_arr_index $form_tag_attrs_const
                 set value_idx [lsearch -exact -nocase \
-                                   $fatts_arr(${f_hash},form_tag_attrs) \
+                                   $fatts_arr(${fatts_arr_index}) \
                                    $value_const ]
+                
                 switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                     radio -
                     checkbox -
                     select {
-                        ##code
                         ::qfo::lol_replace \
-                            -fatts_array_name $ \
-                            -fatts_array_index $ \
-                            -fatts_arr_list_index \
-                            -tag_type \
-                            -qfv_array_name \
-                            -qfv_array_indexes \
+                            -fatts_array_name fatts_arr \
+                            -fatts_array_index  $fatts_arr_index \
+                            -fatts_arr_list_index $value_idx \
+                            -is_multiple_p $fatts_arr(${f_hash},is_multiple_p) \
+                            -qfv_array_name qfv_arr
                     }
                     default {
                         set index $f_hash
-                        set v2 [qf_unquote $qfv_arr($fatts_arr(${f_hash},names)) ]
                         append index $form_tag_attrs_const
+                        set v2 [qf_unquote $qfv_arr($fatts_arr(${f_hash},names)) ]
                         ::qfo::larr_replace \
                             -array_name fatts_arr \
                             -index $index \
