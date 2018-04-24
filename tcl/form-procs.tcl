@@ -1360,7 +1360,7 @@ ad_proc -public qf_input {
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_input.1027: '${attribute}' is not a valid attribute."
+            ns_log Error "qf_input.1027: '${attribute}' is not a valid attribute. arg_list '${arg_list}'"
         }
     }
 
