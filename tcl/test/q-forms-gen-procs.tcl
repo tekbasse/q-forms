@@ -68,7 +68,7 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
                 -list_of_lists_name fd \
                 -ignore_parse_issues_p 0
             set validated_p [qfo_2g -fields_array fields_arr]
-            aa_log "qfo_gen x = '${x}'"
+
         } 
     # example code
     # -teardown_code {
