@@ -147,9 +147,9 @@ ad_proc -private ::qfo::lol_replace {
 
             } else {
                 # selection must be a separator or the like.
-                set new_row_lol $row_nvl
+                set new_row_nvl $row_nvl
             }
-            lappend new_val_lol $new_row_lol
+            lappend new_val_lol $new_row_nvl
         }
 
     } else {
