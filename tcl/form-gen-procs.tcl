@@ -1060,8 +1060,8 @@ ad_proc -public qfo_2g {
 
             }
         }
-        qf_close $form_id
-        set form_m [qf_read $form_id]
+        qf_close form_id $form_id
+        set form_m [qf_read form_id $form_id]
         
     }
     
