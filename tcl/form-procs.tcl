@@ -1647,7 +1647,9 @@ ad_proc -public qf_choice {
     set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype select]
     set attributes_input_list [qf_doctype_tag_attributes $__qf_doctype input]
     set attributes_full_list [concat $attributes_select_list $attributes_input_list]
-    lappend attributes_full_list type form_id label 
+
+    # datatype is used by qfo_g2 paradigm. See qfo_g2 proc.
+    lappend attributes_full_list type form_id label datatype
 
     # A subset of attributes_list gets passed to wrapping tag (select or ul/input)
     set attributes_list [list]
@@ -1889,13 +1891,17 @@ ad_proc -public qf_choices {
         set type "select"
         set attributes_select_list [qf_doctype_tag_attributes $__qf_doctype select]
         set attributes_full_list $attributes_select_list
-        lappend attributes_full_list value
+
+        # datatype is used by qfo_g2 paradigm. See proc qfo_g2
+        lappend attributes_full_list value datatype
     } else {
         set type "checkbox"
         set attributes_input_list [qf_doctype_tag_attributes $__qf_doctype input]
         set attributes_full_list $attributes_input_list
     }
-    lappend attributes_full_list type form_id id label
+
+    # datatype is used by qfo_g2 paradigm. See proc qfo_g2
+    lappend attributes_full_list type form_id id label datatype
     
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact $attributes_full_list $attribute]
@@ -1903,7 +1909,7 @@ ad_proc -public qf_choices {
             set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
         } else {
-            ns_log Error "qf_choices.1416: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' attributes_select_list '${attributes_select_list}'"
+            ns_log Error "qf_choices.1416: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' type '${type}' arg_list '${arg_list}'"
             ad_script_abort
         }
     }

@@ -1052,10 +1052,10 @@ ad_proc -public qfo_2g {
             } else {
                 # choice/choices
 
-                if { [llength $fatts_arr(${f_hash},names) ] > 1 } {
-                    qf_choices $fatts_arr(${f_hash},form_tag_type)
+                if { $fatts_arr(${f_hash},multiple_names_p) } {
+                    qf_choices $fatts_arr(${f_hash},form_tag_attrs)
                 } else {
-                    qf_choice $fatts_arr(${f_hash},form_tag_type)
+                    qf_choice $fatts_arr(${f_hash},form_tag_attrs)
                 }
 
             }
