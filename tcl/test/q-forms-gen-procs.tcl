@@ -17,13 +17,13 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
                              label Test1 \
                              datatype text \
                              tabindex 1 \
-                             default "okay!"]\
+                             value "okay!"]\
                         [list \
                              name test2integer \
                              tabindex 2 \
                              label Test2 \
                              datatype integer \
-                             default "0"]\
+                             value "0"]\
                         [list \
                              label test_checkboxes \
                              tabindex 3 \
