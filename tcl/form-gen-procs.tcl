@@ -66,7 +66,9 @@ ad_proc -private ::qfo::larr_replace {
 } { 
     upvar 1 $array_name a_larr
     set i $attribute_name_index
+    ns_log Notice "::qfo::larr_replace.69 ${array_name}(${index}) '$a_larr(${index})'"
     set a_larr(${index}) [lreplace $a_larr(${index}) $i+1 $i+1 $new_value]
+    ns_log Notice "::qfo::larr_replace.71 ${array_name}(${index}) '$a_larr(${index})'"
     return 1
 }
 
@@ -138,7 +140,7 @@ ad_proc -private ::qfo::lol_replace {
                 if { $s_idx > -1 } {
                     # found in original declaration
                     set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
-                } else { $selected_p } {
+                } elseif { $selected_p } {
                     set new_row_nvl $row_nvl
                     lappend new_row_nvl $selected_const $selected_p
                 }
@@ -190,7 +192,9 @@ ad_proc -private ::qfo::lol_replace {
     }
     if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
+        ns_log Notice "::qfo::lol_replace.194 ${fatts_array_name}(${fatts_array_index}) '$fa_larr(${fatts_array_index})'"
         set fa_larr(${fatts_array_index}) [lreplace $old_lol $x $x $new_val_lol]
+        ns_log Notice "::qfo::lol_replace.196 ${fatts_array_name}(${fatts_array_index}) '$fa_larr(${fatts_array_index})'"
     } 
     # else, use defaults
     return 1
@@ -515,6 +519,8 @@ ad_proc -public qfo_2g {
     set value_const "value"
     set name_const "name"
     set multiple_const "multiple"
+    set form_tag_attrs_const "form_tag_attrs"
+    set comma_const ","
     set choices_type_list [list $select_const "checkbox" "radio"]
 
     # Array for holding datatype 'sets' defined by select/choice/choices:
@@ -534,6 +540,8 @@ ad_proc -public qfo_2g {
     }
     ns_log Notice "qfo_2g.534: datatype_elements_list '${datatype_elements_list}'"
 
+    set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
+    set ftat_idx [lsearch -exact $datatype_elements_list $form_tag_attrs_const]
     
     # Determine adjustments to be applied to tabindex values
     if { $qtable_enabled_p } {
@@ -662,6 +670,9 @@ ad_proc -public qfo_2g {
             set name [lindex $field_list $name_idx+1]
             set fatts_arr(${f_hash},names) $name
 
+            #  is from datatype form_tag_attrs
+            array set temp_attrs_arr $qdt_types_arr(${datatype},form_tag_attrs)
+
         } else {
 
             # When fatts_arr($f_hash,datatype), is not created,
@@ -726,15 +737,34 @@ ad_proc -public qfo_2g {
                 ns_log Error "qfo_2g.722: value for field '${f_hash}' not found."
             }
         }
+
+        # Fill fatts_arr form_tag_attrs
+        # temp_attrs_arr may have been pre-filled with datatype defaults
+        # field_list contains tag attributes from fields_arr
+        array set temp_attrs_arr $field_list
+        set fatts_arr(${f_hash},form_tag_attrs) [array get temp_attrs_arr]
+        array unset temp_attrs_array
+
+
         if { !$error_p } {
             
             # element "datatype" already exists, skip that loop:
-            set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
+            # element "form_tag_attrs" already exists, skipp that in loop also.
             # e = element
-            foreach e [lreplace $datatype_elements_list $dedt_idx $dedt_idx] {
+            # Remove from list, last first to use existing index values.
+            set e_list $datatype_elements_list
+            if { $dedt_idx > $ftat_idx } {
+                set e_list [lreplace $e_list $dedt_idx $dedt_idx]
+                set e_list [lreplace $e_list $ftat_idx $ftat_idx]
+            } else {
+                set e_list [lreplace $e_list $ftat_idx $ftat_idx]
+                set e_list [lreplace $e_list $dedt_idx $dedt_idx]
+            }
+            foreach e $e_list {
                 # Set field data defaults according to datatype
                 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
-                ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e}) qdt_types_arr(${datatype},${e})"
+                ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
+ '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
             }
             
             foreach {attr val} $field_list {
@@ -956,10 +986,10 @@ ad_proc -public qfo_2g {
         if { !$validated_p && $form_submitted_p } {
             # update value of 'value' attribute to one from qfv_arr
             # Every f_hash element has a value at this point.
-            set form_tag_attrs_const ",form_tag_attrs"
+
             foreach f_hash $qfi_fields_sorted_list {
                 set fatts_arr_index $f_hash
-                append fatts_arr_index $form_tag_attrs_const
+                append fatts_arr_index $comma_const $form_tag_attrs_const
                 set value_idx [lsearch -exact -nocase \
                                    $fatts_arr(${fatts_arr_index}) \
                                    $value_const ]
@@ -977,7 +1007,7 @@ ad_proc -public qfo_2g {
                     }
                     default {
                         set index $f_hash
-                        append index $form_tag_attrs_const
+                        append index $comma_const $form_tag_attrs_const
                         set v2 [qf_unquote $qfv_arr($fatts_arr(${f_hash},names)) ]
                         ::qfo::larr_replace \
                             -array_name fatts_arr \
@@ -998,9 +1028,13 @@ ad_proc -public qfo_2g {
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 switch -- $fatts_arr(${f_hash},form_tag_type) {
                     input {
+                        ns_log Notice "qfo_2g.1001: qf_input \
+ fatts_arr(${f_hash},form_tag_attrs) '$fatts_arr(${f_hash},form_tag_attrs)'"
                         qf_input $fatts_arr(${f_hash},form_tag_attrs)
                     }
                     textarea {
+                        ns_log Notice "qfo_2g.1003: qf_textarea \
+ fatts_arr(${f_hash},form_tag_attrs) '$fatts_arr(${f_hash},form_tag_attrs)'"
                         qf_textarea $fatts_arr(${f_hash},form_tag_attrs)
                     }
                     default {
@@ -1257,5 +1291,7 @@ ad_proc -private qfo_form_list_def_to_array {
         array unset v_arr
         array unset n_arr
     }
+    ns_log Notice "qfo_form_list_def_to_array.1267: ${list_of_lists_name} '${elements_lol}'"
+    ns_log Notice "qfo_form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
     return $fields_ordered_list
 }
