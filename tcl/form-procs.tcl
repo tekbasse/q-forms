@@ -809,11 +809,12 @@ ad_proc -public qf_select {
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr($attribute) $value
-            if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
-                lappend attributes_list $attribute
+            set attribute_lc [string tolower $attribute ]
+            set attributes_arr($attribute_lc) $value
+            if { [lsearch -exact $attributes_tag_list $attribute_lc] > -1 } {
+                lappend attributes_list $attribute_lc
             }
         } else {
             ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}' arg_list '${arg_list}'"
@@ -1750,14 +1751,14 @@ ad_proc -public qf_choice {
             if { [f::even_p [llength $input_attributes_list]] } {
                 lappend attributes_input_list label
                 foreach {n v} $input_attributes_list {
-                    if { [lsearch -exact -nocase $attributes_input_list $n] > -1 } {
+                    if { [lsearch -exact $attributes_input_list $n] > -1 } {
                         lappend input_atts_list $n $v
                         lappend input_att_names_list $n
                     }
                 }
                 # Add a label based on value, if there isn't one.
-                if { [lsearch -exact -nocase $input_att_names_list "label"] < 0 } {
-                    set value_idx [lsearch -exact -nocase $input_atts_list "value"]
+                if { [lsearch -exact $input_att_names_list "label"] < 0 } {
+                    set value_idx [lsearch -exact $input_atts_list "value"]
                     if { $value_idx > -1 } {
                         set v [lindex $input_atts_list $value_idx+1]
                         lappend input_atts_list "label" $v
@@ -1769,6 +1770,13 @@ ad_proc -public qf_choice {
                         lappend input_atts_list "name" $attributes_arr(name)
                     }
                 }
+                # pass tabindex from tag attribute to choice item (maybe), if tabindex isn't included
+                if { [lsearch -exact -nocase $input_att_names_list "tabindex" ] < 0 } {
+                    if { [info exists attributes_arr(tabindex)] } {
+                        lappend input_atts_list "tabindex" $attributes_arr(tabindex)
+                    }
+                }
+
                 lappend input_atts_list form_id $attributes_arr(form_id) type radio
                 append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
                 append return_html [qf_input $input_atts_list]
@@ -1995,6 +2003,9 @@ ad_proc -public qf_choices {
             } 
             if { ![info exists input_arr(name)] && [info exists attributes_arr(name)] } {
                 set input_arr(name) $attributes_arr(name)
+            }
+            if { ![info exists input_arr(tabindex) && [ino exists attributes_arr(tabindex)] } {
+                set input_arr(tabindex) $attributes_arr(tabindex)
             }
             set input_attributes_list [array get input_arr]
             lappend input_attributes_list form_id $attributes_arr(form_id) type checkbox
