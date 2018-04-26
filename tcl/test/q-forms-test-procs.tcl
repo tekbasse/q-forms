@@ -36,7 +36,8 @@ aa_register_case -cats {api smoke} qf_form_checks {
             # Generate a form with components in context so 
             # code is not expected to break.
             set form_id1 [ad_generate_random_string $one_to_n]
-            set form_id [qf_form $form_id1]
+            ns_log Notice "test/q-forms-test-procs.tcl form_id1 '${form_id1}'"
+            set form_id [qf_form form_id $form_id1]
             set form_id_len [string length $form_id]
             set form_id_not_empty_p [expr { $form_id_len > 0 } ]
             aa_true "form_id has length greater than zero " $form_id_not_empty_p
