@@ -1024,18 +1024,29 @@ ad_proc -public qfo_2g {
             }
         }
 
+        # build form
+        set tabindex 1
         foreach f_hash $qfi_fields_sorted_list {
+            set atts_list $fatts_arr(${f_hash},form_tag_attrs)
+            set tab_idx [lsearch -exact -nocase $atts_list $tabindex_const ]
+            if { $tab_idx > -1 } {
+                incr tab_idx
+                set atts_list [lreplace $atts_list $tab_idx $tab_idx $tabindex ]
+            } else {
+                lappend atts_list $tabindex_const $tabindex
+                ns_log Notice "qfo_2g.999: atts_list ${atts_list}"
+            }
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 switch -- $fatts_arr(${f_hash},form_tag_type) {
                     input {
                         ns_log Notice "qfo_2g.1001: qf_input \
- fatts_arr(${f_hash},form_tag_attrs) '$fatts_arr(${f_hash},form_tag_attrs)'"
-                        qf_input $fatts_arr(${f_hash},form_tag_attrs)
+ fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                        qf_input $atts_list
                     }
                     textarea {
                         ns_log Notice "qfo_2g.1003: qf_textarea \
- fatts_arr(${f_hash},form_tag_attrs) '$fatts_arr(${f_hash},form_tag_attrs)'"
-                        qf_textarea $fatts_arr(${f_hash},form_tag_attrs)
+ fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                        qf_textarea $atts_list
                     }
                     default {
                         # this is not a form_tag_type
@@ -1053,12 +1064,13 @@ ad_proc -public qfo_2g {
                 # choice/choices
 
                 if { $fatts_arr(${f_hash},multiple_names_p) } {
-                    qf_choices $fatts_arr(${f_hash},form_tag_attrs)
+                    qf_choices $atts_list
                 } else {
-                    qf_choice $fatts_arr(${f_hash},form_tag_attrs)
+                    qf_choice $atts_list
                 }
 
             }
+            incr tabindex
         }
         qf_close form_id $form_id
         set form_m [qf_read form_id $form_id]
