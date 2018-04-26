@@ -427,11 +427,12 @@ ad_proc -public qf_form {
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr(${attribute}) $value
+            set attribute_lc [string tolower $attribute ]
+            set attributes_arr(${attribute_lc}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
-                lappend attributes_list $attribute
+                lappend attributes_list $attribute_lc
             }
         } else {
             ns_log Error "qf_form.337: '${attribute}' is not a valid attribute."
@@ -1211,7 +1212,7 @@ ad_proc -public qf_bypass {
             }
             form_id {
                 if { $value in $__form_ids_list } {
-                    set attriburtes_arr(form_id) $value
+                    set attributes_arr(form_id) $value
                 } else {
                     ns_log Notice "qf_bypass.1106: form_id '${value}' not found; Using last modified form form_id."
                 }
@@ -1654,10 +1655,12 @@ ad_proc -public qf_choice {
     # A subset of attributes_list gets passed to wrapping tag (select or ul/input)
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr(${attribute}) $value
-            lappend attributes_list $attribute
+            # Force attribute to lowercase to reduce complexity in code later
+            set attribute_lc [string tolower $attribute ]
+            set attributes_arr(${attribute_lc}) $value
+            lappend attributes_list $attribute_lc
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
@@ -1695,9 +1698,10 @@ ad_proc -public qf_choice {
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = radio, then items are input tags, wrapped in a list for now
     # if needing to paginate radio buttons, build the radio buttons using qf_input directly.
-    if { $attributes_arr(type) ne "radio" } {
+    if { ![string match -nocase "radio" $attributes_arr(type) ] } {
         set type "select"
     } else {
+        # This forces a lowercase 'radio' to reduce complexity in logic
         set type "radio"
     }
 
@@ -1723,7 +1727,7 @@ ad_proc -public qf_choice {
         if { $tag_wrapping ne "" } {
             set attributes_wrap_list [qf_doctype_tag_attributes $__qf_doctype $tag_wrapping]
             foreach attribute $attributes_list {
-                if { [lsearch -exact $attributes_wrap_list $attribute] > -1 } {
+                if { [lsearch -exact -nocase $attributes_wrap_list $attribute] > -1 } {
                     # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
                     regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
                     append args_html " " $attribute "=\"" $attributes_arr(${attribute}) "\""
@@ -1734,7 +1738,7 @@ ad_proc -public qf_choice {
         append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
         
         set args_html ""
-        # verify this is a list of lists.
+        # verify 'value's value is a list of lists.
         set list_length [llength $attributes_arr(value)]
         # test on the second input, less chance its a special case
         set second_input_attributes_count [llength [lindex $attributes_arr(value) 1]]
@@ -1746,13 +1750,13 @@ ad_proc -public qf_choice {
             if { [f::even_p [llength $input_attributes_list]] } {
                 lappend attributes_input_list label
                 foreach {n v} $input_attributes_list {
-                    if { [lsearch -exact $attributes_input_list $n] > -1 } {
+                    if { [lsearch -exact -nocase $attributes_input_list $n] > -1 } {
                         lappend input_atts_list $n $v
                         lappend input_att_names_list $n
                     }
                 }
                 # Add a label based on value, if there isn't one.
-                if { [lsearch -exact -nocase $input_atts_list "label"] < 0 } {
+                if { [lsearch -exact -nocase $input_att_names_list "label"] < 0 } {
                     set value_idx [lsearch -exact -nocase $input_atts_list "value"]
                     if { $value_idx > -1 } {
                         set v [lindex $input_atts_list $value_idx+1]
@@ -1760,7 +1764,7 @@ ad_proc -public qf_choice {
                     }
                 }
                 # pass the name from tag attribute to choice item, if name isn't included
-                if { [lsearch -exact -nocase $input_atts_list "name" ] < 0 } {
+                if { [lsearch -exact -nocase $input_att_names_list "name" ] < 0 } {
                     if { [info exists attributes_arr(name)] } {
                         lappend input_atts_list "name" $attributes_arr(name)
                     }
@@ -1904,10 +1908,11 @@ ad_proc -public qf_choices {
     lappend attributes_full_list type form_id id label datatype
     
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr(${attribute}) $value
-            lappend attributes_list $attribute
+            set attribute_lc [string tolower $attribute ]
+            set attributes_arr(${attribute_lc}) $value
+            lappend attributes_list $attribute_lc
         } else {
             ns_log Error "qf_choices.1416: [string range ${attribute} 0 15] is not a valid attribute. invoke with attribute value pairs. attributes_full_list '${attributes_full_list}' type '${type}' arg_list '${arg_list}'"
             ad_script_abort
@@ -2068,7 +2073,7 @@ ad_proc -private qf_html4_tag_attributes {
             lappend attr_list name rows cols disabled readonly tabindex accesskey
         }
         select {
-            lappend attr_list name size multiple disabled tabindex disabled tabindex
+            lappend attr_list name size multiple disabled tabindex disabled
         }
         input {
             lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey alt align accept
