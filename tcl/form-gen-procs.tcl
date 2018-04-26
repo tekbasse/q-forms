@@ -743,7 +743,7 @@ ad_proc -public qfo_2g {
         # field_list contains tag attributes from fields_arr
         array set temp_attrs_arr $field_list
         set fatts_arr(${f_hash},form_tag_attrs) [array get temp_attrs_arr]
-        array unset temp_attrs_array
+        array unset temp_attrs_arr
 
 
         if { !$error_p } {
