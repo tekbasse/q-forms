@@ -253,7 +253,7 @@ ad_proc -public qfo_2g {
     {-multiple_key_as_list "0"}
     {-hash_check "0"}
     {-post_only "0"}
-
+    {-tabindex_start "1"}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -1025,7 +1025,7 @@ ad_proc -public qfo_2g {
         }
 
         # build form
-        set tabindex 1
+        set tabindex $tabindex_start
         foreach f_hash $qfi_fields_sorted_list {
             set atts_list $fatts_arr(${f_hash},form_tag_attrs)
             set tab_idx [lsearch -exact -nocase $atts_list $tabindex_const ]
