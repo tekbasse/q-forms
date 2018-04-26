@@ -12,14 +12,15 @@ if { !$admin_p } {
 }
 
 set one_choice_tag_attribute_list [list [list label " label1 " value visa1] [list label " label2 " value visa2] [list label " label3 " value visa3] ]
+
 set multi_choice_tag_attribute_list [list [list name card1 label " label1 " value visa1 selected 1] [list name card2 label " label2 " value visa2 selected 0] [list name card3 label " label3 " value visa3] ]
 
 set f_lol [list \
                [list type text value "example value" name "input_text" label "input text" size 40 maxlength 80 ] \
                [list type radio name creditcard value $one_choice_tag_attribute_list ] \
                [list type checkbox value $multi_choice_tag_attribute_list ] \
-               [list type submit name charlie value bravo] \
-               [list type submit value "#acs-kernel.common_Save#"]
+               [list type submit name charlie value bravo tabindex 9] \
+               [list tabindex 8 type submit name submit value "#acs-kernel.common_Save#"]
               ]
 
 qfo_form_list_def_to_array \

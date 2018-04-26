@@ -1723,7 +1723,7 @@ ad_proc -public qf_choice {
         if { $tag_wrapping ne "" } {
             set attributes_wrap_list [qf_doctype_tag_attributes $__qf_doctype $tag_wrapping]
             foreach attribute $attributes_list {
-                if { [lsearch -exact $attributes_wrap_list $attribute]> -1 } {
+                if { [lsearch -exact $attributes_wrap_list $attribute] > -1 } {
                     # quoting unquoted double quotes in attribute values, so as to not inadvertently break the tag
                     regsub -all -- {\"} $attributes_arr(${attribute}) {\"} attributes_arr(${attribute})
                     append args_html " " $attribute "=\"" $attributes_arr(${attribute}) "\""
