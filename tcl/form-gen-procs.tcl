@@ -384,7 +384,7 @@ ad_proc -public qfo_2g {
 
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
-    ns_log Notice "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
+    ##ns_log Notice "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
         ##code This part has not been tested, as it is
@@ -455,8 +455,8 @@ ad_proc -public qfo_2g {
     # and parsed via flag identifing their variation from using 'name'.
 
 
-    ns_log Notice "qfo_2g.453: array get fields_arr '[array get fields_arr]'"
-    ns_log Notice "qfo_2g.454: qfi_fields_list '${qfi_fields_list}'"
+    ##ns_log Notice "qfo_2g.453: array get fields_arr '[array get fields_arr]'"
+    ##ns_log Notice "qfo_2g.454: qfi_fields_list '${qfi_fields_list}'"
     set field_ct [llength $qfi_fields_list]
     # Create a field attributes array
     # fatts = field attributes
@@ -538,7 +538,7 @@ ad_proc -public qfo_2g {
     foreach n [array names qdt_types_arr "${datatype_dummy},*"] {
         lappend datatype_elements_list [string range $n $datatype_dummy_len+1 end]
     }
-    ns_log Notice "qfo_2g.534: datatype_elements_list '${datatype_elements_list}'"
+    ##ns_log Notice "qfo_2g.534: datatype_elements_list '${datatype_elements_list}'"
 
     set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
     set ftat_idx [lsearch -exact $datatype_elements_list $form_tag_attrs_const]
@@ -763,8 +763,8 @@ ad_proc -public qfo_2g {
             foreach e $e_list {
                 # Set field data defaults according to datatype
                 set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
-                ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
- '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
+                ##ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
+## '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
             }
             
             foreach {attr val} $field_list {
@@ -792,8 +792,8 @@ ad_proc -public qfo_2g {
                 incr tabindex_tail
             }
         }
-        ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
-        ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
+        ##ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
+        ##ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
     }
 
     # All the fields and datatypes are known.
@@ -1034,18 +1034,18 @@ ad_proc -public qfo_2g {
                 set atts_list [lreplace $atts_list $tab_idx $tab_idx $tabindex ]
             } else {
                 lappend atts_list $tabindex_const $tabindex
-                ns_log Notice "qfo_2g.999: atts_list ${atts_list}"
+                ##ns_log Notice "qfo_2g.999: atts_list ${atts_list}"
             }
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 switch -- $fatts_arr(${f_hash},form_tag_type) {
                     input {
-                        ns_log Notice "qfo_2g.1001: qf_input \
- fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                        ##ns_log Notice "qfo_2g.1001: qf_input \
+## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
                         qf_input $atts_list
                     }
                     textarea {
-                        ns_log Notice "qfo_2g.1003: qf_textarea \
- fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                        ##ns_log Notice "qfo_2g.1003: qf_textarea \
+## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
                         qf_textarea $atts_list
                     }
                     default {
@@ -1303,7 +1303,7 @@ ad_proc -private qfo_form_list_def_to_array {
         array unset v_arr
         array unset n_arr
     }
-    ns_log Notice "qfo_form_list_def_to_array.1267: ${list_of_lists_name} '${elements_lol}'"
-    ns_log Notice "qfo_form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
+    ##ns_log Notice "qfo_form_list_def_to_array.1267: ${list_of_lists_name} '${elements_lol}'"
+    ##ns_log Notice "qfo_form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
     return $fields_ordered_list
 }
