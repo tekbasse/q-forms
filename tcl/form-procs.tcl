@@ -848,6 +848,50 @@ ad_proc -public qf_select {
         }
     }
 
+    # propagate the tabindex value to tabindex attribute in options?
+    # Code is added in qf_select instead of qf_options,
+    # because qf_options is not configured to pass extra parameters such as tabindex.
+    if { [info exists attributes_arr(tabindex) ] } {
+        # parse the options, add tabindex if it doesn't exist, or
+        # change its value to be consistent.
+        set tabindex_c "tabindex"
+        # unselected tabindex assigned a value of -1 according to:
+        # https://developers.google.com/web/fundamentals/accessibility/focus/using-tabindex
+        set unselected "-1"
+        set new_value_lol [list ]
+        foreach option_att_list $attributes_arr(value) {
+            array set option_att_arr $option_att_list
+            set oa_names_list [array names option_att_arr]
+            set tab_idx [lsearch -exact -nocase $oa_names_list $tabindex_c ]
+            if { $tab_idx > -1 } {
+                set ti_name [lindex $oa_names_list $tab_idx]
+            } else {
+                set ti_name $tabindex_c
+            }
+            if { [info exists option_att_arr(selected) ] } {
+                if { $option_att_arr(selected) eq 1 } {
+                    set option_att_arr(${ti_name}) $attributes_arr(tabindex)
+                } else {
+                    set option_att_arr(${ti_name}) $unselected
+                }
+            } elseif { [info exists option_att_arr(checked) ] } {
+                if { $option_att_arr(checked) eq 1 } {
+                    set option_att_arr(${ti_name}) $attributes_arr(tabindex)
+                } else {
+                    set option_att_arr(${ti_name}) $unselected
+                }
+            } else {
+                set option_att_arr(${ti_name}) $unselected
+            }
+            set new_option_att_list [array get option_att_arr]
+            array unset option_att_arr
+            lappend new_value_lol $new_option_att_list
+        }
+        set attributes_arr(value) $new_value_lol
+        ns_log Notice "##codeqf_select.891: attributes_arr(value) '$attributes_arr(value)'"
+    }
+    
+
     # prepare attributes to process
     set tag_attributes_list [list]
     set tag_suffix_html ""
@@ -944,7 +988,7 @@ ad_proc -private qf_options {
     }
 
     set options_html ""
-
+    ns_log Notice "##codeqf_options.991: options_list_of_lists '${options_list_of_lists}"
     foreach option_tag_attribute_list $options_list_of_lists {
 
         append options_html [qf_option $option_tag_attribute_list]
@@ -1739,51 +1783,73 @@ ad_proc -public qf_choice {
         append return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
         
         set args_html ""
-        # verify 'value's value is a list of lists.
-        set list_length [llength $attributes_arr(value)]
-        # test on the second input, less chance its a special case
-        set second_input_attributes_count [llength [lindex $attributes_arr(value) 1]]
-        if { $list_length > 1 && $second_input_attributes_count < 2 } {
-            # a list was passed instead of a list of lists. Adjust..
-            set attributes_arr(value) [list $attributes_arr(value)]
-        }
-        foreach input_attributes_list $attributes_arr(value) {
-            if { [f::even_p [llength $input_attributes_list]] } {
-                lappend attributes_input_list label
-                foreach {n v} $input_attributes_list {
-                    if { [lsearch -exact $attributes_input_list $n] > -1 } {
-                        lappend input_atts_list $n $v
-                        lappend input_att_names_list $n
-                    }
-                }
-                # Add a label based on value, if there isn't one.
-                if { [lsearch -exact $input_att_names_list "label"] < 0 } {
-                    set value_idx [lsearch -exact $input_atts_list "value"]
-                    if { $value_idx > -1 } {
-                        set v [lindex $input_atts_list $value_idx+1]
-                        lappend input_atts_list "label" $v
-                    }
-                }
-                # pass the name from tag attribute to choice item, if name isn't included
-                if { [lsearch -exact -nocase $input_att_names_list "name" ] < 0 } {
-                    if { [info exists attributes_arr(name)] } {
-                        lappend input_atts_list "name" $attributes_arr(name)
-                    }
-                }
-                # pass tabindex from tag attribute to choice item (maybe), if tabindex isn't included
-                if { [lsearch -exact -nocase $input_att_names_list "tabindex" ] < 0 } {
-                    if { [info exists attributes_arr(tabindex)] } {
-                        lappend input_atts_list "tabindex" $attributes_arr(tabindex)
-                    }
-                }
 
-                lappend input_atts_list form_id $attributes_arr(form_id) type radio
-                append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
-                append return_html [qf_input $input_atts_list]
-                append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
-            } else {
-                ns_log Notice "qf_choice.1353: list not even number of members, skipping rendering of value attribute with list: '${input_attributes_list}'"
+        set tabindex_att_exists_p [info exists attributes_arr(tabindex) ]
+        set label_c "label"
+        set value_c "value"
+        set name_c "name"
+        set tabindex_c "tabindex"
+        set unselected -1
+
+        foreach input_attributes_list $attributes_arr(value) {
+            array set input_arr $input_attributes_list
+            set input_att_names_list [array names input_arr]
+            # screen out unqualified attributes
+            foreach input_att_name $input_att_names_list {
+                if { [lsearch -exact -nocase $attributes_input_list $input_att_name ] < 0 } {
+                    unset input_arr(${input_att_name})
+                }
             }
+
+            # Add a label based on value, if there isn't a label, but there is a value.
+            set label_idx [lsearch -exact $input_att_names_list $label_c]
+            if { $label_idx < 0 } {
+                set value_idx [lsearch -exact $input_att_names_list $value_c]
+                if { $value_idx > -1 } {
+                    set v_name [lindex $input_att_names_list $value_idx]
+                    set input_arr(label) $input_arr(${v_name}) 
+                }
+            }
+
+            # pass the name from tag attribute to choice item, if name isn't included
+            if { [lsearch -exact -nocase $input_att_names_list $name_c ] < 0 } {
+                if { [info exists attributes_arr(name)] } {
+                    set input_arr(name) $attributes_arr(name)
+                }
+            }
+
+            if { $tabindex_att_exists_p } {
+                # pass tabindex from tag attribute to choice item (maybe), if tabindex isn't included
+                set tab_idx [lsearch -exact -nocase $input_att_names_list $tabindex_c ] 
+                if { $tab_idx > -1 } {
+                    set ti_name [lindex $input_att_names_list $tab_idx]
+                } else {
+                    set ti_name $tabindex_c
+                }
+                if { [info exists input_arr(selected) ] } {
+                    if { $input_arr(selected) eq 1 } {
+                        set input_arr(${ti_name}) $attributes_arr(tabindex)
+                    } else {
+                        set input_arr(${ti_name}) $unselected
+                    }
+                } elseif { [info exists input_arr(checked) ] } {
+                    if { $input_arr(checked) eq 1 } {
+                        set input_arr(${ti_name}) $attributes_arr(tabindex)
+                    } else {
+                        set input_arr(${ti_name}) $unselected
+                    }
+                } else {
+                        set input_arr(${ti_name}) $unselected
+                }
+            }
+
+            set input_atts_list [array get input_arr]
+            array unset input_arr
+            lappend input_atts_list form_id $attributes_arr(form_id) type radio
+            append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
+            append return_html [qf_input $input_atts_list]
+            append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
+            
         }
         append args_html "</" $tag_wrapping ">"
 
@@ -1994,24 +2060,59 @@ ad_proc -public qf_choices {
             # a list was passed instead of a list of lists. Adjust..
             set attributes_arr(value) [list $attributes_arr(value)]
         }
-        
+
+        set unselected -1
+        set label_c "label"
+        set value_c "value"
+        set name_c "name"
+        set tabindex_c "tabindex"
         foreach input_attributes_list $attributes_arr(value) {
-            array unset input_arr
+
             array set input_arr $input_attributes_list
-            if { ![info exists input_arr(label)] && [info exists input_arr(value)] } {
-                set input_arr(label) $input_arr(value)
+            set input_names_list [array names input_arr]
+            set label_idx [lsearch -exact -nocase $input_names_list $label_c ]
+            set value_idx [lsearch -exact -nocase $input_names_list $value_c ]
+            if { $label_idx < 0 && $value_idx > -1 } {
+                set label_n [lindex $input_names_list $label_idx ]
+                set value_n [lindex $input_names_list $value_idx ]
+                set input_arr(${label_n}) $input_arr(${value_n})
             } 
-            if { ![info exists input_arr(name)] && [info exists attributes_arr(name)] } {
-                set input_arr(name) $attributes_arr(name)
+            set name_idx [lsearch -exact -nocase $input_names_list $name_c ]
+            if { $name_idx < 0 && [info exists attributes_arr(name)] } {
+                set name_n [lindex $input_names_list $name_idx ]
+                set input_arr(${name_n}) $attributes_arr(name)
             }
-            if { ![info exists input_arr(tabindex) && [ino exists attributes_arr(tabindex)] } {
-                set input_arr(tabindex) $attributes_arr(tabindex)
+            if { [info exists attributes_arr(tabindex)] } {
+                set tab_idx [lsearch -exact -nocase $input_names_list $tabindex_c ]
+                if { $tab_idx > -1 } {
+                    set ti_name [lindex $input_names_list $tab_idx]
+                } else {
+                    set ti_name $tabindex_c
+                }
+                if { [info exists input_arr(selected) ] } {
+                    if { $input_arr(selected) eq 1 } {
+                        set input_arr(${ti_name}) $attributes_arr(tabindex)
+                    } else {
+                        set input_arr(${ti_name}) $unselected
+                    }
+                } elseif { [info exists input_arr(checked) ] } {
+                    if { $input_arr(checked) eq 1 } {
+                        set input_arr(${ti_name}) $attributes_arr(tabindex)
+                    } else {
+                        set input_arr(${ti_name}) $unselected
+                    }
+                } else {
+                    set input_arr(${ti_name}) $unselected
+                }
             }
             set input_attributes_list [array get input_arr]
+            array unset input_arr
+
             lappend input_attributes_list form_id $attributes_arr(form_id) type checkbox
             append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
             append return_html [qf_input $input_attributes_list]
             append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
+
         }
         set tag_wrapping_arg "</"
         append tag_wrapping_arg $tag_wrapping ">"
