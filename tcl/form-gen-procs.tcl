@@ -978,7 +978,7 @@ ad_proc -public qfo_2g {
 
         # external doc array is used here.
         set doctype [qf_doctype $doc_type]
-        set form_id [qf_form form_id $form_id]
+        set form_id [qf_form form_id $form_id hash_check $hash_check]
 
         # Use qfi_fields_sorted_list to generate 
         # an ordered list of form elements
