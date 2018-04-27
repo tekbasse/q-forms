@@ -438,6 +438,10 @@ ad_proc -public qf_form {
             ns_log Error "qf_form.337: '${attribute}' is not a valid attribute."
         }
     }
+    if { ![info exists attributes_arr(action)] } {
+        set attributes_arr(action) [ad_conn url]
+        lappend attributes_list "action"
+    }
     if { ![info exists attributes_arr(method)] } {
         set attributes_arr(method) "post"
         lappend attributes_list "method"
