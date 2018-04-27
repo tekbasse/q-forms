@@ -888,7 +888,7 @@ ad_proc -public qf_select {
             lappend new_value_lol $new_option_att_list
         }
         set attributes_arr(value) $new_value_lol
-        ns_log Notice "##codeqf_select.891: attributes_arr(value) '$attributes_arr(value)'"
+
     }
     
 
@@ -988,7 +988,7 @@ ad_proc -private qf_options {
     }
 
     set options_html ""
-    ns_log Notice "##codeqf_options.991: options_list_of_lists '${options_list_of_lists}"
+
     foreach option_tag_attribute_list $options_list_of_lists {
 
         append options_html [qf_option $option_tag_attribute_list]
@@ -1022,9 +1022,10 @@ ad_proc -private qf_option {
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr(${attribute}) $value
+            set attribute_lc [string tolower $attribute ]
+            set attributes_arr(${attribute_lc}) $value
             if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
-                lappend attributes_list $attribute
+                lappend attributes_list $attribute_lc
             }
         } elseif { $value eq "" } {
             # do nothing                  
@@ -1401,11 +1402,12 @@ ad_proc -public qf_input {
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
-        set attribute_index [lsearch -exact $attributes_full_list $attribute]
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
         if { $attribute_index > -1 } {
-            set attributes_arr(${attribute}) $value
-            if { [lsearch -exact $attributes_tag_list $attribute] > -1 } {
-                lappend attributes_list $attribute
+            set attribute_lc [string tolower $attribute]
+            set attributes_arr(${attribute_lc}) $value
+            if { [lsearch -exact $attributes_tag_list $attribute_lc] > -1 } {
+                lappend attributes_list $attribute_lc
             }
         } elseif { $value eq "" } {
             # do nothing                  
@@ -1791,28 +1793,34 @@ ad_proc -public qf_choice {
         set tabindex_c "tabindex"
         set unselected -1
 
+        # input needs to be able to pass label..
+        lappend attributes_input_list "label"
+
+
         foreach input_attributes_list $attributes_arr(value) {
             array set input_arr $input_attributes_list
-            set input_att_names_list [array names input_arr]
+            set input_names_list [array names input_arr]
+
             # screen out unqualified attributes
-            foreach input_att_name $input_att_names_list {
+            foreach input_att_name $input_names_list {
                 if { [lsearch -exact -nocase $attributes_input_list $input_att_name ] < 0 } {
+                    ns_log Notice "qf_choice.1802: filtering attribute '${input_att_name}' from list '${input_attributes_list}'"
                     unset input_arr(${input_att_name})
                 }
             }
 
             # Add a label based on value, if there isn't a label, but there is a value.
-            set label_idx [lsearch -exact $input_att_names_list $label_c]
+            set label_idx [lsearch -exact -nocase $input_names_list $label_c]
             if { $label_idx < 0 } {
-                set value_idx [lsearch -exact $input_att_names_list $value_c]
+                set value_idx [lsearch -exact -nocase $input_names_list $value_c]
                 if { $value_idx > -1 } {
-                    set v_name [lindex $input_att_names_list $value_idx]
+                    set v_name [lindex $input_names_list $value_idx]
                     set input_arr(label) $input_arr(${v_name}) 
                 }
             }
 
             # pass the name from tag attribute to choice item, if name isn't included
-            if { [lsearch -exact -nocase $input_att_names_list $name_c ] < 0 } {
+            if { [lsearch -exact -nocase $input_names_list $name_c ] < 0 } {
                 if { [info exists attributes_arr(name)] } {
                     set input_arr(name) $attributes_arr(name)
                 }
@@ -1820,9 +1828,9 @@ ad_proc -public qf_choice {
 
             if { $tabindex_att_exists_p } {
                 # pass tabindex from tag attribute to choice item (maybe), if tabindex isn't included
-                set tab_idx [lsearch -exact -nocase $input_att_names_list $tabindex_c ] 
+                set tab_idx [lsearch -exact -nocase $input_names_list $tabindex_c ] 
                 if { $tab_idx > -1 } {
-                    set ti_name [lindex $input_att_names_list $tab_idx]
+                    set ti_name [lindex $input_names_list $tab_idx]
                 } else {
                     set ti_name $tabindex_c
                 }
@@ -1843,9 +1851,12 @@ ad_proc -public qf_choice {
                 }
             }
 
+            set input_arr(type) "radio"
             set input_atts_list [array get input_arr]
             array unset input_arr
-            lappend input_atts_list form_id $attributes_arr(form_id) type radio
+
+            lappend input_atts_list form_id $attributes_arr(form_id)
+
             append return_html [qf_append form_id $attributes_arr(form_id) html "<li>"]
             append return_html [qf_input $input_atts_list]
             append return_html [qf_append form_id $attributes_arr(form_id) html "</li>"]
