@@ -893,14 +893,14 @@ ad_proc -public qfo_2g {
                                          -form_tag_attrs $fatts_arr(${f_hash},form_tag_attrs) \
                                          -q_tables_enabled_p $qtable_enabled_p ]
                         if { !$valid_p } {
-                            lappend invalid_field_val_list $name
+                            lappend invalid_field_val_list $f_hash
                         }
                     } else {
                         ns_log Notice "qfo_2g.870: field '${f_hash}' \
  no validation proc. found"
                     }
                 } else {
-                    lappend nonexsting_field_val_list $name
+                    lappend nonexsting_field_val_list $f_hash
                 }
 
             } else {
@@ -937,7 +937,8 @@ ad_proc -public qfo_2g {
     }
 
     if { $validated_p } {
-        
+        # Which means form_submitted_p is 1 also.
+
         if { $qtable_enabled_p } {
             # save a new row in customized q-tables table
             qt_row_create $qtable_id $row_list
@@ -946,36 +947,9 @@ ad_proc -public qfo_2g {
         array set qfi_arr [array get qfv_arr]
 
     } else {
+        # validated_p 0, form_submitted_p is 0 or 1.
+
         # generate form
-
-        # Update form values to those provided by user.
-        # Add back the nonexistent cases that must carry a text value
-        # for the form.
-        foreach f_hash $nonexisting_field_val_list {
-
-            # Don't create var if llength fatts_arr(f_hash,names) > 1,
-            # because multiple choices only pass selected values.
-            if { $fatts_arr(${f_hash},is_datatyped_p) } {
-                set name $fatts_arr(${f_hash},names)
-                if { ![info exists qfv_arr(${name})] } {
-                    # Make sure variable exists.
-                    if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
-                        ns_log Notice "qfo_g2.883: '${name}' does not exist. \
- Setting to empty string."
-                        set qfv_arr(${name}) ""
-                    } else {
-                        # set variable to default
-                        # qf_default_val is for presetting value
-                        # Use default value of form at this point
-                        set qfv_arr(${name}) $fatts_arr(${f_hash},value)
-                        ns_log Notice "qfo_g2.888: '${name}' does not exist. \
- Setting to default value '$fatts_arr(${f_hash},${name})'."
-                    }
-                }
-            }
-        }
-
-
 
         # Blend tabindex attributes, used to order html tags:
         # input, select, textarea. 
@@ -1015,7 +989,36 @@ ad_proc -public qfo_2g {
 
         if { !$validated_p && $form_submitted_p } {
             # update value of 'value' attribute to one from qfv_arr
-            # Every f_hash element has a value at this point.
+
+            # Update form values to those provided by user.
+            # Add back the nonexistent cases that must carry a text value
+            # for the form.
+            foreach f_hash $nonexisting_field_val_list {
+                
+                # Don't create var if llength fatts_arr(f_hash,names) > 1,
+                # because multiple choices only pass selected values.
+                if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                    set name $fatts_arr(${f_hash},names)
+                    if { ![info exists qfv_arr(${name})] } {
+                        # Make sure variable exists.
+                        if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
+                            ns_log Notice "qfo_g2.883: '${name}' does not exist. \
+ Setting to empty string."
+                            set qfv_arr(${name}) ""
+                        } else {
+                            # set variable to default
+                            # qf_default_val is for presetting value
+                            # Use default value of form at this point
+                            set qfv_arr(${name}) $fatts_arr(${f_hash},value)
+                            ns_log Notice "qfo_g2.888: '${name}' does not exist. \
+ Setting to default value '$fatts_arr(${f_hash},${name})'."
+                        }
+                    }
+                }
+            }
+
+            # Every f_hash element has a value at this point..
+            # except choice/choices values may not exist
 
             foreach f_hash $qfi_fields_sorted_list {
                 set fatts_arr_index $f_hash
@@ -1030,7 +1033,7 @@ ad_proc -public qfo_2g {
                     select {
                         ::qfo::lol_replace \
                             -fatts_array_name fatts_arr \
-                            -fatts_array_index  $fatts_arr_index \
+                            -fatts_array_index $fatts_arr_index \
                             -fatts_arr_list_index $value_idx \
                             -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
                             -qfv_array_name qfv_arr
@@ -1039,8 +1042,12 @@ ad_proc -public qfo_2g {
                         set index $f_hash
                         append index $comma_const $form_tag_attrs_const
                         set n2 $fatts_arr(${f_hash},names)
+                        ##code if name does not exist, skip following
+                        ## and either use default value.. and
+                        ## if there is a selected attr, set to 0
                         set v2 [qf_unquote $qfv_arr(${n2}) ]
                         ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+
                         ::qfo::larr_replace \
                             -array_name fatts_arr \
                             -index $index \

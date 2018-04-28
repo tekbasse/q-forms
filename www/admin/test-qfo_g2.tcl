@@ -19,10 +19,11 @@ set f_lol [list \
                [list type text value "example value" name "input_text" label "input text" size 40 maxlength 80 ] \
                [list type radio name creditcard value $one_choice_tag_attribute_list ] \
                [list type checkbox value $multi_choice_tag_attribute_list ] \
-               [list type submit name charlie value bravo tabindex 9] \
-               [list tabindex 8 type submit name submit value "#acs-kernel.common_Save#"]
+               [list type submit name charlie value bravo tabindex 9 datatype text_nonempty] \
+               [list tabindex 8 type submit name submit value "#acs-kernel.common_Save#" datatype text_nonempty]
               ]
 
+set form_html ""
 qfo_form_list_def_to_array \
     -array_name f_arr \
     -list_of_lists_name f_lol \
@@ -33,12 +34,22 @@ set validated_p [qfo_2g \
                      -fields_array f_arr \
                      -form_varname form_html \
                      -hash_check 1]
-
-
-
 append content "<pre>\n"
 append content $form_html
 append content " &nbsp; &nbsp; &nbsp; <a href=\"test-qfo_g2\">clear</a>"
 append content "</pre>"
 
+if { $validated_p } {
+    # output inputs
+    append content "<pre>Validated name values returned:<br>"
+    append content "<ul>"
+    foreach name [array names qfi_arr] {
+        append content "<li>'${name}' : '$qfi_arr(${name})'</li>\n"
+    }
+    append content "</ul>"
 
+
+} else {
+
+
+}
