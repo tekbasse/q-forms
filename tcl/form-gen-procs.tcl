@@ -816,6 +816,7 @@ ad_proc -public qfo_2g {
                                   multiple_key_as_list $multiple_key_as_list \
                                   hash_check $hash_check \
                                   post_only $post_only ]
+
     } 
 
     # Make sure every qfi_arr(x) exists for each field
@@ -839,7 +840,7 @@ ad_proc -public qfo_2g {
     # For now, dynamically generated fields need to be 
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
-
+    ns_log Notice "##code qfo_g2.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
     # qfv = field value
     foreach f_hash $qfi_fields_list {
 
@@ -861,7 +862,7 @@ ad_proc -public qfo_2g {
     # Don't use qfi_arr anymore, as it may contain extraneous input
     # Use qfv_arr for input array
     array unset qfi_arr
-    
+        ns_log Notice "##code qfo_g2.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
@@ -880,10 +881,14 @@ ad_proc -public qfo_2g {
                 if { ![info exists qfv_arr(${name})] } {
                     # Make sure variable exists.
                     if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
+                        ns_log Notice "qfo_g2.883: '${name}' does not exist. \
+ Setting to empty string."
                         set qfv_arr(${name}) ""
                     } else {
                         # set variable to default
                         set qfv_arr(${name}) [qf_default_val $fatts_arr(${f_hash},default_proc) ]
+                        ns_log Notice "qfo_g2.888: '${name}' does not exist. \
+ Setting to default value '$qfv_arr(${name})'."
                     }
                 }
             }
@@ -892,9 +897,12 @@ ad_proc -public qfo_2g {
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 if { [info exists fatts_arr(${f_hash},valida_proc)] } {
                     set name $fatts_arr(${f_hash},names)
+                    ns_log Notice "qfo_g2.900. Validating '${name}'"
                     set valid_p [qf_validate_input \
                                      -input $qfv_arr(${name}) \
                                      -proc_name $fatts_arr(${f_hash},valida_proc) \
+                                     -form_tag_type $fatts_arr(${f_hash},form_tag_type) \
+                                     -form_tag_attrs $fatts_arr(${f_hash},form_tag_attrs) \
                                      -q_tables_enabled_p $qtable_enabled_p ]
                     set qfv_arr(${f_hash}) $valid_p
                     if { !$valid_p } {
@@ -1008,7 +1016,9 @@ ad_proc -public qfo_2g {
                     default {
                         set index $f_hash
                         append index $comma_const $form_tag_attrs_const
-                        set v2 [qf_unquote $qfv_arr($fatts_arr(${f_hash},names)) ]
+                        set n2 $fatts_arr(${f_hash},names)
+                        set v2 [qf_unquote $qfv_arr(${n2}) ]
+                        ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
                         ::qfo::larr_replace \
                             -array_name fatts_arr \
                             -index $index \
@@ -1100,8 +1110,15 @@ ad_proc -private qf_validate_input {
     -input 
     -proc_name
     {-q_tables_enabled_p "0"}
+    {-form_tag_type ""}
+    {-form_tag_attrs ""}
 } {
     Returns '1' if value is validated. Otherwise returns '0'.
+    <br><br>
+    <code>form_tag_type</code> and <code>form_tag_attrs</code> refer to the fields of same name as defined by <code>qdt::data_types</code>.
+    These two fields might be used to validate special cases, such as INPUT tag of various special-purpose types, or for diagnostics (To Be Determined).
+    @see qdt::data_types
+
 } {
     
     set valid_p 0
@@ -1113,7 +1130,7 @@ ad_proc -private qf_validate_input {
     if { $proc_name_len > 1 } {
         if { $proc_name_len eq 2 \
                  && [lindex $proc_name 1] eq "{value}" } {
-            set proc_name [lindex 0]
+            set proc_name [lindex $proc_name 0]
             set proc_name_len 1
         } else {
             regsub -- {{value}} $proc_name "\${input}" proc_name
@@ -1208,6 +1225,11 @@ ad_proc -private qf_validate_input {
                     ns_log Notice "qf_validate_input.1158: processing safe_eval '${proc_params_list}'"
                     set valid_p [safe_eval $proc_params_list]
                 }
+            }
+            if { !$allowed_p } {
+                ns_log Warning "qf_validate_input.1230: Broken UI. \
+ proc_name '${proc_name}' form_tag_type '${form_tag_type}' \
+ form_tag_attrs '${form_tag_attrs}'"
             }
         }
     }    
