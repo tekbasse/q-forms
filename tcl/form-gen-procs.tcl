@@ -904,7 +904,6 @@ ad_proc -public qfo_2g {
                                      -form_tag_type $fatts_arr(${f_hash},form_tag_type) \
                                      -form_tag_attrs $fatts_arr(${f_hash},form_tag_attrs) \
                                      -q_tables_enabled_p $qtable_enabled_p ]
-                    set qfv_arr(${f_hash}) $valid_p
                     if { !$valid_p } {
                         lappend invalid_field_val_list $name
                     }
@@ -1138,15 +1137,15 @@ ad_proc -private qf_validate_input {
             set proc_name [lindex $proc_params_list 0]
         }
     }
-    switch -- $proc_name {
+    switch -exact -- $proc_name {
         qf_is_decimal {
             set valid_p [qf_is_decimal $input ]
         }
         qf_is_integer {
             set valid_p [qf_is_integer $input ]
         }
-        hf_are_safe_and_visibe_characters_q {
-            set valid_p [hf_are_safe_and_visibe_characters_q $input ]
+        hf_are_safe_and_visible_characters_q {
+            set valid_p [hf_are_safe_and_visible_characters_q $input ]
         }
         hf_are_safe_and_printable_characters_q {
             set valid_p [hf_are_safe_and_printable_characters_q $input ]
