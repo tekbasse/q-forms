@@ -112,6 +112,11 @@ ad_proc -private ::qfo::lol_replace {
 
         # Not every name exists in qfv_arr
 
+        ##code
+        # If name does not exist, 
+        # use default value.. and
+        # if there is a 'selected' attribute, set it to '0'
+
         # val = value, as in attribute 'value'
         foreach row_nvl $old_val_lol {
             array set row_arr $row_nvl
@@ -1019,7 +1024,7 @@ ad_proc -public qfo_2g {
 
             # Every f_hash element has a value at this point..
             # except choice/choices values may not exist
-
+            set selected_c "selected"
             foreach f_hash $qfi_fields_sorted_list {
                 set fatts_arr_index $f_hash
                 append fatts_arr_index $comma_const $form_tag_attrs_const
@@ -1042,17 +1047,32 @@ ad_proc -public qfo_2g {
                         set index $f_hash
                         append index $comma_const $form_tag_attrs_const
                         set n2 $fatts_arr(${f_hash},names)
-                        ##code if name does not exist, skip following
-                        ## and either use default value.. and
-                        ## if there is a selected attr, set to 0
-                        set v2 [qf_unquote $qfv_arr(${n2}) ]
-                        ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
-
-                        ::qfo::larr_replace \
-                            -array_name fatts_arr \
-                            -index $index \
-                            -attribute_name_index $value_idx \
-                            -new_value $v2
+                        if { [info exists qfv_arr(${ns}) ] } {
+                            set v2 [qf_unquote $qfv_arr(${n2}) ]
+                            if { $v2 ne "" \
+                                     || ( $v2 eq "" \
+                                              && $fatts_arr(${f_hash},empty_allowed_p) ) } {
+                                ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+                            
+                                ::qfo::larr_replace \
+                                    -array_name fatts_arr \
+                                    -index $index \
+                                    -attribute_name_index $value_idx \
+                                    -new_value $v2
+                            }
+                        } else {
+                            # If there is a 'selected' attr, unselect it.
+                            array set v2_arr $fatts_arr(${index})
+                            set v2_names_ul [array names v2_arr]
+                            # s = selected
+                            set s_idx [lsearch -exact -nocase $v2_names_ul $selected_c ]
+                            if { $s_idx > -1 } {
+                                set v2_name [lindex $v2_names_ul $s_idx]
+                                set v2_arr(${v2_name}) "0"
+                                set fatts_arr(${index}) [array get $v2_arr]
+                            }
+                            array unset v2_arr
+                        }
                     }
                 }
 
