@@ -866,13 +866,14 @@ ad_proc -public qfo_2g {
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
+    set valid_p 1
     set invalid_field_val_list [list ]
     set nonexisting_field_val_list [list ]
     set row_list [list ]
     if { $form_submitted_p } {
 
         # validate inputs
-        
+
         foreach f_hash $qfi_fields_list {
 
             # validate. 
@@ -941,6 +942,9 @@ ad_proc -public qfo_2g {
             # save a new row in customized q-tables table
             qt_row_create $qtable_id $row_list
         }
+        # put qfv_arr back into qfi_arr
+        array set qfi_arr [array get qfv_arr]
+
     } else {
         # generate form
 
