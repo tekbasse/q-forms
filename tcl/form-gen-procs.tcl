@@ -112,7 +112,6 @@ ad_proc -private ::qfo::lol_replace {
 
         # Not every name exists in qfv_arr
 
-        ##code
         # If name does not exist, 
         # use default value.. and
         # if there is a 'selected' attribute, set it to '0'
@@ -123,8 +122,9 @@ ad_proc -private ::qfo::lol_replace {
             # index may be upper or lower case
             set n_list [array names row_arr]
             set name_idx [lsearch -exact -nocase $n_list $name_const]
+
+            # Does the input case exist? Or maybe this is a separator
             if { $name_idx > -1 } {
-                # Does the input case exist?
                 set name_n [lindex $n_list $name_idx]
 
                 set value_idx [lsearch -exact -nocase $n_list $value_const]
@@ -993,37 +993,13 @@ ad_proc -public qfo_2g {
         # an ordered list of form elements
 
         if { !$validated_p && $form_submitted_p } {
-            # update value of 'value' attribute to one from qfv_arr
 
             # Update form values to those provided by user.
+            # That is, update value of 'value' attribute to one from qfv_arr
+
             # Add back the nonexistent cases that must carry a text value
             # for the form.
-            foreach f_hash $nonexisting_field_val_list {
-                
-                # Don't create var if llength fatts_arr(f_hash,names) > 1,
-                # because multiple choices only pass selected values.
-                if { $fatts_arr(${f_hash},is_datatyped_p) } {
-                    set name $fatts_arr(${f_hash},names)
-                    if { ![info exists qfv_arr(${name})] } {
-                        # Make sure variable exists.
-                        if { [qf_is_true $fatts_arr(${f_hash},empty_allowed_p) ] } {
-                            ns_log Notice "qfo_g2.883: '${name}' does not exist. \
- Setting to empty string."
-                            set qfv_arr(${name}) ""
-                        } else {
-                            # set variable to default
-                            # qf_default_val is for presetting value
-                            # Use default value of form at this point
-                            set qfv_arr(${name}) $fatts_arr(${f_hash},value)
-                            ns_log Notice "qfo_g2.888: '${name}' does not exist. \
- Setting to default value '$fatts_arr(${f_hash},${name})'."
-                        }
-                    }
-                }
-            }
 
-            # Every f_hash element has a value at this point..
-            # except choice/choices values may not exist
             set selected_c "selected"
             foreach f_hash $qfi_fields_sorted_list {
                 set fatts_arr_index $f_hash
@@ -1036,6 +1012,8 @@ ad_proc -public qfo_2g {
                     radio -
                     checkbox -
                     select {
+                        # choice/choices name/values may not exist.
+                        # qfo::lol_replace handles those cases also.
                         ::qfo::lol_replace \
                             -fatts_array_name fatts_arr \
                             -fatts_array_index $fatts_arr_index \
@@ -1082,6 +1060,8 @@ ad_proc -public qfo_2g {
             # choice/choices needs to reflect "selected status"
             }
         }
+
+        # Every f_hash element has a value at this point..
 
         # build form
         set tabindex $tabindex_start
