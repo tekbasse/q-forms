@@ -1798,7 +1798,7 @@ ad_proc -public qf_choice {
         set unselected -1
 
         # input needs to be able to pass label..
-        lappend attributes_input_list "label"
+        lappend attributes_input_list "label" selected
 
 
         foreach input_attributes_list $attributes_arr(value) {
