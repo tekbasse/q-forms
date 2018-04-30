@@ -226,7 +226,7 @@ ad_proc -public qf_get_inputs_as_array {
                 #            ns_log Notice "qf_get_inputs_as_array.194: __form_key_exists ${__form_key_exists} length __form_key \[string length ${__form_key}\]"
                 #           ns_log Notice "qf_get_inputs_as_array.196: attempt to insert unallowed characters to user input '{__form_key}' as '\[ns_set key $__form $__form_counter_i\]' for counter ${__form_counter_i}."
                 if { $__form_counter_i > 0 } {
-                ns_log Notice "qf_get_inputs_as_array.197: attempt to insert unallowed characters to user input '{__form_key}'."
+                    ns_log Notice "qf_get_inputs_as_array.197: attempt to insert unallowed characters to user input '{__form_key}'."
                 }
             } else {
                 set __form_key [ad_quotehtml $__form_key]
@@ -238,7 +238,8 @@ ad_proc -public qf_get_inputs_as_array {
                 
                 set __form_input_exists 1
                 # check for duplicate key?
-                if { $arg_arr(duplicate_key_check) && [info exists __form_buffer_arr(${__form_key}) ] } {
+                set __form_key_exists [info exists __form_buffer_arr(${__form_key}) ]
+                if { $arg_arr(duplicate_key_check) && $__form_key_exists } {
                     if { $__form_input ne $__form_buffer_arr(${__form_key}) } {
                         # which one is correct? log error
                         ns_log Error "qf_get_form_input.212: form input error. duplcate key provided for '${__form_key}'"
@@ -247,8 +248,8 @@ ad_proc -public qf_get_inputs_as_array {
                     } else {
                         ns_log Warning "qf_get_form_input.216: notice, form has a duplicate key with multiple values containing same info.."
                     }
-                } elseif { $arg_arr(multiple_key_as_list) } {
-                    ns_log Notice "qf_get_inputs_as_array.219: A key has been posted with multible values. Values assigned to the key as a list."
+                } elseif { $arg_arr(multiple_key_as_list) && $__form_key_exists } {
+                    ns_log Notice "qf_get_inputs_as_array.219: A key has been posted with multiple values. Values assigned to the key as a list."
                     if { [llength $__form_buffer_arr(${__form_key})] > 1 } {
                         # value is a list, lappend
                         lappend __form_buffer_arr(${__form_key}) $__form_input
