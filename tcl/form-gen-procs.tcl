@@ -104,9 +104,9 @@ ad_proc -private ::qfo::lol_replace {
     set old_lol $fa_larr(${fatts_array_index})
     set old_val_lol [lindex $old_lol $x ]
     set new_val_lol [list ]
-    set selected_const "selected"
-    set name_const "name"
-    set value_const "value"
+    set selected_c "selected"
+    set name_c "name"
+    set value_c "value"
 
     if { $is_multiple_p } {
 
@@ -121,13 +121,13 @@ ad_proc -private ::qfo::lol_replace {
             array set row_arr $row_nvl
             # index may be upper or lower case
             set n_list [array names row_arr]
-            set name_idx [lsearch -exact -nocase $n_list $name_const]
+            set name_idx [lsearch -exact -nocase $n_list $name_c]
 
             # Does the input case exist? Or maybe this is a separator
             if { $name_idx > -1 } {
                 set name_n [lindex $n_list $name_idx]
 
-                set value_idx [lsearch -exact -nocase $n_list $value_const]
+                set value_idx [lsearch -exact -nocase $n_list $value_c]
                 set value_n [lindex $n_list $value_idx]
 
                 # Is qvf_arr(name) set to the value of this choice?
@@ -141,13 +141,13 @@ ad_proc -private ::qfo::lol_replace {
                 }
 
                 # Is 'selected' an attribute in original declaration?
-                set s_idx [lsearch -exact -nocase $n_list $selected_const]
+                set s_idx [lsearch -exact -nocase $n_list $selected_c]
                 if { $s_idx > -1 } {
                     # found in original declaration
                     set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
                 } elseif { $selected_p } {
                     set new_row_nvl $row_nvl
-                    lappend new_row_nvl $selected_const $selected_p
+                    lappend new_row_nvl $selected_c $selected_p
                 }
 
             } else {
@@ -163,7 +163,7 @@ ad_proc -private ::qfo::lol_replace {
 
         # index may be upper or lower case
         set n_list [array names row_arr]
-        set name_idx [lsearch -exact -nocase $n_list $name_const]
+        set name_idx [lsearch -exact -nocase $n_list $name_c]
         if { $name_idx > -1 } {
 
 
@@ -171,20 +171,20 @@ ad_proc -private ::qfo::lol_replace {
                 array set row_arr $row_nvl
                 # index may be upper or lower case
                 set n_list [array names row_arr]
-                set name_idx [lsearch -exact -nocase $n_list $name_const]
+                set name_idx [lsearch -exact -nocase $n_list $name_c]
                 if { $name_idx > -1 } {
                     # Does the input case exist?
                     set name_n [lindex $n_list $name_idx]
                     set selected_p [info exists qfv_arr(${name_n}) ]
 
                     # Is 'selected' an attribute in original declaration?
-                    set s_idx [lsearch -exact -nocase $n_list $selected_const]
+                    set s_idx [lsearch -exact -nocase $n_list $selected_c]
                     if { $s_idx > -1 } {
                         # found in original declaration
                         set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
                     } else { $selected_p } {
                         set new_row_nvl $row_nvl
-                        lappend new_row_nvl $selected_const $selected_p
+                        lappend new_row_nvl $selected_c $selected_p
                     }
 
                 } else {
@@ -517,16 +517,15 @@ ad_proc -public qfo_2g {
     # a separate array to store what is essentially custom lists.
 
 
-    set datatype_const "datatype"
-    set tabindex_const "tabindex"
-    set type_const "type"
-    set select_const "select"
-    set value_const "value"
-    set name_const "name"
-    set multiple_const "multiple"
-    set form_tag_attrs_const "form_tag_attrs"
-    set comma_const ","
-    set choices_type_list [list $select_const "checkbox" "radio"]
+    set datatype_c "datatype"
+    set tabindex_c "tabindex"
+    set type_c "type"
+    set select_c "select"
+    set value_c "value"
+    set name_c "name"
+    set multiple_c "multiple"
+    set form_tag_attrs_c "form_tag_attrs"
+    set comma_c ","
 
     # Array for holding datatype 'sets' defined by select/choice/choices:
     # fchoices_larr(element_name)
@@ -545,8 +544,8 @@ ad_proc -public qfo_2g {
     }
     ##ns_log Notice "qfo_2g.534: datatype_elements_list '${datatype_elements_list}'"
 
-    set dedt_idx [lsearch -exact $datatype_elements_list $datatype_const]
-    set ftat_idx [lsearch -exact $datatype_elements_list $form_tag_attrs_const]
+    set dedt_idx [lsearch -exact $datatype_elements_list $datatype_c]
+    set ftat_idx [lsearch -exact $datatype_elements_list $form_tag_attrs_c]
     
     # Determine adjustments to be applied to tabindex values
     if { $qtable_enabled_p } {
@@ -597,12 +596,12 @@ ad_proc -public qfo_2g {
         # default tag_type
 
         set tag_type $default_tag_type
-        set type_idx [lsearch -exact -nocase $field_list $type_const]
+        set type_idx [lsearch -exact -nocase $field_list $type_c]
         if { $type_idx > -1 } {
             set tag_type [lindex $field_list $type_idx+1]
             switch -exact -nocase -- $tag_type {
                 select {
-                    if { [lsearch -exact -nocase $field_list $multiple_const] } {
+                    if { [lsearch -exact -nocase $field_list $multiple_c] } {
                         set multiple_names_p 1
                     } else {
                         set multiple_names_p 0
@@ -663,15 +662,15 @@ ad_proc -public qfo_2g {
         set fatts_arr(${f_hash},tag_type) $tag_type
 
         if { $fatts_arr(${f_hash},is_datatyped_p) } {
-            set datatype_idx [lsearch -exact -nocase $field_list $datatype_const]
+            set datatype_idx [lsearch -exact -nocase $field_list $datatype_c]
             if { $datatype_idx > -1 } {
                 set datatype [lindex $field_list $datatype_idx+1]
-                set fatts_arr(${f_hash},${datatype_const}) $datatype
+                set fatts_arr(${f_hash},${datatype_c}) $datatype
             } else {
                 set datatype "text"
-                set fatts_arr(${f_hash},${datatype_const}) "text"
+                set fatts_arr(${f_hash},${datatype_c}) "text"
             }
-            set name_idx [lsearch -exact -nocase $field_list $name_const]
+            set name_idx [lsearch -exact -nocase $field_list $name_c]
             set name [lindex $field_list $name_idx+1]
             set fatts_arr(${f_hash},names) $name
 
@@ -691,7 +690,7 @@ ad_proc -public qfo_2g {
             # Just setup to validate input from form post/get.
 
             # define choice(s) datatype in fchoices_larr for validation
-            set value_idx [lsearch -exact -nocase $field_list $value_const]
+            set value_idx [lsearch -exact -nocase $field_list $value_c]
             if { $value_idx > -1 } {
                 set tag_value [lindex $field_list $value_idx+1]
                 # Are choices treated differently than choice
@@ -721,7 +720,7 @@ ad_proc -public qfo_2g {
                     array unset fv_arr
                 } else {
                     # Name is derived from tag:
-                    set name_idx [lsearch -exact -nocase $field_list $name_const]
+                    set name_idx [lsearch -exact -nocase $field_list $name_c]
                     set name [lindex $field_list $name_idx+1]
                     set fatts_arr(${f_hash},names) $name
                     
@@ -729,7 +728,7 @@ ad_proc -public qfo_2g {
                     # because the name may be the same, 
                     # just different value.
                     foreach tag_v_list $tag_value {
-                        set v_idx [lsearch -exact -nocase $tag_v_list $value_const]
+                        set v_idx [lsearch -exact -nocase $tag_v_list $value_c]
                         if { $v_idx > -1 } {
                             set v_val [lindex $tag_v_list $v_idx+1 ]
                             lappend fchoices_larr(${name}) $v_val
@@ -773,13 +772,13 @@ ad_proc -public qfo_2g {
             }
             
             foreach {attr val} $field_list {
-                if { [string match -nocase $datatype_const $attr] } {
+                if { [string match -nocase $datatype_c $attr] } {
                     # Put datatypes in an array where value is list of
                     # fields using it.
                     lappend fields_w_datatypes_used_arr(${val}) $f_hash
                     # We set type before adding default datatype elements
                     #set fatts_arr(${f_hash},${attr}) $val
-                } elseif { [string match -nocase $tabindex_const $attr] } {
+                } elseif { [string match -nocase $tabindex_c $attr] } {
                     if { [qf_is_integer $val] } {
                         set val [expr { $val + $tabindex_adj } ]
                         set fatts_arr(${f_hash},${attr}) $val
@@ -846,6 +845,8 @@ ad_proc -public qfo_2g {
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
     ns_log Notice "##code qfo_g2.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
+#    ns_log Notice "##code qfo_g2.904 array get fatts_arr '[array get fatts_arr]'"
+    ns_log Notice "##code qfo_g2.905 array get fields_arr '[array get fields_arr]'"
     # qfv = field value
     foreach f_hash $qfi_fields_list {
 
@@ -1003,10 +1004,10 @@ ad_proc -public qfo_2g {
             set selected_c "selected"
             foreach f_hash $qfi_fields_sorted_list {
                 set fatts_arr_index $f_hash
-                append fatts_arr_index $comma_const $form_tag_attrs_const
+                append fatts_arr_index $comma_c $form_tag_attrs_c
                 set value_idx [lsearch -exact -nocase \
                                    $fatts_arr(${fatts_arr_index}) \
-                                   $value_const ]
+                                   $value_c ]
                 
                 switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                     radio -
@@ -1023,9 +1024,9 @@ ad_proc -public qfo_2g {
                     }
                     default {
                         set index $f_hash
-                        append index $comma_const $form_tag_attrs_const
+                        append index $comma_c $form_tag_attrs_c
                         set n2 $fatts_arr(${f_hash},names)
-                        if { [info exists qfv_arr(${ns}) ] } {
+                        if { [info exists qfv_arr(${n2}) ] } {
                             set v2 [qf_unquote $qfv_arr(${n2}) ]
                             if { $v2 ne "" \
                                      || ( $v2 eq "" \
@@ -1067,12 +1068,12 @@ ad_proc -public qfo_2g {
         set tabindex $tabindex_start
         foreach f_hash $qfi_fields_sorted_list {
             set atts_list $fatts_arr(${f_hash},form_tag_attrs)
-            set tab_idx [lsearch -exact -nocase $atts_list $tabindex_const ]
+            set tab_idx [lsearch -exact -nocase $atts_list $tabindex_c ]
             if { $tab_idx > -1 } {
                 incr tab_idx
                 set atts_list [lreplace $atts_list $tab_idx $tab_idx $tabindex ]
             } else {
-                lappend atts_list $tabindex_const $tabindex
+                lappend atts_list $tabindex_c $tabindex
                 ##ns_log Notice "qfo_2g.999: atts_list ${atts_list}"
             }
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
@@ -1289,8 +1290,8 @@ ad_proc -private qfo_form_list_def_to_array {
     upvar 1 $list_of_lists_name elements_lol
     upvar 1 $fields_ordered_list_name fields_ordered_list
     set select_multiple_i 0
-    set select_const "select"
-    set checkbox_const "checkbox"
+    set select_c "select"
+    set checkbox_c "checkbox"
     set checkbox_i 0
     set fields_ordered_list [list ]
     foreach element_nvl $elements_lol {
@@ -1312,7 +1313,7 @@ ad_proc -private qfo_form_list_def_to_array {
                         if { [info exists v_arr(id) ] } {
                             set select_ref $v_arr(id)
                         } else {
-                            set select_ref $select_const
+                            set select_ref $select_c
                             append select $select_multiple_i
                         }
                         set fields_arr(${select_ref}) $element_nvl
@@ -1330,7 +1331,7 @@ ad_proc -private qfo_form_list_def_to_array {
                     if { [info exists v_arr(id) ] } {
                         set checkbox_ref $v_arr(id)
                     } else {
-                        set checkbox_ref $checkbox_const
+                        set checkbox_ref $checkbox_c
                         append checkbox_ref $checkbox_i
                     }
                     set fields_arr(${checkbox_ref}) $element_nvl

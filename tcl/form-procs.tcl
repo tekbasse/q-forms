@@ -1798,10 +1798,15 @@ ad_proc -public qf_choice {
         set unselected -1
 
         # input needs to be able to pass label..
-        lappend attributes_input_list "label" selected
-
+        lappend attributes_input_list "label" "selected"
 
         foreach input_attributes_list $attributes_arr(value) {
+            if { ![qf_is_even [llength $input_attributes_list ] ] } {
+                ns_log Error "qf_choice.1804 'value' attribute count is odd. \
+ arg_list '${arg_list}'. Issue at: value '${input_attributes_list}'"
+                ad_script_abort
+            }
+
             array set input_arr $input_attributes_list
             set input_names_list [array names input_arr]
 
@@ -2067,21 +2072,17 @@ ad_proc -public qf_choices {
         set return_html [qf_append form_id $attributes_arr(form_id) html $args_html]
         set args_html ""
 
-        # verify this is a list of lists.
-        set list_length [llength $attributes_arr(value)]
-        # test on the second input, less chance its a special case
-        set second_input_attributes_count [llength [lindex $attributes_arr(value) 1]]
-        if { $list_length > 1 && $second_input_attributes_count < 2 } {
-            # a list was passed instead of a list of lists. Adjust..
-            set attributes_arr(value) [list $attributes_arr(value)]
-        }
-
         set unselected -1
         set label_c "label"
         set value_c "value"
         set name_c "name"
         set tabindex_c "tabindex"
         foreach input_attributes_list $attributes_arr(value) {
+            if { ![qf_is_even [llength $input_attributes_list ] ] } {
+                ns_log Error "qf_choices.2091 'value' attribute count is odd. \
+ arg_list '${arg_list}'. Issue at: value '${input_attributes_list}'"
+                ad_script_abort
+            }
 
             array set input_arr $input_attributes_list
             set input_names_list [array names input_arr]
