@@ -1300,8 +1300,10 @@ ad_proc -private qfo_form_list_def_to_array {
     set fields_ordered_list [list ]
     foreach element_nvl $elements_lol {
         # array set e_arr $element_nvl, except convert names to lowercase
+        set n_list [list ]
         foreach {n v} $element_nvl {
             set nlc [string tolower $n]
+            lappend n_list $nlc
             set v_arr(${nlc}) $v
             set n_arr(${nlc}) $n
         }
@@ -1315,6 +1317,14 @@ ad_proc -private qfo_form_list_def_to_array {
                     # If type is checkbox, it is a multiple choice
                     # If type is select, it must be multiple choice, because
                     # if it wasn't, it would have a 'name' attribute.
+                    if { $v_arr(type) eq $select_c } {
+                        set mx [lsearch -exact $n_list $multiple_c ]
+                        if { $mx > -1 } {
+                            set element_nvl [lreplace $element_nvl $mx $mx 1]
+                        } else {
+                            lappend element_nvl $multiple_c 1
+                        }
+                    }
 
                     # if id exists, use it, or create one.
                     if { [info exists v_arr(id) ] } {
