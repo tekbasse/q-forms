@@ -601,11 +601,15 @@ ad_proc -public qfo_2g {
             set tag_type [lindex $field_list $type_idx+1]
             switch -exact -nocase -- $tag_type {
                 select {
-                    if { [lsearch -exact -nocase $field_list $multiple_c] } {
-                        set multiple_names_p 1
-                    } else {
+                    if { [lsearch -exact -nocase $field_list $name_c] } {
+                        # If there is a name, it must be qf_choice
                         set multiple_names_p 0
-                    }
+                    } else {
+                        # must be qf_choices
+                        # Could confirm with this, assume instead
+                        # lsearch -exact -nocase $field_list $multiple_c
+                        set multiple_names_p 1
+                    } 
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
                 }
@@ -1289,10 +1293,10 @@ ad_proc -private qfo_form_list_def_to_array {
     upvar 1 $array_name fields_arr
     upvar 1 $list_of_lists_name elements_lol
     upvar 1 $fields_ordered_list_name fields_ordered_list
-    set select_multiple_i 0
+    set multiple_i 0
     set select_c "select"
+    set multiple_c "multiple"
     set checkbox_c "checkbox"
-    set checkbox_i 0
     set fields_ordered_list [list ]
     foreach element_nvl $elements_lol {
         # array set e_arr $element_nvl, except convert names to lowercase
@@ -1306,37 +1310,22 @@ ad_proc -private qfo_form_list_def_to_array {
             lappend fields_ordered_list $v_arr(name)
         } elseif { [info exists v_arr(type) ] } {
             switch -exact -nocase -- $v_arr(type) {
-                select {
-                    if { [info exists v_arr(multiple)] } {
-                        # This is a multiple.
-                        # if id exists, use it, or create one.
-                        if { [info exists v_arr(id) ] } {
-                            set select_ref $v_arr(id)
-                        } else {
-                            set select_ref $select_c
-                            append select $select_multiple_i
-                        }
-                        set fields_arr(${select_ref}) $element_nvl
-                        lappend fields_ordered_list $select_ref
-                        incr select_multiple_i
-                    } else {
-                        if { !$ignore_parse_issues_p } {
-                            ns_log Warning "qfo_form_list_def_to_array.1222: \
- No 'name' attribute found for element '${element_nvl}'"
-                        }
-                    }
-                }
+                select -
                 checkbox {
+                    # If type is checkbox, it is a multiple choice
+                    # If type is select, it must be multiple choice, because
+                    # if it wasn't, it would have a 'name' attribute.
+
                     # if id exists, use it, or create one.
                     if { [info exists v_arr(id) ] } {
-                        set checkbox_ref $v_arr(id)
+                        set multiple_ref $v_arr(id)
                     } else {
-                        set checkbox_ref $checkbox_c
-                        append checkbox_ref $checkbox_i
+                        set multiple_ref $multiple_c
+                        append multiple_ref $multiple_i
                     }
-                    set fields_arr(${checkbox_ref}) $element_nvl
-                    lappend fields_ordered_list $checkbox_ref
-                    incr checkbox_i
+                    set fields_arr(${multiple_ref}) $element_nvl
+                    lappend fields_ordered_list $multiple_ref
+                    incr multiple_i
                 }
                 default {
                     if { !$ignore_parse_issues_p } {

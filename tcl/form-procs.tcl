@@ -1019,7 +1019,7 @@ ad_proc -private qf_option {
     set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype option]
 
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list label name 
+    lappend attributes_full_list label name tabindex
     # type form_id
     set arg_list $option_attributes_list
     set attributes_list [list]
