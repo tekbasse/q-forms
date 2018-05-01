@@ -110,6 +110,16 @@ ad_proc -private ::qfo::lol_replace {
 
     if { $is_multiple_p } {
 
+        # get name from checkbox/select multiple attributes,
+        set attributes_arr [array get $fa_larr(${fa_index}) ]
+        set attributes_names_list [array names $attributes_arr]
+        set att_names_idx [lsearch -exact -nocase $attributes_names_list ]
+        if { $att_n_idx > -1 } {
+            set att_n_idx [lindex $attribute_names_list $att_names_idx]
+            set att_name_n $attributes_arr(${att_n_idx})
+        }
+
+
         # Not every name exists in qfv_arr
 
         # If name does not exist, 
@@ -120,26 +130,38 @@ ad_proc -private ::qfo::lol_replace {
         foreach row_nvl $old_val_lol {
             array set row_arr $row_nvl
             # index may be upper or lower case
+            # Use attribute 'value' as it is consistent for 
+            # checkbox and select multiple cases.
+            # 'name' is only required for checkbox input attributes.
             set n_list [array names row_arr]
-            set name_idx [lsearch -exact -nocase $n_list $name_c]
+            set value_idx [lsearch -exact -nocase $n_list $value_c ]
 
             # Does the input case exist? Or maybe this is a separator
-            if { $name_idx > -1 } {
-                set name_n [lindex $n_list $name_idx]
-
-                set value_idx [lsearch -exact -nocase $n_list $value_c]
+            if { $value_idx > -1 } {
                 set value_n [lindex $n_list $value_idx]
+
+                set name_idx [lsearch -exact -nocase $n_list $name_c]
+                if { $name_idx > -1 } {
+                    #  input type checkbox
+                    set name_n [lindex $n_list $name_idx]
+                } elseif { $att_n_idx > -1 } {
+                    #  input type select multiple
+                    set name_n $att_name_n
+                } 
 
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
                 if { [info exists qfv_arr(${name_n}) ] } {
                     # unqoute qfv_arr first
                     set input_unquoted [qf_unquote $qfv_arr(${name_n}) ]
-                    if { $input_unquoted eq $row_arr(${value_n}) } {
+                    # Instead of checking only if input matches original
+                    # check also if original is *in* input, because
+                    # input may be a list of multiple inputs of same name.
+                    if { $input_unquoted eq $row_arr(${value_n}) \
+                             || [lsearch -exact $input_unquoted $row_arr(${value_n}) ] } {
                         set selected_p 1
                     }
                 }
-
                 # Is 'selected' an attribute in original declaration?
                 set s_idx [lsearch -exact -nocase $n_list $selected_c]
                 if { $s_idx > -1 } {
@@ -337,6 +359,12 @@ ad_proc -public qfo_2g {
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
     <br><br>
     Note: fieldset tag is not implemented in this paradigm.
+    <br><br>
+    Note: qf_choices can determine use of type 'select' vs. 'checkbox' using
+    just the existence of 'checkbox', anything else can safely be 
+    interpreted to be a 'select multiple'.
+    With qfo_g2, differentiation is not so simple. 'select' may specify
+    a single choice, or 'multiple' selections with same name.
     <br><br>
     @see qdt::data_types
     @see util_user_message
@@ -601,14 +629,10 @@ ad_proc -public qfo_2g {
             set tag_type [lindex $field_list $type_idx+1]
             switch -exact -nocase -- $tag_type {
                 select {
-                    if { [lsearch -exact -nocase $field_list $name_c] } {
-                        # If there is a name, it must be qf_choice
-                        set multiple_names_p 0
-                    } else {
-                        # must be qf_choices
-                        # Could confirm with this, assume instead
-                        # lsearch -exact -nocase $field_list $multiple_c
+                    if { [lsearch -exact -nocase $field_list $multiple_c ] > -1 } {
                         set multiple_names_p 1
+                    } else {
+                        set multiple_names_p 0
                     } 
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
@@ -824,7 +848,7 @@ ad_proc -public qfo_2g {
                                   multiple_key_as_list $multiple_key_as_list \
                                   hash_check $hash_check \
                                   post_only $post_only ]
-
+        ns_log Notice "##code array get qfi_arr '[array get qfi_arr]'"
     } 
 
     # Make sure every qfi_arr(x) exists for each field
