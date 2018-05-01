@@ -37,8 +37,15 @@ set f_lol [list \
                $sample_abc_lol \
                [list type text value "example textarea value" name "input_text" label "input text" size 40 maxlength 80 ] \
                $multiple_lol \
-               [list type submit name charlie value bravo tabindex 9 datatype text_nonempty] \
-               [list tabindex 8 type submit name submit value "#acs-kernel.common_Save#" datatype text_nonempty]
+               [list type submit name charlie value bravo tabindex 90 datatype text_nonempty] \
+               [list tabindex 88 type submit name submit value "#acs-kernel.common_Save#" datatype text_nonempty] \
+               [list name a_decimal datatype decimal ] \
+               [list name a_nat_num datatype natural_num ] \
+               [list name integer_1_to_6 datatype range_integer min 0 max 10 ] \
+               [list name integers_0_2_10 datatype range_integers min 0 max 10 ] \
+               [list name nonempty1 datatype text_nonempty ] \
+               [list name a_word datatype text_word ] \
+
               ]
 
 set form_html ""
