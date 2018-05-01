@@ -1714,7 +1714,7 @@ ad_proc -public qf_choice {
             set attributes_arr(${attribute_lc}) $value
             lappend attributes_list $attribute_lc
         } elseif { $value eq "" } {
-            # do nothing                  
+            # do nothing
         } else {
             ns_log Error "qf_choice.1283: '[string range ${attribute} 0 15]' is not a valid attribute."
             ad_script_abort
@@ -1829,7 +1829,7 @@ ad_proc -public qf_choice {
                 }
             }
 
-            # pass the name from tag attribute to choice item, if name isn't included
+            # pass the name from tag attribute to choice item, if name isn't included and this 
             if { [lsearch -exact -nocase $input_names_list $name_c ] < 0 } {
                 if { [info exists attributes_arr(name)] } {
                     set input_arr(name) $attributes_arr(name)
@@ -2000,7 +2000,7 @@ ad_proc -public qf_choices {
     }
 
     # datatype is used by qfo_g2 paradigm. See proc qfo_g2
-    lappend attributes_full_list type form_id id label datatype
+    lappend attributes_full_list type form_id id label datatype multiple
     
     foreach {attribute value} $arg_list {
         set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]

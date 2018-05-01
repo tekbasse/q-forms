@@ -119,7 +119,7 @@ ad_proc -private ::qfo::lol_replace {
     
     if { $is_multiple_p } {
 
-
+        # this is a checkbox or select multiple tag configuration.
 
         # Not every name exists in qfv_arr
 
@@ -504,8 +504,8 @@ ad_proc -public qfo_2g {
 
     set qfi_fields_list [array names fields_arr]
     # Do not assume field index is same as attribute name's value.
-    # Ideally, this list is the names used for inputs, 
-    # This assumption breaks for 'input checkbox' and 'select multiple',
+    # Ideally, this list is the names used for inputs. 
+    # Yet, this pattern breaks for 'input checkbox' (not 'select multiple'),
     # where names are defined in the supplied value list of lists.
     # How to handle?  These cases should be defined uniquely,
     # using available data, so attribute 'id' if it exists,
@@ -575,6 +575,7 @@ ad_proc -public qfo_2g {
     set select_c "select"
     set value_c "value"
     set name_c "name"
+    set text_c "text"
     set multiple_c "multiple"
     set form_tag_attrs_c "form_tag_attrs"
     set comma_c ","
@@ -609,11 +610,19 @@ ad_proc -public qfo_2g {
 
 
     # Parse fields
-    set default_tag_type "text"
+    set default_tag_type $text_c
     # Build dataset validation and making a form
+
+    # $f_hash is field_index not field name.
     foreach f_hash $qfi_fields_list {
-        set field_list $fields_arr(${f_hash})
-        # $f_hash is field_index not field name.
+
+        set field_nvl $fields_arr(${f_hash})
+        foreach {n v} $field_nvl {
+            set nlc [string tolower $n]
+            set hfv_arr(${nlc}) $v
+            set hfn_arr(${nlc}) $n
+        }
+
 
         # This loop fills fatts_arr(${f_hash},${datatype_element}),
         # where datatype elements are:
@@ -629,7 +638,7 @@ ad_proc -public qfo_2g {
         # pushes complexity to later on.
         # Is lowest burden to get datatype first, load defaults,
         # then overwrite values supplied with field?  Yes.
-        # What if case is a table with 100+ fields with same type?
+        # What ife case is a table with 100+ fields with same type?
         # Doesn't matter, if every $f_hash and $attr will be referenced:
         # A proc could be called that caches, with parameters:
         # $f_hash and $attr, yet that is slower than just filling the array
@@ -648,13 +657,19 @@ ad_proc -public qfo_2g {
         # default tag_type
 
         set tag_type $default_tag_type
-        set type_idx [lsearch -exact -nocase $field_list $type_c]
-        if { $type_idx > -1 } {
-            set tag_type [lindex $field_list $type_idx+1]
+
+        if { [info exists hfv_arr(type) ] } {
+            set tag_type $hfv_arr(type)
             switch -exact -nocase -- $tag_type {
                 select {
-                    if { [lsearch -exact -nocase $field_list $multiple_c ] > -1 } {
+                    if { [info exists hfv_arr(multiple) ] } {
                         set multiple_names_p 1
+                        # Technically, 'select multiple' case is still one
+                        # name, yet multiple values posted.
+                        # This case is handled in the context
+                        # of multiple_names_p, essentially as a subset
+                        # of 'input checkbox' since names supplied
+                        # with inputs *could* be the same.
                     } else {
                         set multiple_names_p 0
                     } 
@@ -719,16 +734,15 @@ ad_proc -public qfo_2g {
         set fatts_arr(${f_hash},tag_type) $tag_type
 
         if { $fatts_arr(${f_hash},is_datatyped_p) } {
-            set datatype_idx [lsearch -exact -nocase $field_list $datatype_c]
-            if { $datatype_idx > -1 } {
-                set datatype [lindex $field_list $datatype_idx+1]
+            
+            if { [info exists hfv_arr(datatype) ] } {
+                set datatype $hfv_arr(datatype)
                 set fatts_arr(${f_hash},${datatype_c}) $datatype
             } else {
-                set datatype "text"
-                set fatts_arr(${f_hash},${datatype_c}) "text"
+                set datatype $text_c
+                set fatts_arr(${f_hash},${datatype_c}) $text_c
             }
-            set name_idx [lsearch -exact -nocase $field_list $name_c]
-            set name [lindex $field_list $name_idx+1]
+            set name $hfv_arr(name)
             set fatts_arr(${f_hash},names) $name
 
             #  is from datatype form_tag_attrs
@@ -747,50 +761,45 @@ ad_proc -public qfo_2g {
             # Just setup to validate input from form post/get.
 
             # define choice(s) datatype in fchoices_larr for validation
-            set value_idx [lsearch -exact -nocase $field_list $value_c]
-            if { $value_idx > -1 } {
-                set tag_value [lindex $field_list $value_idx+1]
+
+            if { [info exists hfv_arr(value) ] } {
+                set tag_value $hfv_arr(value)
                 # Are choices treated differently than choice
                 # for validation? No
                 # Only difference is name is for all choices with 'choice'
-                # whereas 'choices' has a different name for each choice.
+                # and 'choices select' whereas
+                # 'choices checkbox' has a different name for each choice.
                 # For SELECT tag, need to know if has MULTIPLE attribute
-                # to know if to expect Name attribute.
-                if { $multiple_names_p } {
-                    foreach tag_v_list $tag_value {
-                        #array set fc_arr $tag_v_list
-                        # Re-written to consider uppercase/lowercase refs
-                        foreach {n v} $tag_v_list {
-                            set nlc [string tolower $n]
-                            #set fn_arr($nlc) $n
-                            set fv_arr(${nlc}) $v
-                        }
-                        if { [info exists fv_arr(value) ] \
-                                 && [info exists fv_arr(name)] } {
+                # to know if to expect multiple input values.
+
+                if { [info exists hfv_arr(name) ] } {
+                    set tag_name $hfv_arr(name)
+                    lappend fatts_arr(${f_hash},names) $tag_name
+                }
+
+                
+                foreach tag_v_list $tag_value {
+                    #array set fc_arr $tag_v_list
+                    # Re-written to consider uppercase/lowercase refs
+                    foreach {n v} $tag_v_list {
+                        set nlc [string tolower $n]
+                        #set fn_arr($nlc) $n
+                        set fv_arr(${nlc}) $v
+                    }
+                    if { [info exists fv_arr(value) ] } {
+                        if { [info exists fv_arr(name)] } {
                             # Use lappend to collect validation values, 
                             # because the name may be the same, 
                             # just different value.
                             lappend fchoices_larr($fv_arr(name)) $fv_arr(value)
                             lappend fatts_arr(${f_hash},names) $fv_arr(name)
+                        } else {
+                            # use name from tag
+                            lappend fchoices_larr(${tag_name}) $fv_arr(value)
                         }
                     }
                     array unset fv_arr
-                } else {
-                    # Name is derived from tag:
-                    set name_idx [lsearch -exact -nocase $field_list $name_c]
-                    set name [lindex $field_list $name_idx+1]
-                    set fatts_arr(${f_hash},names) $name
                     
-                    # Use lappend to collect validation values, 
-                    # because the name may be the same, 
-                    # just different value.
-                    foreach tag_v_list $tag_value {
-                        set v_idx [lsearch -exact -nocase $tag_v_list $value_c]
-                        if { $v_idx > -1 } {
-                            set v_val [lindex $tag_v_list $v_idx+1 ]
-                            lappend fchoices_larr(${name}) $v_val
-                        }
-                    }
                 }
                 
             } else {
@@ -799,18 +808,18 @@ ad_proc -public qfo_2g {
             }
         }
 
-        # Fill fatts_arr form_tag_attrs
-        # temp_attrs_arr may have been pre-filled with datatype defaults
-        # field_list contains tag attributes from fields_arr
-        array set temp_attrs_arr $field_list
-        set fatts_arr(${f_hash},form_tag_attrs) [array get temp_attrs_arr]
-        array unset temp_attrs_arr
+        # Fill fatts_arr form_tag_attrs with any modifications 
+        set new_field_nvl [list ]
+        foreach nlc [array names hfn_arr] {
+            lappend new_field_nvl $hfn_arr(${nlc}) $hfv_arr(${nlc})
+        }
+        set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
 
 
         if { !$error_p } {
             
             # element "datatype" already exists, skip that loop:
-            # element "form_tag_attrs" already exists, skipp that in loop also.
+            # element "form_tag_attrs" already exists, skip that in loop also.
             # e = element
             # Remove from list, last first to use existing index values.
             set e_list $datatype_elements_list
@@ -828,7 +837,7 @@ ad_proc -public qfo_2g {
 ## '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
             }
             
-            foreach {attr val} $field_list {
+            foreach {attr val} $field_nvl {
                 if { [string match -nocase $datatype_c $attr] } {
                     # Put datatypes in an array where value is list of
                     # fields using it.
@@ -855,7 +864,13 @@ ad_proc -public qfo_2g {
         }
         ##ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
         ##ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
+
+        array unset hfv_arr
+        array unset hfn_arr
     }
+    # end of foreach f_hash
+
+
 
     # All the fields and datatypes are known.
     # Proceed with form building and UI stuff
@@ -1115,11 +1130,6 @@ ad_proc -public qfo_2g {
                         }
                     }
                 }
-
-            ## set input values from qfv_arr
-            # they need to be unquoted..
-            # if value eq "" && !$empty_allowed_p, set default
-            # choice/choices needs to reflect "selected status"
             }
         }
 
