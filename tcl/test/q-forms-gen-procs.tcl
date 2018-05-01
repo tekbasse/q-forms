@@ -63,12 +63,24 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
                                              value visa3 ] \
                                        ] ] \
                        ]
+
             qfo_form_list_def_to_array \
                 -array_name fields_arr \
                 -list_of_lists_name fd \
                 -ignore_parse_issues_p 0
-            set validated_p [qfo_2g -fields_array fields_arr]
 
+            # qfo_2g thinks the form is submitted,
+            # because qf_get_input_as_array sees form input
+            # from acs-automated-testing ui.
+            # Therefore form_html is not generated"
+            set validated_p [qfo_2g -fields_array fields_arr \
+                                 -inputs_as_array dummy_arr \
+                                -form_varname form_html ]
+            set form_m_exists_p [info exists form_m]
+            aa_false "No form html is created." $form_m_exists_p
+            aa_true "Testing qfo_2g is limited here. \
+ Thinks form posted and validated. \
+ Test with q-forms/www/admin/test-* pages" $validated_p
         } 
     # example code
     # -teardown_code {
