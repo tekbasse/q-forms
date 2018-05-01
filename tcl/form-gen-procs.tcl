@@ -416,9 +416,12 @@ ad_proc -public qfo_2g {
     upvar 1 $fields_array fields_arr
     upvar 1 $inputs_as_array qfi_arr
     upvar 1 $form_varname form_m
+
     # To obtain page's doctype, if customized:
     upvar 1 doc doc
-    
+    # external doc array is used here
+    set doctype [qf_doctype $doc_type]
+
     
     # Add the customization code
     # where a q-tables table of same name overrides form definition
@@ -474,7 +477,8 @@ ad_proc -public qfo_2g {
         ##code: this will not work for type:SELECT,Checkbox,or radio.
         ## Will q-tables paradigm handle these cases? May require a deeper
         ## investigation.
-        ## Perhaps adding an additional datatype "set of elements"
+        ## It can adapt. Use tab delim data in a cell, then split.
+        ## Or perhaps adding an additional datatype "set of elements"
         ## where  set of elements are defined as entries in another table..
         foreach n qt_field_names_list {
             set f_list $qt_fields_larr(${n})
@@ -667,12 +671,17 @@ ad_proc -public qfo_2g {
                     set fatts_arr(${f_hash},is_datatyped_p) 0
                     set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
                 }
+                email -
+                file {
+                    # These can pass multiple values in html5.
+                    set multiple_names_p ""
+                    # Still should be validateable
+                    set fatts_arr(${f_hash},is_datatyped_p) 1
+                }
                 button -
                 color -
                 date -
                 datetime-local -
-                email -
-                file -
                 hidden -
                 image -
                 month -
@@ -888,13 +897,14 @@ ad_proc -public qfo_2g {
     # by selecting the fields via a glob that uniquely identifes them like so:
     #  array set qfv_arr /array get qfi_arr "{glob1}"
     #  array set qfv_arr /array get qfi_arr "glob2"
-    # 
+
     # For now, dynamically generated fields need to be 
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
     ns_log Notice "##code qfo_g2.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
 #    ns_log Notice "##code qfo_g2.904 array get fatts_arr '[array get fatts_arr]'"
     ns_log Notice "##code qfo_g2.905 array get fields_arr '[array get fields_arr]'"
+
     # qfv = field value
     foreach f_hash $qfi_fields_list {
 
@@ -966,11 +976,16 @@ ad_proc -public qfo_2g {
                     set name $fatts_arr(${f_hash},names)
                     if { [info exists qfv_arr(${name}) ] } {
                         # check for type=select,checkbox, or radio
-                        if { [lsearch -exact $fchoices_larr(${name}) $qfv_arr(${name})] < 0 } {
-                            # name exists, value not found
-                            set valid_p 0
-                            ns_log Notice "qfo_2g.886: name '${name}' \
+                        # qfv_arr may contain multiple values
+                        foreach m $qfv_arr(${name}) {
+                            set m_valid_p 1
+                            if { [lsearch -exact $fchoices_larr(${name}) $m ] < 0 } {
+                                # name exists, value not found
+                                set m_valid_p 0
+                                ns_log Notice "qfo_2g.886: name '${name}' \
  has not valid value '$qfv_arr(${name})'"
+                            }
+                            set valid_p [expr { $valid_p && $m_valid_p } ]
                         }
                     }
                     incr n_idx
@@ -1034,8 +1049,6 @@ ad_proc -public qfo_2g {
         # build form using qf_* api
         set form_m ""
 
-        # external doc array is used here.
-        set doctype [qf_doctype $doc_type]
         set form_id [qf_form form_id $form_id hash_check $hash_check]
 
         # Use qfi_fields_sorted_list to generate 
