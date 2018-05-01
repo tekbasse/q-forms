@@ -108,16 +108,17 @@ ad_proc -private ::qfo::lol_replace {
     set name_c "name"
     set value_c "value"
 
+    # get name from checkbox/select multiple attributes,
+    set attributes_arr [array get $fa_larr(${fa_index}) ]
+    set attributes_names_list [array names $attributes_arr]
+    set att_names_idx [lsearch -exact -nocase $attributes_names_list ]
+    if { $att_n_idx > -1 } {
+        set att_n_idx [lindex $attribute_names_list $att_names_idx]
+        set att_name_n $attributes_arr(${att_n_idx})
+    }
+    
     if { $is_multiple_p } {
 
-        # get name from checkbox/select multiple attributes,
-        set attributes_arr [array get $fa_larr(${fa_index}) ]
-        set attributes_names_list [array names $attributes_arr]
-        set att_names_idx [lsearch -exact -nocase $attributes_names_list ]
-        if { $att_n_idx > -1 } {
-            set att_n_idx [lindex $attribute_names_list $att_names_idx]
-            set att_name_n $attributes_arr(${att_n_idx})
-        }
 
 
         # Not every name exists in qfv_arr
@@ -158,7 +159,7 @@ ad_proc -private ::qfo::lol_replace {
                     # check also if original is *in* input, because
                     # input may be a list of multiple inputs of same name.
                     if { $input_unquoted eq $row_arr(${value_n}) \
-                             || [lsearch -exact $input_unquoted $row_arr(${value_n}) ] } {
+                             || [lsearch -exact $input_unquoted $row_arr(${value_n}) ] > -1 } {
                         set selected_p 1
                     }
                 }
@@ -184,21 +185,40 @@ ad_proc -private ::qfo::lol_replace {
         # so there is only one name to check.
 
         # index may be upper or lower case
-        set n_list [array names row_arr]
-        set name_idx [lsearch -exact -nocase $n_list $name_c]
-        if { $name_idx > -1 } {
+        if { $attn_n_idx > -1 } {
 
-
+            set selected_count 0
+            
             foreach row_nvl $old_val_lol {
                 array set row_arr $row_nvl
                 # index may be upper or lower case
                 set n_list [array names row_arr]
-                set name_idx [lsearch -exact -nocase $n_list $name_c]
-                if { $name_idx > -1 } {
+                set value_idx [lsearch -exact -nocase $n_list $value_c ]
+                if { $value_idx > -1 } {
                     # Does the input case exist?
+                    set name_idx [lsearch -exact -nocase $n_list $name_c ]
                     set name_n [lindex $n_list $name_idx]
-                    set selected_p [info exists qfv_arr(${name_n}) ]
-
+                    set selected_p 0
+                    if { [info exists qfv_arr(${name_n}) ] } {
+                        # unqoute qfv_arr first
+                        set input_unquoted [qf_unquote $qfv_arr(${name_n}) ]
+                        # Instead of checking only if input matches original
+                        # check also if original is *in* input, because
+                        # input may be a list of multiple inputs of same name
+                        # intentional or not.
+                        if { $input_unquoted eq $row_arr(${value_n}) \
+                                 || [lsearch -exact $input_unquoted $row_arr(${value_n}) ] > -1 } {
+                            incr selected_count
+                            if { $selected_count < 2 } {
+                                set selected_p 1
+                            } else {
+                                ns_log Warning "qfo_g2.215: Unexpected: \
+ 'selected' has multiple selected cases. \
+ items for form element '${old_val_lol}', \
+ specifically item '${row_nvl}'. Unselected."
+                            }
+                        } 
+                    }
                     # Is 'selected' an attribute in original declaration?
                     set s_idx [lsearch -exact -nocase $n_list $selected_c]
                     if { $s_idx > -1 } {
@@ -208,7 +228,7 @@ ad_proc -private ::qfo::lol_replace {
                         set new_row_nvl $row_nvl
                         lappend new_row_nvl $selected_c $selected_p
                     }
-
+                    
                 } else {
                     # selection must be a separator or the like.
                     set new_row_nvl $row_nvl
