@@ -838,12 +838,12 @@ ad_proc -public qfo_2g {
             foreach {attr val} $field_nvl {
                     set fatts_arr(${f_hash},${attr}) $val
             }
-            if { [info exists $hfv_arr(datatype) ] } {
+            if { [info exists hfv_arr(datatype) ] } {
                     lappend fields_w_datatypes_used_arr(${val}) $f_hash
             }
-            if { [info exists $hfv_arr(tabindex) ] } {
+            if { [info exists hfv_arr(tabindex) ] } {
                 if { [qf_is_integer $hfv_arr(tabindex) ] } {
-                    set val [expr { $val + $tabindex_adj } ]
+                    set val [expr { $hfv_arr(tabindex) + $tabindex_adj } ]
                     set fatts_arr(${f_hash},${attr}) $val
                 } else {
                     ns_log Warning "qfo_2g.748: tabindex not integer for \
@@ -1016,9 +1016,17 @@ ad_proc -public qfo_2g {
     } else {
         # form not submitted
 
-        # Populate form values with defaults
+        # Populate form values with defaults if not provided otherwise
         foreach f_hash $qfi_fields_list {
-            set qfv_arr(${f_hash}) [qf_default_val $fatts_arr(${f_hash},default_proc) ] 
+            if { ![info exists fatts_arr(${f_hash},value) ] } {
+                # A value was not provided by fields_arr
+                if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                    set qfv_arr(${f_hash}) [qf_default_val $fatts_arr(${f_hash},default_proc) ]
+                } else {
+                    ns_log Warning "qfo_g2.1025: Form element '${f_hash}' \
+ has no attribute 'value', and is not a datatype."
+                }
+            }
         }
     }
 
