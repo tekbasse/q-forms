@@ -613,6 +613,21 @@ ad_proc -public qfo_2g {
     set default_tag_type $text_c
     # Build dataset validation and making a form
 
+    # make a list of datatype elements that are not made during next loop:
+    # element "datatype" already exists, skip that loop:
+    # element "form_tag_attrs" already exists, skip that in loop also.
+    # e = element
+    # Remove from list, last first to use existing index values.
+    set e_list $datatype_elements_list
+    if { $dedt_idx > $ftat_idx } {
+        set e_list [lreplace $e_list $dedt_idx $dedt_idx]
+        set e_list [lreplace $e_list $ftat_idx $ftat_idx]
+    } else {
+        set e_list [lreplace $e_list $ftat_idx $ftat_idx]
+        set e_list [lreplace $e_list $dedt_idx $dedt_idx]
+    }
+
+
     # $f_hash is field_index not field name.
     foreach f_hash $qfi_fields_list {
 
@@ -807,6 +822,38 @@ ad_proc -public qfo_2g {
                 ns_log Error "qfo_2g.722: value for field '${f_hash}' not found."
             }
         }
+        
+
+        if { !$error_p } {
+            
+            if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                foreach e $e_list {
+                    # Set field data defaults according to datatype
+                    set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
+                    ##ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
+                        ## '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
+                }
+            }
+
+            foreach {attr val} $field_nvl {
+                    set fatts_arr(${f_hash},${attr}) $val
+            }
+            if { [info exists $hfv_arr(datatype) ] } {
+                    lappend fields_w_datatypes_used_arr(${val}) $f_hash
+            }
+            if { [info exists $hfv_arr(tabindex) ] } {
+                if { [qf_is_integer $hfv_arr(tabindex) ] } {
+                    set val [expr { $val + $tabindex_adj } ]
+                    set fatts_arr(${f_hash},${attr}) $val
+                } else {
+                    ns_log Warning "qfo_2g.748: tabindex not integer for \
+ tabindex attribute of field '${f_hash}'. Value is '${val}'"
+                }
+            } else {
+                # add it to the end 
+                set fatts_arr(${f_hash},tabindex) $tabindex_tail
+                incr tabindex_tail
+            }
 
         # Fill fatts_arr form_tag_attrs with any modifications 
         set new_field_nvl [list ]
@@ -816,51 +863,6 @@ ad_proc -public qfo_2g {
         set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
 
 
-        if { !$error_p } {
-            
-            # element "datatype" already exists, skip that loop:
-            # element "form_tag_attrs" already exists, skip that in loop also.
-            # e = element
-            # Remove from list, last first to use existing index values.
-            set e_list $datatype_elements_list
-            if { $dedt_idx > $ftat_idx } {
-                set e_list [lreplace $e_list $dedt_idx $dedt_idx]
-                set e_list [lreplace $e_list $ftat_idx $ftat_idx]
-            } else {
-                set e_list [lreplace $e_list $ftat_idx $ftat_idx]
-                set e_list [lreplace $e_list $dedt_idx $dedt_idx]
-            }
-            foreach e $e_list {
-                # Set field data defaults according to datatype
-                set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
-                ##ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
-## '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
-            }
-            
-            foreach {attr val} $field_nvl {
-                if { [string match -nocase $datatype_c $attr] } {
-                    # Put datatypes in an array where value is list of
-                    # fields using it.
-                    lappend fields_w_datatypes_used_arr(${val}) $f_hash
-                    # We set type before adding default datatype elements
-                    #set fatts_arr(${f_hash},${attr}) $val
-                } elseif { [string match -nocase $tabindex_c $attr] } {
-                    if { [qf_is_integer $val] } {
-                        set val [expr { $val + $tabindex_adj } ]
-                        set fatts_arr(${f_hash},${attr}) $val
-                    } else {
-                        ns_log Warning "qfo_2g.748: tabindex not integer for \
- tabindex attribute of field '${f_hash}'. Value is '${val}'"
-                    }
-                } else {
-                    set fatts_arr(${f_hash},${attr}) $val
-                }
-            }
-            if { ![info exists fatts_arr(${f_hash},tabindex) ] } {
-                # add it to the end 
-                set fatts_arr(${f_hash},tabindex) $tabindex_tail
-                incr tabindex_tail
-            }
         }
         ##ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
         ##ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
