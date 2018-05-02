@@ -536,6 +536,9 @@ ad_proc -public qf_fieldset {
     args
 } {
     Starts a form fieldset by appending a fieldset tag.  Fieldset closes when form is closed or another fieldset defined in same form.
+    <br><br>
+    If a 'label' attribute is included, the attribute is converted to
+    a 'legend' tag and added immediately following the fieldset tag.
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -568,7 +571,7 @@ ad_proc -public qf_fieldset {
     set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype fieldset]
 
     set attributes_full_list $attributes_tag_list
-    lappend attributes_full_list form_id
+    lappend attributes_full_list form_id label
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
@@ -630,6 +633,10 @@ ad_proc -public qf_fieldset {
     append tag_html "<fieldset"
     append tag_html [qf_insert_attributes ${tag_attributes_list}]
     append tag_html ">"
+
+    if { [info exists $attributes_arr(label) ] } {
+        append tag_html "<legend>" $attributes_arr(label) "</legend>"
+    }
 
     # set results __form_ids_fieldset_open_list
     if { $previous_fs } {
