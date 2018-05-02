@@ -539,7 +539,12 @@ ad_proc -public qfo_2g {
     #    css_abbrev 
     #    xml_format
     set fields_ordered_list_len [llength $fields_ordered_list]
-
+    set qfi_fields_list_len [llength $qfi_fields_list]
+    if { $fields_ordered_list_len == $qfi_fields_list_len } {
+        set calculate_tabindex_p 0
+    } else {
+        set calculate_tabindex_p 1
+    }
     # Make a list of available datatypes
     # Html SELECT tags, and
     # INPUT tag with attribute type=radio or type=checkbox
@@ -827,6 +832,10 @@ ad_proc -public qfo_2g {
         if { !$error_p } {
             
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                set dt $fatts_arr(${f_hash},datatype)
+                lappend fields_w_datatypes_used_arr(${dt}) $f_hash
+
+
                 foreach e $e_list {
                     # Set field data defaults according to datatype
                     set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
@@ -835,25 +844,24 @@ ad_proc -public qfo_2g {
                 }
             }
 
-            foreach {attr val} $field_nvl {
-                    set fatts_arr(${f_hash},${attr}) $val
-            }
-            if { [info exists hfv_arr(datatype) ] } {
-                    lappend fields_w_datatypes_used_arr(${val}) $f_hash
-            }
-            if { [info exists hfv_arr(tabindex) ] } {
-                if { [qf_is_integer $hfv_arr(tabindex) ] } {
-                    set val [expr { $hfv_arr(tabindex) + $tabindex_adj } ]
-                    set fatts_arr(${f_hash},${attr}) $val
-                } else {
-                    ns_log Warning "qfo_2g.748: tabindex not integer for \
- tabindex attribute of field '${f_hash}'. Value is '${val}'"
+
+            if { $calculate_tabindex_p } {
+                # Calculate relative tabindex
+                set val [lsearch -exact $fields_ordered_list $f_hash]
+                if { $val < 0 } {
+                    set val $tabindex_tail
+                    if { [info exists hfv_arr(tabindex) ] } {
+                        if { [qf_is_integer $hfv_arr(tabindex) ] } {
+                            set val [expr { $hfv_arr(tabindex) + $tabindex_adj } ]
+                        } else {
+                            ns_log Warning "qfo_2g.748: tabindex not integer \
+ for  tabindex attribute of field '${f_hash}'. Value is '${val}'"
+                        }
+                    }
                 }
-            } else {
-                # add it to the end 
-                set fatts_arr(${f_hash},tabindex) $tabindex_tail
-                incr tabindex_tail
+                set fatts_arr(${f_hash},tabindex) $val
             }
+
 
         # Fill fatts_arr form_tag_attrs with any modifications 
         set new_field_nvl [list ]
@@ -1057,17 +1065,21 @@ ad_proc -public qfo_2g {
 
         # Finally, a new sequence is generated to clean up any blending
         # or ommissions in sequence etc.
-        # Create a new qfi_fields_list, sorted according to tabindex
-        set qfi_fields_tabindex_lists [list ]
-        foreach f_hash $qfi_fields_list {
-            set f_list [list $f_hash $fatts_arr(${f_hash},tabindex) ]
-            lappend qfi_fields_tabindex_lists $f_list
-        }
-        set qfi_fields_tabindex_sorted_lists [lsort -integer -index 1 \
-                                                  $qfi_fields_tabindex_lists]
-        set qfi_fields_sorted_list [list]
-        foreach f_list $qfi_fields_tabindex_sorted_lists {
-            lappend qfi_fields_sorted_list [lindex $f_list 0]
+        if { $calculate_tabindex_p } {
+            # Create a new qfi_fields_list, sorted according to tabindex
+            set qfi_fields_tabindex_lists [list ]
+            foreach f_hash $qfi_fields_list {
+                set f_list [list $f_hash $fatts_arr(${f_hash},tabindex) ]
+                lappend qfi_fields_tabindex_lists $f_list
+            }
+            set qfi_fields_tabindex_sorted_lists [lsort -integer -index 1 \
+                                                      $qfi_fields_tabindex_lists]
+            set qfi_fields_sorted_list [list]
+            foreach f_list $qfi_fields_tabindex_sorted_lists {
+                lappend qfi_fields_sorted_list [lindex $f_list 0]
+            }
+        } else {
+            set qfi_fields_sorted_list $fields_ordered_list
         }
 
 
