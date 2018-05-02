@@ -1030,9 +1030,6 @@ ad_proc -public qfo_2g {
                 # A value was not provided by fields_arr
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
                     set qfv_arr(${f_hash}) [qf_default_val $fatts_arr(${f_hash},default_proc) ]
-                } else {
-                    ns_log Warning "qfo_g2.1025: Form element '${f_hash}' \
- has no attribute 'value', and is not a datatype."
                 }
             }
         }
@@ -1103,10 +1100,19 @@ ad_proc -public qfo_2g {
             foreach f_hash $qfi_fields_sorted_list {
                 set fatts_arr_index $f_hash
                 append fatts_arr_index $comma_c $form_tag_attrs_c
-                set value_idx [lsearch -exact -nocase \
-                                   $fatts_arr(${fatts_arr_index}) \
-                                   $value_c ]
-                
+
+                set n2_idx 0
+                set value_idx -1
+                foreach {n v} $fatts_arr(${fatts_arr_index}) {
+                    set nlc [string tolower $n]
+                    set fav_arr(${nlc}) $v
+                    set fan_arr(${nlc}) $n
+                    if { $nlc eq $value_c } {
+                        set value_idx $n2_idx
+                    }
+                    incr n2_idx
+                }
+
                 switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                     radio -
                     checkbox -
@@ -1121,37 +1127,37 @@ ad_proc -public qfo_2g {
                             -qfv_array_name qfv_arr
                     }
                     default {
-                        set index $f_hash
-                        append index $comma_c $form_tag_attrs_c
                         set n2 $fatts_arr(${f_hash},names)
+                        # If there is no label, add one.
+                        ##code Label is not added. see test-qfo_g2-a
+                        if { ![info exists fav_arr(label)] } {
+                            set fav_arr(label) $fav_arr(name)
+                            set fan_arr(label) $label_c
+                        }
                         if { [info exists qfv_arr(${n2}) ] } {
                             set v2 [qf_unquote $qfv_arr(${n2}) ]
                             if { $v2 ne "" \
                                      || ( $v2 eq "" \
                                               && $fatts_arr(${f_hash},empty_allowed_p) ) } {
                                 ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+                                set fatts_arr(${fatts_arr_index}) [array get $fav_arr]                          
                             
                                 ::qfo::larr_replace \
                                     -array_name fatts_arr \
-                                    -index $index \
+                                    -index $fatts_arr_index \
                                     -attribute_name_index $value_idx \
                                     -new_value $v2
                             }
                         } else {
                             # If there is a 'selected' attr, unselect it.
-                            array set v2_arr $fatts_arr(${index})
-                            set v2_names_ul [array names v2_arr]
-                            # s = selected
-                            set s_idx [lsearch -exact -nocase $v2_names_ul $selected_c ]
-                            if { $s_idx > -1 } {
-                                set v2_name [lindex $v2_names_ul $s_idx]
-                                set v2_arr(${v2_name}) "0"
-                                set fatts_arr(${index}) [array get $v2_arr]
+                            if { [info exists fav_arr(selected) } {
+                                set fav_arr(selected) "0"
+                                set fatts_arr(${fatts_arr_index}) [array get $fav_arr]
                             }
-                            array unset v2_arr
                         }
                     }
                 }
+                array unset fav_arr
             }
         }
 
