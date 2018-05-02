@@ -2106,21 +2106,9 @@ ad_proc -public qf_choices {
                 } else {
                     set ti_name $tabindex_c
                 }
-                if { [info exists input_arr(selected) ] } {
-                    if { $input_arr(selected) eq 1 } {
-                        set input_arr(${ti_name}) $attributes_arr(tabindex)
-                    } else {
-                        set input_arr(${ti_name}) $unselected
-                    }
-                } elseif { [info exists input_arr(checked) ] } {
-                    if { $input_arr(checked) eq 1 } {
-                        set input_arr(${ti_name}) $attributes_arr(tabindex)
-                    } else {
-                        set input_arr(${ti_name}) $unselected
-                    }
-                } else {
-                    set input_arr(${ti_name}) $unselected
-                }
+                # set the tabindex the same for all for consistent context
+                set input_arr(${ti_name}) $attributes_arr(tabindex)
+
             }
             set input_attributes_list [array get input_arr]
             array unset input_arr
