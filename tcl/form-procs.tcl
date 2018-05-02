@@ -166,6 +166,8 @@ ad_proc -public qf_get_inputs_as_array {
     If <code>post_only</code> is 1, confirms that input is via cgi POST. Ignores input via GET.
 
 } {
+    # For Form input expectations 
+    # see https://www.w3.org/TR/html4/interact/forms.html#successful-controls
     # get args
     upvar 1 $form_array_name __form_input_arr
     set array __form_buffer_arr
@@ -1740,28 +1742,38 @@ ad_proc -public qf_choice {
     }
     lappend attributes_list form_id $attributes_arr(form_id)
 
-    # If a label is supplied, wrap the output with a LABEL tag.
-    set label_wrap_start_html ""
-    set label_wrap_end_html ""
-    if { [info exists attributes_arr(label)] } {
-        # wrap html with a LABEL tag. Wrap instead
-        # of referring by id attribute, because html4 does not validate
-        # when ID attribute is in a SELECT tag.
-        set label_wrap_start_html "<label>"
-        append label_wrap_start_html [string trim $attributes_arr(label)]
-
-        set label_wrap_end_html "</label>"
-    }
-
 
     # if attributes_arr(type) = select, then items are option tags wrapped by a select tag
     # if attributes_arr(type) = radio, then items are input tags, wrapped in a list for now
     # if needing to paginate radio buttons, build the radio buttons using qf_input directly.
     if { ![string match -nocase "radio" $attributes_arr(type) ] } {
         set type "select"
+        set label_wrap_tag "label"
     } else {
         # This forces a lowercase 'radio' to reduce complexity in logic
         set type "radio"
+        set label_wrap_tag "fieldset"
+    }
+
+    # If a label is supplied, wrap the output with a LABEL tag.
+    set label_wrap_start_html ""
+    set label_wrap_end_html ""
+
+    if { [info exists attributes_arr(label)] } {
+        # wrap html with a LABEL tag. Wrap instead
+        # of referring by id attribute, because html4 does not validate
+        # when ID attribute is in a SELECT tag.
+        set label_wrap_start_html "<${label_wrap_tag}>"
+        if { $label_wrap_tag eq "fieldset" } {
+            append label_wrap_start_html "<legend>"
+            append label_wrap_start_html $attributes_arr(label)
+            append label_wrap_start_html "</legend>\n"
+        } else {
+
+            append label_wrap_start_html $attributes_arr(label)
+        }
+
+        set label_wrap_end_html "</${label_wrap_tag}>"
     }
 
     # At this point, the buffer for returned html vs. value supplied to form_id diverge,
@@ -2037,14 +2049,31 @@ ad_proc -public qf_choices {
     set label_wrap_start_html ""
     set label_wrap_end_html ""
     if { [info exists attributes_arr(label)] } {
+
+        if { $type eq "checkbox" } {
+            set label_wrap_tag "fieldset"
+        } else {
+            set label_wrap_tag "label"
+        }
         # wrap html with a LABEL tag. Wrap instead
         # of referring by id attribute, because html4 does not validate
         # when ID attribute is in a SELECT tag.
-        set label_wrap_start_html "<label>"
-        append label_wrap_start_html [string trim $attributes_arr(label)]
+
+        # FIELDSET/LEGEND may be more appropriate to avoid nested LABEL tags
+        
+        set label_wrap_start_html "<${label_wrap_tag}>"
+
+        if { $label_wrap_tag eq "fieldset" } {
+            append label_wrap_start_html "<legend>"
+            append label_wrap_start_html $attributes_arr(label)
+            append label_wrap_start_html "</legend>\n"
+        } else {
+            append label_wrap_start_html $attributes_arr(label)
+        }
+
         append return_html [qf_append html $label_wrap_start_html form_id $attributes_arr(form_id)]
 
-        set label_wrap_end_html "</label>"
+        append label_wrap_end_html "</${label_wrap_tag}>"
     }
 
     
@@ -2130,6 +2159,8 @@ ad_proc -public qf_choices {
         append tag_wrapping_arg $tag_wrapping ">"
 
         append return_html [qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg]
+            
+
 
     } else {
         # select_list are attribute/value pairs passed to qf_select
