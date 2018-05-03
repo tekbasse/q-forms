@@ -301,6 +301,7 @@ ad_proc -public qfo_2g {
     {-hash_check "0"}
     {-post_only "0"}
     {-tabindex_start "1"}
+    {-suppress_tabindex_p "1"}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -1128,19 +1129,17 @@ ad_proc -public qfo_2g {
                     }
                     default {
                         set n2 $fatts_arr(${f_hash},names)
-                        # If there is no label, add one.
-                        ##code Label is not added. see test-qfo_g2-a
-                        if { ![info exists fav_arr(label)] } {
-                            set fav_arr(label) $fav_arr(name)
-                            set fan_arr(label) $label_c
-                        }
                         if { [info exists qfv_arr(${n2}) ] } {
                             set v2 [qf_unquote $qfv_arr(${n2}) ]
                             if { $v2 ne "" \
                                      || ( $v2 eq "" \
                                               && $fatts_arr(${f_hash},empty_allowed_p) ) } {
                                 ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
-                                set fatts_arr(${fatts_arr_index}) [array get $fav_arr]                          
+                                set fa_list [list ]
+                                foreach nlc [array names fav_arr] {
+                                    lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
+                                }
+                                set fatts_arr(${fatts_arr_index}) $fa_list
                             
                                 ::qfo::larr_replace \
                                     -array_name fatts_arr \
@@ -1150,14 +1149,19 @@ ad_proc -public qfo_2g {
                             }
                         } else {
                             # If there is a 'selected' attr, unselect it.
-                            if { [info exists fav_arr(selected) } {
+                            if { [info exists fav_arr(selected) ] } {
                                 set fav_arr(selected) "0"
-                                set fatts_arr(${fatts_arr_index}) [array get $fav_arr]
+                                set fa_list [list ]
+                                foreach nlc [array names fav_arr] {
+                                    lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
+                                }
+                                set fatts_arr(${fatts_arr_index}) $fa_list
                             }
                         }
                     }
                 }
                 array unset fav_arr
+                array unset fan_arr
             }
         }
 
@@ -1165,17 +1169,40 @@ ad_proc -public qfo_2g {
 
         # build form
         set tabindex $tabindex_start
+        set label_c "label"
         foreach f_hash $qfi_fields_sorted_list {
             set atts_list $fatts_arr(${f_hash},form_tag_attrs)
-            set tab_idx [lsearch -exact -nocase $atts_list $tabindex_c ]
-            if { $tab_idx > -1 } {
-                incr tab_idx
-                set atts_list [lreplace $atts_list $tab_idx $tab_idx $tabindex ]
-            } else {
-                lappend atts_list $tabindex_c $tabindex
-                ##ns_log Notice "qfo_2g.999: atts_list ${atts_list}"
+            foreach {n v} $atts_list {
+                set nlc [string tolower $n]
+                set attn_arr(${nlc}) $n
+                set attv_arr(${nlc}) $v
+            }
+            
+
+            if { [info exists attv_arr(tabindex) ] } {
+                if { $suppress_tabindex_p } {
+                    unset attv_arr(tabindex)
+                    unset attn_arr(tabindex)
+                } else {
+                    set attv_arr(tabindex) $tabindex
+                }
             }
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
+
+                # If there is no label, add one.
+                if { ![info exists fav_arr(label)] } {
+                    set attv_arr(label) $attv_arr(name)
+                    set attn_arr(label) $label_c
+                }
+            }
+
+            set atts_list [list ]
+            foreach nlc [array get attn_arr ] {
+                lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
+            }
+
+            if { $fatts_arr(${f_hash},is_datatyped_p) } {
+
                 switch -- $fatts_arr(${f_hash},form_tag_type) {
                     input {
                         ##ns_log Notice "qfo_2g.1001: qf_input \
