@@ -1197,6 +1197,8 @@ ad_proc -public qfo_2g {
             foreach nlc [array names attn_arr ] {
                 lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
             }
+            array unset attn_arr
+            array unset attv_arr
 
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
