@@ -212,8 +212,8 @@ ad_proc -private ::qfo::lol_replace {
                             if { $selected_count < 2 } {
                                 set selected_p 1
                             } else {
-                                ns_log Warning "qfo_g2.215: Unexpected: \
- 'selected' has multiple selected cases. \
+                                ns_log Warning "qfo::lol_replace.215: \
+ Unexpected: 'selected' has multiple selected cases. \
  items for form element '${old_val_lol}', \
  specifically item '${row_nvl}'. Unselected."
                             }
@@ -384,7 +384,7 @@ ad_proc -public qfo_2g {
     Note: qf_choices can determine use of type 'select' vs. 'checkbox' using
     just the existence of 'checkbox', anything else can safely be 
     interpreted to be a 'select multiple'.
-    With qfo_g2, differentiation is not so simple. 'select' may specify
+    With qfo_2g, differentiation is not so simple. 'select' may specify
     a single choice, or 'multiple' selections with same name.
     <br><br>
     @see qdt::data_types
@@ -766,9 +766,6 @@ ad_proc -public qfo_2g {
             set name $hfv_arr(name)
             set fatts_arr(${f_hash},names) $name
 
-            #  is from datatype form_tag_attrs
-            array set temp_attrs_arr $qdt_types_arr(${datatype},form_tag_attrs)
-
         } else {
 
             # When fatts_arr($f_hash,datatype), is not created,
@@ -862,16 +859,16 @@ ad_proc -public qfo_2g {
                 }
                 set fatts_arr(${f_hash},tabindex) $val
             }
-
-
-        # Fill fatts_arr form_tag_attrs with any modifications 
-        set new_field_nvl [list ]
-        foreach nlc [array names hfn_arr] {
-            lappend new_field_nvl $hfn_arr(${nlc}) $hfv_arr(${nlc})
-        }
-        set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
-
-
+            
+            
+            # Fill fatts_arr form_tag_attrs with any modifications 
+            set new_field_nvl [list ]
+            foreach nlc [array names hfn_arr] {
+                lappend new_field_nvl $hfn_arr(${nlc}) $hfv_arr(${nlc})
+            }
+            set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
+            
+            
         }
         ##ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
         ##ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
@@ -927,9 +924,9 @@ ad_proc -public qfo_2g {
     # For now, dynamically generated fields need to be 
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
-    ns_log Notice "##code qfo_g2.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
-#    ns_log Notice "##code qfo_g2.904 array get fatts_arr '[array get fatts_arr]'"
-    ns_log Notice "##code qfo_g2.905 array get fields_arr '[array get fields_arr]'"
+    ns_log Notice "##code qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
+#    ns_log Notice "##code qfo_2g.904 array get fatts_arr '[array get fatts_arr]'"
+    ns_log Notice "##code qfo_2g.905 array get fields_arr '[array get fields_arr]'"
 
     # qfv = field value
     foreach f_hash $qfi_fields_list {
@@ -952,7 +949,7 @@ ad_proc -public qfo_2g {
     # Don't use qfi_arr anymore, as it may contain extraneous input
     # Use qfv_arr for input array
     array unset qfi_arr
-        ns_log Notice "##code qfo_g2.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
+        ns_log Notice "##code qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
@@ -974,7 +971,7 @@ ad_proc -public qfo_2g {
 
                 if { [info exists fatts_arr(${f_hash},valida_proc)] } {
                     set name $fatts_arr(${f_hash},names)
-                    ns_log Notice "qfo_g2.900. Validating '${name}'"
+                    ns_log Notice "qfo_2g.900. Validating '${name}'"
                     if { [info exists qfv_arr(${name}) ] } {
                         set valid_p [qf_validate_input \
                                          -input $qfv_arr(${name}) \
@@ -1197,7 +1194,7 @@ ad_proc -public qfo_2g {
             }
 
             set atts_list [list ]
-            foreach nlc [array get attn_arr ] {
+            foreach nlc [array names attn_arr ] {
                 lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
             }
 
