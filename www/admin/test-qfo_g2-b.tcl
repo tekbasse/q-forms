@@ -53,14 +53,16 @@ set f_lol [list \
               ]
 
 set form_html ""
-qfo_form_list_def_to_array \
+::qfo::form_list_def_to_array \
     -list_of_lists_name f_lol \
+    -fields_ordered_list_name qf_fields_ordered_list \
     -array_name f_arr \
     -ignore_parse_issues_p 0
 
 
 set validated_p [qfo_2g \
                      -form_id 20180425 \
+                     -fields_ordered_list $qf_fields_ordered_list \
                      -fields_array f_arr \
                      -form_varname form_html \
                      -multiple_key_as_list 1 ]
