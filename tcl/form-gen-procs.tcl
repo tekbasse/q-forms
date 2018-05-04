@@ -302,6 +302,7 @@ ad_proc -public qfo_2g {
     {-post_only "0"}
     {-tabindex_start "1"}
     {-suppress_tabindex_p "1"}
+    {-replace_datatype_tag_attributes_p "0"}
 } {
     Inputs essentially declare properties of a form and manages field type validation.
     <br><br>
@@ -751,8 +752,8 @@ ad_proc -public qfo_2g {
             # tag_type set to default_tag_type
             #set fatts_arr(${f_hash},tag_type) $tag_type
             set fatts_arr(${f_hash},is_datatyped_p) 1
-        }
-        set fatts_arr(${f_hash},tag_type) $tag_type
+        } 
+       set fatts_arr(${f_hash},tag_type) $tag_type
 
         if { $fatts_arr(${f_hash},is_datatyped_p) } {
             
@@ -797,8 +798,7 @@ ad_proc -public qfo_2g {
 
                 
                 foreach tag_v_list $tag_value {
-                    #array set fc_arr $tag_v_list
-                    # Re-written to consider uppercase/lowercase refs
+                    # Consider uppercase/lowercase refs
                     foreach {n v} $tag_v_list {
                         set nlc [string tolower $n]
                         #set fn_arr($nlc) $n
@@ -860,14 +860,42 @@ ad_proc -public qfo_2g {
                 set fatts_arr(${f_hash},tabindex) $val
             }
             
-            
-            # Fill fatts_arr form_tag_attrs with any modifications 
-            set new_field_nvl [list ]
-            foreach nlc [array names hfn_arr] {
-                lappend new_field_nvl $hfn_arr(${nlc}) $hfv_arr(${nlc})
+                set new_field_nvl [list ]
+                foreach nlc [array names hfn_arr] {
+                    lappend new_field_nvl $hfn_arr(${nlc}) $hfv_arr(${nlc})
+                }
+            if { !$replace_datatype_tag_attributes_p } {
+                # Just overwrite the datatype form_tag_attrs that
+                # are redefined in the fields definition.
+                # In other words, blend the attributes.
+
+                # Names may not match case, so use normalized names to blend
+                foreach {n v} $fatts_arr(${f_hash},form_tag_attrs) {
+                    set nlc [string tolower $n ]
+                    set temp_form_tag_attrs_v_arr(${nlc}) $v
+                    set temp_form_tag_attrs_n_arr(${nlc}) $n
+                }
+                foreach {n v} $new_field_nvl {
+                    set nlc [string tolower $n]
+                    set temp_form_tag_attrs_v_arr(${nlc}) $v
+                    set temp_form_tag_attrs_n_arr(${nlc}) $n
+                }
+                set new_field_nvl [list ]
+                foreach {n v} [array get temp_form_tag_attrs_v_arr] {
+                    # n is lowercase from prior use
+                    lappend new_field_nvl $temp_form_tag_attrs_n_arr(${n})
+                    lappend new_field_nvl $temp_form_tag_attrs_v_arr(${n})
+                }
             }
+            # else 
+            # Overwrite/replace all datatype form_tag_attrs
+            # with any modifications from fields definition.
+            # If the new field tag attrs leave an attribute out,
+            # it is left out of the final rendering.
+            # No code needed for this case.
+
+            # Both cases end by replacing contents.
             set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
-            
             
         }
         ##ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
