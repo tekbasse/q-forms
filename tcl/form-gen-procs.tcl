@@ -442,6 +442,9 @@ ad_proc -public qfo_2g {
 
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
+#    set datatype "text_word"
+ #           ns_log Notice "qfo_2g.290: array get qdt_types_arr(${datatype},form_tag_attrs) '[array get qdt_types_arr(${datatype},form_tag_attrs) ]' array get qdt_types_arr(${datatype},form_tag_type) '[array get qdt_types_arr(${datatype},form_tag_type) ]'"
+#    ns_log Notice "qfo_2g.292: array get qdt_types_arr text_word '[array get qdt_types_arr "text_word*"]'"
     ##ns_log Notice "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
@@ -576,16 +579,21 @@ ad_proc -public qfo_2g {
     # a separate array to store what is essentially custom lists.
 
 
-    set datatype_c "datatype"
-    set tabindex_c "tabindex"
-    set type_c "type"
-    set select_c "select"
-    set value_c "value"
-    set name_c "name"
-    set text_c "text"
-    set multiple_c "multiple"
-    set form_tag_attrs_c "form_tag_attrs"
+    set button_c "button"
     set comma_c ","
+    set datatype_c "datatype"
+    set form_tag_attrs_c "form_tag_attrs"
+    set form_tag_type_c "form_tag_type"
+    set input_c "input"
+    set label_c "label"
+    set multiple_c "multiple"
+    set name_c "name"
+    set select_c "select"
+    set submit_c "submit"
+    set tabindex_c "tabindex"
+    set text_c "text"
+    set type_c "type"
+    set value_c "value"
 
     # Array for holding datatype 'sets' defined by select/choice/choices:
     # fchoices_larr(element_name)
@@ -618,6 +626,7 @@ ad_proc -public qfo_2g {
 
     # Parse fields
     set default_tag_type $text_c
+    set default_type "input"
     # Build dataset validation and making a form
 
     # make a list of datatype elements that are not made during next loop:
@@ -625,25 +634,18 @@ ad_proc -public qfo_2g {
     # element "form_tag_attrs" already exists, skip that in loop also.
     # e = element
     # Remove from list, last first to use existing index values.
-    set e_list $datatype_elements_list
+    set remaining_datatype_elements_list $datatype_elements_list
     if { $dedt_idx > $ftat_idx } {
-        set e_list [lreplace $e_list $dedt_idx $dedt_idx]
-        set e_list [lreplace $e_list $ftat_idx $ftat_idx]
+        set remaining_datatype_elements_list [lreplace $remaining_datatype_elements_list $dedt_idx $dedt_idx]
+        set remaining_datatype_elements_list [lreplace $remaining_datatype_elements_list $ftat_idx $ftat_idx]
     } else {
-        set e_list [lreplace $e_list $ftat_idx $ftat_idx]
-        set e_list [lreplace $e_list $dedt_idx $dedt_idx]
+        set remaining_datatype_elements_list [lreplace $remaining_datatype_elements_list $ftat_idx $ftat_idx]
+        set remaining_datatype_elements_list [lreplace $remaining_datatype_elements_list $dedt_idx $dedt_idx]
     }
 
 
     # $f_hash is field_index not field name.
     foreach f_hash $qfi_fields_list {
-
-        set field_nvl $fields_arr(${f_hash})
-        foreach {n v} $field_nvl {
-            set nlc [string tolower $n]
-            set hfv_arr(${nlc}) $v
-            set hfn_arr(${nlc}) $n
-        }
 
 
         # This loop fills fatts_arr(${f_hash},${datatype_element}),
@@ -676,13 +678,60 @@ ad_proc -public qfo_2g {
         # so add an index with a logical value to speed up
         # parsing at these logical branches:  is_datatyped_p
 
+
+        # get freshed, highest priority field html tag attributes
+        set field_nvl $fields_arr(${f_hash})
+        foreach {n v} $field_nvl {
+            set nlc [string tolower $n]
+            set hfv_arr(${nlc}) $v
+            set hfn_arr(${nlc}) $n
+        }
+
+
         # default tag_type
-
+        # tag_type is the html tag (aka element) used in the form.
+        # tag is an attribute of tag_type.
         set tag_type $default_tag_type
+        if { [info exists hfv_arr(datatype) ] } {
+            # This field is partly defined by datatype
+            set datatype $hfv_arr(datatype)
 
-        if { [info exists hfv_arr(type) ] } {
-            set tag_type $hfv_arr(type)
-            switch -exact -nocase -- $tag_type {
+            ns_log Notice "qfo_2g.490: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
+
+            set dt_idx $datatype
+            append dt_idx $comma_c $form_tag_type_c
+            set tag_type $qdt_types_arr(${dt_idx})
+
+            set dta_idx $datatype
+            append dta_idx $comma_c $form_tag_attrs_c
+            foreach {n v} $qdt_types_arr(${dta_idx}) {
+                set nlc [string tolower $n ]
+                set hfv_arr(${nlc}) $v
+                set hfn_arr(${nlc}) $n
+            }
+            ns_log Notice "qfo_2g.500. array get hfv_arr '[array get hfv_arr]'"
+        }
+
+        # tag attributes provided from field definition
+        if { $replace_datatype_tag_attributes_p \
+                 && [array exists hfv_arr ] } {
+            array unset hfv_arr
+            array unset hfn_arr
+        }
+        # Overwrite anything introduced by datatype reference
+        set field_nvl $fields_arr(${f_hash})
+        foreach {n v} $field_nvl {
+            set nlc [string tolower $n]
+            set hfv_arr(${nlc}) $v
+            set hfn_arr(${nlc}) $n
+        }
+        ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
+
+        if { [string match -nocase "*input*" $tag_type ] \
+                 && [info exists hfv_arr(type) ] } {
+            set type $hfv_arr(type)
+            ns_log Notice "qfo_2g.630: type '${type}'"
+            switch -exact -nocase -- $type {
                 select {
                     if { [info exists hfv_arr(multiple) ] } {
                         set multiple_names_p 1
@@ -734,26 +783,41 @@ ad_proc -public qfo_2g {
                 url -
                 week {
                     # Check of attribute against doctype occurs later.
-                    # tag_type set to default_tag_type
+                    # type is recognized
                     set multiple_names_p ""
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
                 default {
                     ns_log Notice "qfo_2g.635: field '${f_hash}' \
-'type' attribute not recognized '${tag_type}'. Setting to 'text'"
-                    # tag_type set to default_tag_type
+ 'type' value of '${type}' 'input' tag not recognized. \
+ Setting 'type' to '${default_type}'"
+                    # type set to defaut_type
                     set fatts_arr(${f_hash},is_datatyped_p) 1
+                    set hfv_arr(type) $default_type
                 }
             }
+
+            if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                # If there is no label, add one.
+                if { ![info exists fav_arr(label)] \
+                         && $type ne $submit_c \
+                         && $type ne $button_c } {
+                    set hfv_arr(label) $hfv_arr(name)
+                    set hfn_arr(label) $label_c
+                }
+            }
+
             #set fatts_arr(${f_hash},tag_type) $tag_type
-        } else {
+        } elseif { [string match -nocase "*textarea*" $tag_type ] } {
+            set fatts_arr(${f_hash},is_datatyped_p) 1
+            set multiple_names_p ""
+        } else  {
             ns_log Notice "qfo_2g.642: field '${f_hash}' \
-'type' attribute not found. Setting to 'text'"
-            # tag_type set to default_tag_type
-            #set fatts_arr(${f_hash},tag_type) $tag_type
+ 'type' attribute not found. Setting to '${default_tag_type}'"
+            # code started with default. No need to re-set.
             set fatts_arr(${f_hash},is_datatyped_p) 1
         } 
-       set fatts_arr(${f_hash},tag_type) $tag_type
+        #set fatts_arr(${f_hash},html_tag_type) $tag_type
 
         if { $fatts_arr(${f_hash},is_datatyped_p) } {
             
@@ -836,7 +900,7 @@ ad_proc -public qfo_2g {
                 lappend fields_w_datatypes_used_arr(${datatype}) $f_hash
 
 
-                foreach e $e_list {
+                foreach e $remaining_datatype_elements_list {
                     # Set field data defaults according to datatype
                     set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
                     ##ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
@@ -867,44 +931,6 @@ ad_proc -public qfo_2g {
                 lappend new_field_nvl $hfn_arr(${nlc}) $hfv_arr(${nlc})
             }
             
-            ns_log Notice "qfo_2g.896: f_hash '${f_hash}' Only one before error?"
-            if { $fatts_arr(${f_hash},is_datatyped_p) } {
-                if { !$replace_datatype_tag_attributes_p } {
-                    # Just overwrite the datatype form_tag_attrs that
-                    # are redefined in the fields definition.
-                    # In other words, blend the attributes.
-                    
-                    # Names may not match upper/lowercase, 
-                    #so use normalized names to blend
-                    # Get tag attributes from datatype
-                    foreach {n v} $qdt_types_arr(${datatype},form_tag_attrs) {
-                        set nlc [string tolower $n ]
-                        set temp_form_tag_attrs_v_arr(${nlc}) $v
-                        set temp_form_tag_attrs_n_arr(${nlc}) $n
-                    }
-                    # overwrite tag attributes with ones from field defintion
-                    foreach {n v} $new_field_nvl {
-                        set nlc [string tolower $n]
-                        set temp_form_tag_attrs_v_arr(${nlc}) $v
-                        set temp_form_tag_attrs_n_arr(${nlc}) $n
-                    }
-                    set new_field_nvl [list ]
-                    foreach {n v} [array get temp_form_tag_attrs_v_arr] {
-                        # n is lowercase from prior use
-                        lappend new_field_nvl $temp_form_tag_attrs_n_arr(${n})
-                        lappend new_field_nvl $temp_form_tag_attrs_v_arr(${n})
-                    }
-                }
-                # else 
-                # Overwrite/replace all datatype form_tag_attrs
-                # with any modifications from fields definition.
-                # If the new field tag attrs leave an attribute out,
-                # it is left out of the final rendering.
-                # No code needed for this case.
-
-
-            }
-            # Both cases end by replacing contents.
             set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
             
         }
@@ -1204,7 +1230,7 @@ ad_proc -public qfo_2g {
 
         # build form
         set tabindex $tabindex_start
-        set label_c "label"
+
         foreach f_hash $qfi_fields_sorted_list {
             set atts_list $fatts_arr(${f_hash},form_tag_attrs)
             foreach {n v} $atts_list {
@@ -1220,14 +1246,6 @@ ad_proc -public qfo_2g {
                     unset attn_arr(tabindex)
                 } else {
                     set attv_arr(tabindex) $tabindex
-                }
-            }
-            if { $fatts_arr(${f_hash},is_datatyped_p) } {
-
-                # If there is no label, add one.
-                if { ![info exists fav_arr(label)] } {
-                    set attv_arr(label) $attv_arr(name)
-                    set attn_arr(label) $label_c
                 }
             }
 
@@ -1429,7 +1447,7 @@ ad_proc -private qf_validate_input {
     return $valid_p
 }
 
-ad_proc -private qfo_form_list_def_to_array {
+ad_proc -public ::qfo::form_list_def_to_array {
     -array_name
     -list_of_lists_name
     {-fields_ordered_list_name "qf_fields_ordered_list"}
