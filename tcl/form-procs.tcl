@@ -1426,7 +1426,7 @@ ad_proc -public qf_input {
         } elseif { $value eq "" } {
             # do nothing                  
         } else {
-            ns_log Error "qf_input.1027: '${attribute}' is not a valid attribute. arg_list '${arg_list}'"
+            ns_log Error "qf_input.1027: '${attribute}' is not a valid attribute. arg_list '${arg_list}' doctype '${__qf_doctype}'"
         }
     }
 
@@ -2360,7 +2360,7 @@ ad_proc -public qf_doctype {
             set doctype $doc(type)
         }
         if { $doctype ne "" } {
-            if { [string match -nocase "doctype" $doctype] } {
+            if { [string match -nocase "*doctype*" $doctype] } {
                 # parse 
                 switch -glob -nocase -- $doctype {
                     "*html*4*" {
@@ -2374,10 +2374,17 @@ ad_proc -public qf_doctype {
                         set doc_type "xml"
                     }
                     default {
-                        ns_log Warning "qf_doctype. \
+                        if { [string match -nocase "*html*" $doctype ] } {
+                            set doc_type "html5"
+                        } else {
+                            ns_log Warning "qf_doctype.2377 \
  Unable to parse doctype '${doctype}'."
+                        }
                     }
                 }
+            } else {
+                ns_log Warning "qf_doctype.2382 \
+ Unable to parse doctype '${doctype}'."
             }
         }
         if { $doc_type eq "" } {
