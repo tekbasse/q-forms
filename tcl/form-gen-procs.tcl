@@ -1196,52 +1196,56 @@ ad_proc -public qfo_2g {
                     incr n2_idx
                 }
 
-
-##code  tag_type  ??? IS this how to differentiate? allign with set tag_type..
-                switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
-                    radio -
-                    checkbox -
-                    select {
-                        # choice/choices name/values may not exist.
-                        # qfo::lol_replace handles those cases also.
-                        ::qfo::lol_replace \
-                            -fatts_array_name fatts_arr \
-                            -fatts_array_index $fatts_arr_index \
-                            -fatts_arr_list_index $value_idx \
-                            -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
-                            -qfv_array_name qfv_arr
-                    }
-                    default {
-                        set n2 $fatts_arr(${f_hash},names)
-                        if { [info exists qfv_arr(${n2}) ] } {
-                            set v2 [qf_unquote $qfv_arr(${n2}) ]
-                            if { $v2 ne "" \
-                                     || ( $v2 eq "" \
-                                              && $fatts_arr(${f_hash},empty_allowed_p) ) } {
-                                ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
-                                set fa_list [list ]
-                                foreach nlc [array names fav_arr] {
-                                    lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
-                                }
-                                set fatts_arr(${fatts_arr_index}) $fa_list
+                if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                    set n2 $fatts_arr(${f_hash},names)
+                    if { [info exists qfv_arr(${n2}) ] } {
+                        set v2 [qf_unquote $qfv_arr(${n2}) ]
+                        if { $v2 ne "" \
+                                 || ( $v2 eq "" \
+                                          && $fatts_arr(${f_hash},empty_allowed_p) ) } {
+                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+                            set fa_list [list ]
+                            foreach nlc [array names fav_arr] {
+                                lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
+                            }
+                            set fatts_arr(${fatts_arr_index}) $fa_list
                             
-                                ::qfo::larr_replace \
-                                    -array_name fatts_arr \
-                                    -index $fatts_arr_index \
-                                    -attribute_name_index $value_idx \
-                                    -new_value $v2
-                            }
-                        } else {
-                            # If there is a 'selected' attr, unselect it.
-                            if { [info exists fav_arr(selected) ] } {
-                                set fav_arr(selected) "0"
-                                set fa_list [list ]
-                                foreach nlc [array names fav_arr] {
-                                    lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
-                                }
-                                set fatts_arr(${fatts_arr_index}) $fa_list
-                            }
+                            ::qfo::larr_replace \
+                                -array_name fatts_arr \
+                                -index $fatts_arr_index \
+                                -attribute_name_index $value_idx \
+                                -new_value $v2
                         }
+                    } else {
+                        # If there is a 'selected' attr, unselect it.
+                        if { [info exists fav_arr(selected) ] } {
+                            set fav_arr(selected) "0"
+                            set fa_list [list ]
+                            foreach nlc [array names fav_arr] {
+                                lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
+                            }
+                            set fatts_arr(${fatts_arr_index}) $fa_list
+                        }
+                    }
+                } else { 
+                    switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
+                        radio -
+                        checkbox -
+                        select {
+                            # choice/choices name/values may not exist.
+                            # qfo::lol_replace handles those cases also.
+                            ::qfo::lol_replace \
+                                -fatts_array_name fatts_arr \
+                                -fatts_array_index fatts_arr_index \
+                                -fatts_arr_list_index $value_idx \
+                                -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
+                                -qfv_array_name qfv_arr
+                        }
+                        default {
+                            ns_log Warning "qfo_2g.1245 tag_type '${tag_type}' \
+ unexpected."
+                        }
+                        
                     }
                 }
                 array unset fav_arr
