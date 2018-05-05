@@ -927,8 +927,6 @@ ad_proc -public qfo_2g {
             
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
-                ##code Following line commented out, because appears redundant
-                #set dt $fatts_arr(${f_hash},datatype)
                 lappend fields_w_datatypes_used_arr(${datatype}) $f_hash
 
 
@@ -1021,7 +1019,7 @@ ad_proc -public qfo_2g {
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
     ns_log Notice "##code qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
-#    ns_log Notice "##code qfo_2g.904 array get fatts_arr '[array get fatts_arr]'"
+
     ns_log Notice "##code qfo_2g.905 array get fields_arr '[array get fields_arr]'"
 
     # qfv = field value
@@ -1114,7 +1112,9 @@ ad_proc -public qfo_2g {
             set all_valid_p [expr { $all_valid_p && $valid_p } ]
         }
         set validated_p $all_valid_p
-
+        ns_log Notice "qfo_2g.1117: Form input validated_p '${validated_p}' \
+ invalid_field_val_list '${invalid_field_val_list}' \
+ nonexisting_field_val_list '${nonexisting_field_val_list}'"
     } else {
         # form not submitted
 
@@ -1185,10 +1185,16 @@ ad_proc -public qfo_2g {
         if { !$validated_p && $form_submitted_p } {
 
             # Update form values to those provided by user.
+            ##code not working for select, select multiple, checkbox, radio
+
             # That is, update value of 'value' attribute to one from qfv_arr
 
             # Add back the nonexistent cases that must carry a text value
             # for the form.
+
+            ##code
+            # Highlight the fields that did not validate.
+            # Add hints to title/other attributes.
 
             set selected_c "selected"
             foreach f_hash $qfi_fields_sorted_list {
