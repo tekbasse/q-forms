@@ -56,18 +56,17 @@ ad_proc -private ::qfo::qtable_label_package_id {
 ad_proc -private ::qfo::larr_replace {
     -array_name
     -index
-    -attribute_name_index
+    -list_index
     -new_value
 } {
-    Replaces the value in a name/value paired list that is indexed by 'index' 
-    in array 'array_name'.
+    Replaces the value in a list of an array_name that is indexed by 'index'.
     Returns 1.
     This proc essentially breaks up a long line in to many, more legible ones.
 } { 
     upvar 1 $array_name a_larr
-    set i $attribute_name_index
+    set i $list_index
     ns_log Notice "::qfo::larr_replace.69 ${array_name}(${index}) '$a_larr(${index})'"
-    set a_larr(${index}) [lreplace $a_larr(${index}) $i+1 $i+1 $new_value]
+    set a_larr(${index}) [lreplace $a_larr(${index}) $i $i $new_value]
     ns_log Notice "::qfo::larr_replace.71 ${array_name}(${index}) '$a_larr(${index})'"
     return 1
 }
@@ -1209,11 +1208,11 @@ ad_proc -public qfo_2g {
                                 lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
                             }
                             set fatts_arr(${fatts_arr_index}) $fa_list
-                            
+                            incr value_idx
                             ::qfo::larr_replace \
                                 -array_name fatts_arr \
                                 -index $fatts_arr_index \
-                                -attribute_name_index $value_idx \
+                                -list_index $value_idx \
                                 -new_value $v2
                         }
                     } else {
