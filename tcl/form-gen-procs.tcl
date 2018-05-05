@@ -1401,6 +1401,15 @@ ad_proc -private qf_validate_input {
         hf_are_safe_and_printable_characters_q {
             set valid_p [hf_are_safe_and_printable_characters_q $input ]
         }
+        hf_list_filter_by_natural_number {
+            set input_list [split $input ";,\t "]
+            set filtered_list [hf_list_filter_by_natural_number $input_list ]
+            if { [llength $input_list ] == [llength $filtered_list] } {
+                set valid_p 1
+            } else {
+                set valid_p 0
+            }
+        }
         util_url_valid_p {
             set valid_p [util_url_valid_p $input ]
         }
@@ -1415,6 +1424,9 @@ ad_proc -private qf_validate_input {
         }
         qf_is_decimal {
             set valid_p [qf_is_decimal $input ]
+        }
+        qf_is_natural_number {
+            set valid_p [qf_is_natural_number $input ]
         }
         ad_var_type_check_safefilename_p {
             set valid_p [ad_var_type_check_safefilename_p $input ]
