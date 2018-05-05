@@ -73,7 +73,7 @@ ad_proc -private ::qfo::larr_replace {
 
 ad_proc -private ::qfo::lol_replace {
     -fatts_array_name
-    -fatts_array_index
+    -fatts_array_index_name
     -fatts_arr_list_index
     -is_multiple_p
     -qfv_array_name
@@ -98,7 +98,7 @@ ad_proc -private ::qfo::lol_replace {
     @see qf_get_inputs_as_array
 } { 
     upvar 1 $fatts_array_name fa_larr
-    upvar 1 $fatts_array_index fa_index
+    upvar 1 $fatts_array_index_name fa_index
     upvar 1 $qfv_array_name qfv_arr
 
     # The value's value is a list of name/value pair lists.
@@ -120,7 +120,7 @@ ad_proc -private ::qfo::lol_replace {
     
     set att_name_exists_p 0
     if { [info exists vattributes_v_arr(name) ] } {
-        set att_name_n $vattributes_arr(name)
+        set att_name_n $vattributes_v_arr(name)
         set att_name_exists_p 1
     }
     
@@ -256,9 +256,9 @@ ad_proc -private ::qfo::lol_replace {
     }
     if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
-        ns_log Notice "::qfo::lol_replace.194 ${fatts_array_name}(${fatts_array_index}) '$fa_larr(${fatts_array_index})'"
-        set fa_larr(${fatts_array_index}) [lreplace $old_lol $x $x $new_val_lol]
-        ns_log Notice "::qfo::lol_replace.196 ${fatts_array_name}(${fatts_array_index}) '$fa_larr(${fatts_array_index})'"
+        ns_log Notice "::qfo::lol_replace.194 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
+        set fa_larr(${fa_index}) [lreplace $old_lol $x $x $new_val_lol]
+        ns_log Notice "::qfo::lol_replace.196 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
     } 
     # else, use defaults
     return 1
@@ -642,8 +642,7 @@ ad_proc -public qfo_2g {
 
 
     # Parse fields
-    set default_tag_type $text_c
-    set default_type "input"
+
     # Build dataset validation and making a form
 
     # make a list of datatype elements that are not made during next loop:
@@ -660,6 +659,11 @@ ad_proc -public qfo_2g {
         set remaining_datatype_elements_list [lreplace $remaining_datatype_elements_list $dedt_idx $dedt_idx]
     }
 
+    # default tag_type
+    # tag_type is the html tag (aka element) used in the form.
+    # tag is an attribute of tag_type.
+    set default_type $text_c
+    set default_tag_type "input"
 
     # $f_hash is field_index not field name.
     foreach f_hash $qfi_fields_list {
@@ -705,10 +709,7 @@ ad_proc -public qfo_2g {
         }
 
 
-        # default tag_type
-        # tag_type is the html tag (aka element) used in the form.
-        # tag is an attribute of tag_type.
-        set tag_type $default_tag_type
+        set tag_type ""
         if { [info exists hfv_arr(datatype) ] } {
             # This field is partly defined by datatype
             set datatype $hfv_arr(datatype)
@@ -727,7 +728,7 @@ ad_proc -public qfo_2g {
                 set hfn_arr(${nlc}) $n
             }
             ns_log Notice "qfo_2g.500. array get hfv_arr '[array get hfv_arr]'"
-        }
+        } 
 
         # tag attributes provided from field definition
         if { $replace_datatype_tag_attributes_p \
@@ -744,13 +745,24 @@ ad_proc -public qfo_2g {
         }
         ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
 
+       
+        # "tag_type" in inde refers to attribute's 'type' not $tag_type
         if { [info exists hfv_arr(type) ] } {
             set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
         }
-
+        if { $tag_type eq "" } {
+            # Let's try to guess tag_type
+            if { [info exists hfv_arr(rows) ] \
+                    || [info exists hfv_arr(cols) ] } {
+                set tag_type "textarea"
+            } else {
+                set tag_type $default_tag_type
+            }
+        }
         
         set multiple_names_p ""
-        if { [string match -nocase "*input*" $tag_type ] \
+        if { ( [string match -nocase "*input*" $tag_type ] \
+                  || $tag_type eq "" ) \
                  && [info exists hfv_arr(type) ] } {
             set type $hfv_arr(type)
             #set fatts_arr(${f_hash},tag_type) $type
@@ -811,7 +823,7 @@ ad_proc -public qfo_2g {
                 }
                 default {
                     ns_log Notice "qfo_2g.635: field '${f_hash}' \
- 'type' value of '${type}' 'input' tag not recognized. \
+ attribute 'type' '${type}' for 'input' tag not recognized. \
  Setting 'type' to '${default_type}'"
                     # type set to defaut_type
                     set fatts_arr(${f_hash},is_datatyped_p) 1
@@ -832,9 +844,9 @@ ad_proc -public qfo_2g {
         } elseif { [string match -nocase "*textarea*" $tag_type ] } {
             set fatts_arr(${f_hash},is_datatyped_p) 1
         } else  {
-            ns_log Notice "qfo_2g.642: field '${f_hash}' \
- 'type' attribute not found. Setting to '${default_tag_type}'"
-            # code started with default. No need to re-set.
+            ns_log Warning "qfo_2g.642: field '${f_hash}' \
+ tag '${tag_type}' not recognized. Setting to '${default_tag_type}'"
+            set tag_type $default_tag_type
             set fatts_arr(${f_hash},is_datatyped_p) 1
         } 
         set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
@@ -1183,16 +1195,10 @@ ad_proc -public qfo_2g {
                 set fatts_arr_index $f_hash
                 append fatts_arr_index $comma_c $form_tag_attrs_c
 
-                set n2_idx 0
-                set value_idx -1
                 foreach {n v} $fatts_arr(${fatts_arr_index}) {
                     set nlc [string tolower $n]
                     set fav_arr(${nlc}) $v
                     set fan_arr(${nlc}) $n
-                    if { $nlc eq $value_c } {
-                        set value_idx $n2_idx
-                    }
-                    incr n2_idx
                 }
 
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
@@ -1204,16 +1210,23 @@ ad_proc -public qfo_2g {
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
                             ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
                             set fa_list [list ]
+                            set n2_idx 1
+                            set value_idx -1
                             foreach nlc [array names fav_arr] {
                                 lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
+                                if { $nlc eq $value_c } {
+                                    set value_idx $n2_idx
+                                }
+                                incr n2_idx 2
                             }
                             set fatts_arr(${fatts_arr_index}) $fa_list
-                            incr value_idx
-                            ::qfo::larr_replace \
-                                -array_name fatts_arr \
-                                -index $fatts_arr_index \
-                                -list_index $value_idx \
-                                -new_value $v2
+                            if { $value_idx > -1 } {
+                                ::qfo::larr_replace \
+                                    -array_name fatts_arr \
+                                    -index $fatts_arr_index \
+                                    -list_index $value_idx \
+                                    -new_value $v2
+                            }
                         }
                     } else {
                         # If there is a 'selected' attr, unselect it.
