@@ -727,9 +727,14 @@ ad_proc -public qfo_2g {
         }
         ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
 
+        if { [info exists hfv_arr(type) ] } {
+            set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
+        }
+
         if { [string match -nocase "*input*" $tag_type ] \
                  && [info exists hfv_arr(type) ] } {
             set type $hfv_arr(type)
+            #set fatts_arr(${f_hash},tag_type) $type
             ns_log Notice "qfo_2g.630: type '${type}'"
             switch -exact -nocase -- $type {
                 select {
@@ -807,7 +812,6 @@ ad_proc -public qfo_2g {
                 }
             }
 
-            #set fatts_arr(${f_hash},tag_type) $tag_type
         } elseif { [string match -nocase "*textarea*" $tag_type ] } {
             set fatts_arr(${f_hash},is_datatyped_p) 1
             set multiple_names_p ""
@@ -1175,6 +1179,8 @@ ad_proc -public qfo_2g {
                     incr n2_idx
                 }
 
+
+##code  tag_type  ??? IS this how to differentiate? allign with set tag_type..
                 switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                     radio -
                     checkbox -
