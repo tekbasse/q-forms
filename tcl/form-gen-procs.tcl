@@ -84,6 +84,8 @@ ad_proc -private ::qfo::lol_replace {
     <code>fatts_arr_list_index</code> is the index of the attribute 'value' 
     in the list referenced by fatts_array_index.
     <br><br>
+    qfv_arr is the array containing form input such as from 
+    <code>qf_get_inputs_as_array</code>
 
     Similar to <code>::qfo::larr_replace</code>
     except, instead of an array containing a list,
@@ -93,6 +95,8 @@ ad_proc -private ::qfo::lol_replace {
     that is indexed by 'fatts_array_index' 
     in array 'fatts_array_name'.
     Returns 1.
+
+    @see qf_get_inputs_as_array
 } { 
     upvar 1 $fatts_array_name fa_larr
     upvar 1 $fatts_array_index fa_index
@@ -101,20 +105,31 @@ ad_proc -private ::qfo::lol_replace {
     # The value's value is a list of name/value pair lists.
     set x $fatts_arr_list_index
     incr x
-    set old_lol $fa_larr(${fatts_array_index})
+    set old_lol $fa_larr(${fa_index})
     set old_val_lol [lindex $old_lol $x ]
     set new_val_lol [list ]
-    set selected_c "selected"
-    set name_c "name"
-    set value_c "value"
+
 
     # get name from checkbox/select multiple attributes,
-    set attributes_arr [array get $fa_larr(${fa_index}) ]
-    set attributes_names_list [array names $attributes_arr]
-    set att_names_idx [lsearch -exact -nocase $attributes_names_list ]
-    if { $att_n_idx > -1 } {
-        set att_n_idx [lindex $attribute_names_list $att_names_idx]
-        set att_name_n $attributes_arr(${att_n_idx})
+    set vattributes_names_list [list ]
+    foreach {n v} $old_val_lol {
+        set nlc [string tolower $n]
+        lappend vattributes_names_list $nlc
+        set vattributes_v_arr(${nlc}) $v
+        #set vattributes_n_arr(${nlc}) $n
+    }
+    
+    set att_name_exists_p 0
+    if { [info exists vattributes_v_arr(name) ] } {
+        set att_name_n $vattributes_arr(name)
+        set att_name_exists_p 1
+    }
+    
+    # normalize form input names
+    foreach {n v} [array get qfv_arr] {
+        set nlc [string tolower $n]
+        set qfv_v_arr(${nlc}) $v
+        #set qfv_n_arr(${nlc}) $n
     }
     
     if { $is_multiple_p } {
@@ -129,50 +144,51 @@ ad_proc -private ::qfo::lol_replace {
 
         # val = value, as in attribute 'value'
         foreach row_nvl $old_val_lol {
-            array set row_arr $row_nvl
             # index may be upper or lower case
+            foreach {n v} $row_nvl {
+                set nlc [string tolower $n]
+                set row_v_arr(${nlc}) $v
+                set row_n_arr(${nlc}) $n
+            }
+
             # Use attribute 'value' as it is consistent for 
             # checkbox and select multiple cases.
             # 'name' is only required for checkbox input attributes.
-            set n_list [array names row_arr]
-            set value_idx [lsearch -exact -nocase $n_list $value_c ]
 
             # Does the input case exist? Or maybe this is a separator
-            if { $value_idx > -1 } {
-                set value_n [lindex $n_list $value_idx]
+            if { [info exists row_v_arr(value) ] } {
 
-                set name_idx [lsearch -exact -nocase $n_list $name_c]
-                if { $name_idx > -1 } {
+                if { [info exists row_v_arr(name) ] } {
                     #  input type checkbox
-                    set name_n [lindex $n_list $name_idx]
-                } elseif { $att_n_idx > -1 } {
+                    set name_n $row_v_arr(name)
+                } elseif { $att_name_exists_p } {
                     #  input type select multiple
                     set name_n $att_name_n
                 } 
 
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
-                if { [info exists qfv_arr(${name_n}) ] } {
+                if { [info exists qfv_v_arr(name) ] } {
                     # unqoute qfv_arr first
-                    set input_unquoted [qf_unquote $qfv_arr(${name_n}) ]
+                    set input_unquoted [qf_unquote $qfv_v_arr(name) ]
                     # Instead of checking only if input matches original
                     # check also if original is *in* input, because
                     # input may be a list of multiple inputs of same name.
-                    if { $input_unquoted eq $row_arr(${value_n}) \
-                             || [lsearch -exact $input_unquoted $row_arr(${value_n}) ] > -1 } {
+                    if { $input_unquoted eq $row_v_arr(value) \
+                             || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                         set selected_p 1
                     }
                 }
                 # Is 'selected' an attribute in original declaration?
-                set s_idx [lsearch -exact -nocase $n_list $selected_c]
-                if { $s_idx > -1 } {
-                    # found in original declaration
-                    set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
-                } elseif { $selected_p } {
-                    set new_row_nvl $row_nvl
-                    lappend new_row_nvl $selected_c $selected_p
-                }
+                # Either way, set according to new state
+                set row_v_arr(selected) $selected_p
 
+                set new_row_nvl [list ]
+                foreach nlc [array names row_v_arr] {
+                    lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
+                }
+                unset row_v_arr
+                unset row_n_arr
             } else {
                 # selection must be a separator or the like.
                 set new_row_nvl $row_nvl
@@ -185,29 +201,30 @@ ad_proc -private ::qfo::lol_replace {
         # so there is only one name to check.
 
         # index may be upper or lower case
-        if { $attn_n_idx > -1 } {
+        if { $att_name_exists_p } {
 
             set selected_count 0
             
             foreach row_nvl $old_val_lol {
-                array set row_arr $row_nvl
+                foreach {n v} $row_nvl {
+                    set nlc [string tolower $n]
+                    set row_v_arr(${nlc}) $v
+                    set row_n_arr(${nlc}) $n
+                }
                 # index may be upper or lower case
-                set n_list [array names row_arr]
-                set value_idx [lsearch -exact -nocase $n_list $value_c ]
-                if { $value_idx > -1 } {
+
+                if { [info exists row_v_arr(value) } {
                     # Does the input case exist?
-                    set name_idx [lsearch -exact -nocase $n_list $name_c ]
-                    set name_n [lindex $n_list $name_idx]
                     set selected_p 0
-                    if { [info exists qfv_arr(${name_n}) ] } {
+                    if { [info exists qfv_v_arr(name) ] } {
                         # unqoute qfv_arr first
-                        set input_unquoted [qf_unquote $qfv_arr(${name_n}) ]
+                        set input_unquoted [qf_unquote $qfv_v_arr(name) ]
                         # Instead of checking only if input matches original
                         # check also if original is *in* input, because
                         # input may be a list of multiple inputs of same name
                         # intentional or not.
-                        if { $input_unquoted eq $row_arr(${value_n}) \
-                                 || [lsearch -exact $input_unquoted $row_arr(${value_n}) ] > -1 } {
+                        if { $input_unquoted eq $row_v_arr(value) \
+                                 || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                             incr selected_count
                             if { $selected_count < 2 } {
                                 set selected_p 1
@@ -220,14 +237,15 @@ ad_proc -private ::qfo::lol_replace {
                         } 
                     }
                     # Is 'selected' an attribute in original declaration?
-                    set s_idx [lsearch -exact -nocase $n_list $selected_c]
-                    if { $s_idx > -1 } {
-                        # found in original declaration
-                        set new_row_nvl [lreplace $row_nvl $s_idx $s_idx $selected_p ]
-                    } else { $selected_p } {
-                        set new_row_nvl $row_nvl
-                        lappend new_row_nvl $selected_c $selected_p
+                    # Either way, set to new status
+                    set row_v_arr(selected) $selected_p
+
+                    set new_row_nvl [list ]
+                    foreach nlc [array names row_v_arr] {
+                        lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
                     }
+                    unset row_v_arr
+                    unset row_n_arr
                     
                 } else {
                     # selection must be a separator or the like.
@@ -731,6 +749,8 @@ ad_proc -public qfo_2g {
             set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
         }
 
+        
+        set multiple_names_p ""
         if { [string match -nocase "*input*" $tag_type ] \
                  && [info exists hfv_arr(type) ] } {
             set type $hfv_arr(type)
@@ -765,7 +785,6 @@ ad_proc -public qfo_2g {
                 email -
                 file {
                     # These can pass multiple values in html5.
-                    set multiple_names_p ""
                     # Still should be validateable
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
@@ -789,7 +808,6 @@ ad_proc -public qfo_2g {
                 week {
                     # Check of attribute against doctype occurs later.
                     # type is recognized
-                    set multiple_names_p ""
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
                 default {
@@ -814,14 +832,13 @@ ad_proc -public qfo_2g {
 
         } elseif { [string match -nocase "*textarea*" $tag_type ] } {
             set fatts_arr(${f_hash},is_datatyped_p) 1
-            set multiple_names_p ""
         } else  {
             ns_log Notice "qfo_2g.642: field '${f_hash}' \
  'type' attribute not found. Setting to '${default_tag_type}'"
             # code started with default. No need to re-set.
             set fatts_arr(${f_hash},is_datatyped_p) 1
         } 
-        #set fatts_arr(${f_hash},html_tag_type) $tag_type
+        set fatts_arr(${f_hash},multiple_names_p) $multiple_names_p
 
         if { $fatts_arr(${f_hash},is_datatyped_p) } {
             
