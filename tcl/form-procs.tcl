@@ -1475,7 +1475,7 @@ ad_proc -public qf_input {
 
     # by default, wrap the input with a label tag for better UI, part 1
     if { [info exists attributes_arr(label)] && [info exists attributes_arr(type) ] && $attributes_arr(type) ne "hidden" } {
-        if { ![info exists attributes_arr(id) ] } {
+        if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(name) ] } {
             set attributes_arr(id) $attributes_arr(name)
             append attributes_arr(id) "-" [string range [clock clicks -milliseconds] end-3 end] "-" [string range [random ] 2 end]
             lappend attributes_list "id"
@@ -1501,6 +1501,12 @@ ad_proc -public qf_input {
                 # set to checked or disabled
             }
         }
+    }
+
+    if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(value) ] } {
+        set attributes_arr(id) [string range [clock clicks -milliseconds] end-3 end]
+        append attributes_arr(id) "-" [string range [random ] 2 end]
+        lappend attributes_list "id"
     }
 
     # by default, wrap the input with a label tag for better UI, part 2
