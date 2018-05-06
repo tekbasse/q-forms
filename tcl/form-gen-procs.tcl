@@ -1242,13 +1242,15 @@ ad_proc -public qfo_2g {
                         if { $v2 ne "" \
                                  || ( $v2 eq "" \
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
-                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})' value_idx '${value_idx}'"
                             if { $value_idx > -1 } {
                                 ::qfo::larr_replace \
                                     -array_name fatts_arr \
                                     -index $fatts_arr_index \
                                     -list_index $value_idx \
                                     -new_value $v2
+                            } else {
+                                lappend fatts_arr(${fatts_arr_index}) $value_c $v2
                             }
                         }
                     } else {
