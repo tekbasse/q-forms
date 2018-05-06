@@ -80,12 +80,16 @@ ad_proc -private ::qfo::lol_replace {
 } {
     <code>fatts_array_index</code> is the index of the array where the list is.
     <br><br>
-    <code>fatts_arr_list_index</code> is the index of the attribute 'value' 
+    <code>fatts_arr_list_index</code> is the index of the value 
+    of the attribute 'value'
     in the list referenced by fatts_array_index.
+    In other words, if fatts_array_name(fatts_array_index) was a list
+    consisting of 'id example name test value value1', then
+    the index points to value1 --which is expected to be a list of lists.
     <br><br>
     qfv_arr is the array containing form input such as from 
     <code>qf_get_inputs_as_array</code>
-
+    <br><br>
     Similar to <code>::qfo::larr_replace</code>
     except, instead of an array containing a list,
     the array contains a list, 
@@ -100,10 +104,10 @@ ad_proc -private ::qfo::lol_replace {
     upvar 1 $fatts_array_name fa_larr
     upvar 1 $fatts_array_index_name fa_index
     upvar 1 $qfv_array_name qfv_arr
+    set selected_c "selected"
 
     # The value's value is a list of name/value pair lists.
     set x $fatts_arr_list_index
-    incr x
     set old_lol $fa_larr(${fa_index})
     set old_val_lol [lindex $old_lol $x ]
     set new_val_lol [list ]
@@ -111,19 +115,20 @@ ad_proc -private ::qfo::lol_replace {
 
     # get name from checkbox/select multiple attributes,
     set vattributes_names_list [list ]
-    foreach {n v} $old_val_lol {
+    foreach {n v} $old_lol {
         set nlc [string tolower $n]
         lappend vattributes_names_list $nlc
         set vattributes_v_arr(${nlc}) $v
         #set vattributes_n_arr(${nlc}) $n
     }
-    
     set att_name_exists_p 0
     if { [info exists vattributes_v_arr(name) ] } {
         set att_name_n $vattributes_v_arr(name)
         set att_name_exists_p 1
     }
     
+    ns_log Notice "qfo::lol_replace.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get vattributes_v_arr '[array get vattributes_v_arr]'"
+
     # normalize form input names
     foreach {n v} [array get qfv_arr] {
         set nlc [string tolower $n]
@@ -131,6 +136,8 @@ ad_proc -private ::qfo::lol_replace {
         #set qfv_n_arr(${nlc}) $n
     }
     
+
+
     if { $is_multiple_p } {
 
         # this is a checkbox or select multiple tag configuration.
@@ -167,12 +174,13 @@ ad_proc -private ::qfo::lol_replace {
 
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
-                if { [info exists qfv_v_arr(name) ] } {
+                if { [info exists qfv_v_arr(${name_n}) ] } {
                     # unqoute qfv_arr first
-                    set input_unquoted [qf_unquote $qfv_v_arr(name) ]
+                    set input_unquoted [qf_unquote $qfv_v_arr(${name_n}) ]
                     # Instead of checking only if input matches original
                     # check also if original is *in* input, because
                     # input may be a list of multiple inputs of same name.
+                    ns_log Notice "qfo::lol_replace.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                     if { $input_unquoted eq $row_v_arr(value) \
                              || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                         set selected_p 1
@@ -181,17 +189,23 @@ ad_proc -private ::qfo::lol_replace {
                 # Is 'selected' an attribute in original declaration?
                 # Either way, set according to new state
                 set row_v_arr(selected) $selected_p
+                set row_n_arr(selected) $selected_c
 
                 set new_row_nvl [list ]
                 foreach nlc [array names row_v_arr] {
                     lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
                 }
-                unset row_v_arr
-                unset row_n_arr
+                ns_log Notice "qfo::lol_replace 191. \
+ new_row_nvl '${new_row_nvl}'"
             } else {
+                ns_log Notice "qfo::lol_replace 192. \
+ new_row_nvl '${new_row_nvl}'"
                 # selection must be a separator or the like.
                 set new_row_nvl $row_nvl
             }
+            unset row_v_arr
+            unset row_n_arr
+
             lappend new_val_lol $new_row_nvl
         }
 
@@ -212,23 +226,24 @@ ad_proc -private ::qfo::lol_replace {
                 }
                 # index may be upper or lower case
 
-                if { [info exists row_v_arr(value) } {
+                if { [info exists row_v_arr(value) ] } {
                     # Does the input case exist?
                     set selected_p 0
-                    if { [info exists qfv_v_arr(name) ] } {
+                    if { [info exists qfv_v_arr(${att_name_n}) ] } {
                         # unqoute qfv_arr first
-                        set input_unquoted [qf_unquote $qfv_v_arr(name) ]
+                        set input_unquoted [qf_unquote $qfv_v_arr(${att_name_n}) ]
                         # Instead of checking only if input matches original
                         # check also if original is *in* input, because
                         # input may be a list of multiple inputs of same name
                         # intentional or not.
+                        ns_log Notice "qfo::lol_replace.237 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                         if { $input_unquoted eq $row_v_arr(value) \
                                  || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                             incr selected_count
                             if { $selected_count < 2 } {
                                 set selected_p 1
                             } else {
-                                ns_log Warning "qfo::lol_replace.215: \
+                                ns_log Warning "qfo::lol_replace.244: \
  Unexpected: 'selected' has multiple selected cases. \
  items for form element '${old_val_lol}', \
  specifically item '${row_nvl}'. Unselected."
@@ -238,27 +253,31 @@ ad_proc -private ::qfo::lol_replace {
                     # Is 'selected' an attribute in original declaration?
                     # Either way, set to new status
                     set row_v_arr(selected) $selected_p
+                    set row_n_arr(selected) $selected_c
 
                     set new_row_nvl [list ]
                     foreach nlc [array names row_v_arr] {
                         lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
                     }
-                    unset row_v_arr
-                    unset row_n_arr
                     
                 } else {
                     # selection must be a separator or the like.
                     set new_row_nvl $row_nvl
                 }
+                unset row_v_arr
+                unset row_n_arr
                 lappend new_val_lol $new_row_nvl
             }
+        } else {
+            ns_log Warning "::qfo::lol_replace.261. Name attribute not found. \
+ ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
         }
     }
     if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
-        ns_log Notice "::qfo::lol_replace.194 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
+        ns_log Notice "::qfo::lol_replace.270 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
         set fa_larr(${fa_index}) [lreplace $old_lol $x $x $new_val_lol]
-        ns_log Notice "::qfo::lol_replace.196 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
+        ns_log Notice "::qfo::lol_replace.272 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
     } 
     # else, use defaults
     return 1
@@ -1185,7 +1204,8 @@ ad_proc -public qfo_2g {
         if { !$validated_p && $form_submitted_p } {
 
             # Update form values to those provided by user.
-            ##code not working for select, select multiple, checkbox, radio
+
+
 
             # That is, update value of 'value' attribute to one from qfv_arr
 
@@ -1201,10 +1221,18 @@ ad_proc -public qfo_2g {
                 set fatts_arr_index $f_hash
                 append fatts_arr_index $comma_c $form_tag_attrs_c
 
+
+                # Determine index of value attribute's value
+                set n2_idx 1
+                set value_idx -1
                 foreach {n v} $fatts_arr(${fatts_arr_index}) {
                     set nlc [string tolower $n]
                     set fav_arr(${nlc}) $v
                     set fan_arr(${nlc}) $n
+                    if { $nlc eq $value_c } {
+                        set value_idx $n2_idx
+                    }
+                    incr n2_idx 2
                 }
 
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
@@ -1215,17 +1243,6 @@ ad_proc -public qfo_2g {
                                  || ( $v2 eq "" \
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
                             ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
-                            set fa_list [list ]
-                            set n2_idx 1
-                            set value_idx -1
-                            foreach nlc [array names fav_arr] {
-                                lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
-                                if { $nlc eq $value_c } {
-                                    set value_idx $n2_idx
-                                }
-                                incr n2_idx 2
-                            }
-                            set fatts_arr(${fatts_arr_index}) $fa_list
                             if { $value_idx > -1 } {
                                 ::qfo::larr_replace \
                                     -array_name fatts_arr \
@@ -1246,18 +1263,21 @@ ad_proc -public qfo_2g {
                         }
                     }
                 } else { 
+                    ##code not working for select/s multiple, checkbox, radio
                     switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                         radio -
                         checkbox -
                         select {
                             # choice/choices name/values may not exist.
                             # qfo::lol_replace handles those cases also.
-                            ::qfo::lol_replace \
-                                -fatts_array_name fatts_arr \
-                                -fatts_array_index fatts_arr_index \
-                                -fatts_arr_list_index $value_idx \
-                                -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
-                                -qfv_array_name qfv_arr
+                            if { $value_idx > -1 } {
+                                ::qfo::lol_replace \
+                                    -fatts_array_name fatts_arr \
+                                    -fatts_array_index_name fatts_arr_index \
+                                    -fatts_arr_list_index $value_idx \
+                                    -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
+                                    -qfv_array_name qfv_arr
+                            }
                         }
                         default {
                             ns_log Warning "qfo_2g.1245 tag_type '${tag_type}' \
