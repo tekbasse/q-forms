@@ -105,6 +105,7 @@ ad_proc -private ::qfo::lol_replace {
     upvar 1 $fatts_array_index_name fa_index
     upvar 1 $qfv_array_name qfv_arr
     set selected_c "selected"
+    set checkbox_c "checkbox"
 
     # The value's value is a list of name/value pair lists.
     set x $fatts_arr_list_index
@@ -126,7 +127,13 @@ ad_proc -private ::qfo::lol_replace {
         set att_name_n $vattributes_v_arr(name)
         set att_name_exists_p 1
     }
-    
+    set type_checkbox_p 0
+    if { [info exists vattributes_v_arr(type) ] } {
+        if { [string match -nocase $checkbox_c $vattributes_v_arr(type) ] } {
+            set type_checkbox_p 1
+        }
+    }
+       
     ns_log Notice "qfo::lol_replace.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get vattributes_v_arr '[array get vattributes_v_arr]'"
 
     # normalize form input names
@@ -164,14 +171,15 @@ ad_proc -private ::qfo::lol_replace {
             # Does the input case exist? Or maybe this is a separator
             if { [info exists row_v_arr(value) ] } {
 
-                if { [info exists row_v_arr(name) ] } {
+                if { [info exists row_v_arr(name) ] \
+                     && $type_checkbox_p } {
                     #  input type checkbox
                     set name_n $row_v_arr(name)
                 } elseif { $att_name_exists_p } {
                     #  input type select multiple
                     set name_n $att_name_n
-                } 
-
+                }
+                ns_log Notice "qfo::lol_replace.174 name_n '${name_n}'"
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
                 if { [info exists qfv_v_arr(${name_n}) ] } {
@@ -1013,7 +1021,7 @@ ad_proc -public qfo_2g {
                                   multiple_key_as_list $multiple_key_as_list \
                                   hash_check $hash_check \
                                   post_only $post_only ]
-        ns_log Notice "##code array get qfi_arr '[array get qfi_arr]'"
+        ns_log Notice "qfo_2g.891 array get qfi_arr '[array get qfi_arr]'"
     } 
 
     # Make sure every qfi_arr(x) exists for each field
@@ -1037,9 +1045,9 @@ ad_proc -public qfo_2g {
     # For now, dynamically generated fields need to be 
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
-    ns_log Notice "##code qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
+    ns_log Notice "qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
 
-    ns_log Notice "##code qfo_2g.905 array get fields_arr '[array get fields_arr]'"
+    ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
 
     # qfv = field value
     foreach f_hash $qfi_fields_list {
@@ -1062,7 +1070,7 @@ ad_proc -public qfo_2g {
     # Don't use qfi_arr anymore, as it may contain extraneous input
     # Use qfv_arr for input array
     array unset qfi_arr
-        ns_log Notice "##code qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
+        ns_log Notice "qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
@@ -1265,7 +1273,6 @@ ad_proc -public qfo_2g {
                         }
                     }
                 } else { 
-                    ##code not working for select/s multiple, checkbox, radio
                     switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                         radio -
                         checkbox -
@@ -1279,7 +1286,7 @@ ad_proc -public qfo_2g {
                                     -fatts_arr_list_index $value_idx \
                                     -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
                                     -qfv_array_name qfv_arr
-                            }
+                            }  
                         }
                         default {
                             ns_log Warning "qfo_2g.1245 tag_type '${tag_type}' \
