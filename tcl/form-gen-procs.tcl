@@ -638,6 +638,7 @@ ad_proc -public qfo_2g {
     set text_c "text"
     set type_c "type"
     set value_c "value"
+    set title_c "title"
 
     # Array for holding datatype 'sets' defined by select/choice/choices:
     # fchoices_larr(element_name)
@@ -1212,11 +1213,7 @@ ad_proc -public qfo_2g {
         if { !$validated_p && $form_submitted_p } {
 
             # Update form values to those provided by user.
-
-
-
             # That is, update value of 'value' attribute to one from qfv_arr
-
             # Add back the nonexistent cases that must carry a text value
             # for the form.
 
@@ -1241,6 +1238,25 @@ ad_proc -public qfo_2g {
                         set value_idx $n2_idx
                     }
                     incr n2_idx 2
+                }
+
+                if { [lsearch -exact $invalid_field_val_list $f_hash] > -1 \
+                         && [string match "*html*" $doctype ] } {
+                    set error_msg " <strong class=\"form-label-error\">"
+                    append error_msg "#acs-tcl.lt_Problem_with_your_input# "
+                    if { !$fatts_arr(${f_hash},empty_allowed_p) } {
+                        append error_msg "<span class=\"form-error\"> "
+                        append error_msg "#acs-templating.required#"
+                        append error_msg "</span> "
+                    }
+                    append error_msg "#acs-templating.Format# "
+                    append error_msg "</strong> "
+                    if { [info exists fav_arr(title) ] } {
+                        append fav_arr(title) $error_msg
+                    } else {
+                        set fav_arr(title) $error_msg
+                        set fan_arr(title) $title_c
+                    }
                 }
 
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
