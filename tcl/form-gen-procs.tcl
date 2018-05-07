@@ -72,69 +72,50 @@ ad_proc -private ::qfo::larr_replace {
 }
 
 ad_proc -private ::qfo::lol_replace {
-    -fatts_array_name
-    -fatts_array_index_name
-    -fatts_arr_list_index
+    -attributes_name_array_name
+    -attributes_value_array_name
     -is_multiple_p
     -qfv_array_name
 } {
-    <code>fatts_array_index</code> is the index of the array where the list is.
-    <br><br>
-    <code>fatts_arr_list_index</code> is the index of the value 
-    of the attribute 'value'
-    in the list referenced by fatts_array_index.
-    In other words, if fatts_array_name(fatts_array_index) was a list
-    consisting of 'id example name test value value1', then
-    the index points to value1 --which is expected to be a list of lists.
+    <code>attributes_name_array_name</code> and
+    <code>attributes_value_array_name</code> refer to the name/value pairs
+    of a list of lists for <code>qf_choice</code> or <code>qf_choices</code>,
+    where the name/value pairs have been split into two arrays with a lowercase
+    name as common index for both. See code implementation for example.
     <br><br>
     qfv_arr is the array containing form input such as from 
     <code>qf_get_inputs_as_array</code>
     <br><br>
-    Similar to <code>::qfo::larr_replace</code>
-    except, instead of an array containing a list,
-    the array contains a list, 
-    where the target 'value' attribute is a list of lists.
-    Replaces the values in a name/value paired list of lists
-    that is indexed by 'fatts_array_index' 
-    in array 'fatts_array_name'.
-    Returns 1.
-
-    @see qf_get_inputs_as_array
+    Returns updated values in a name/value paired list of lists
+    based on existence of input from qfv_array_name.
+    
+    @see qf_get_inputs_as_array for expected qfv_array_name format.
 } { 
-    upvar 1 $fatts_array_name fa_larr
-    upvar 1 $fatts_array_index_name fa_index
+    upvar 1 $attributes_name_array_name fan_arr
+    upvar 1 $attributes_value_array_name fav_arr
     upvar 1 $qfv_array_name qfv_arr
     set selected_c "selected"
     set checkbox_c "checkbox"
 
+    # fan_arr/fav_arr is a normalized array pair representing choicem_lol
+    set new_qf_choices_lol [list]
+
     # The value's value is a list of name/value pair lists.
-    set x $fatts_arr_list_index
-    set old_lol $fa_larr(${fa_index})
-    set old_val_lol [lindex $old_lol $x ]
     set new_val_lol [list ]
 
 
     # get name from checkbox/select multiple attributes,
-    set vattributes_names_list [list ]
-    foreach {n v} $old_lol {
-        set nlc [string tolower $n]
-        lappend vattributes_names_list $nlc
-        set vattributes_v_arr(${nlc}) $v
-        #set vattributes_n_arr(${nlc}) $n
-    }
-    set att_name_exists_p 0
-    if { [info exists vattributes_v_arr(name) ] } {
-        set att_name_n $vattributes_v_arr(name)
-        set att_name_exists_p 1
-    }
+
+    set att_name_exists_p [info exists fav_arr(name) ]
+
     set type_checkbox_p 0
-    if { [info exists vattributes_v_arr(type) ] } {
-        if { [string match -nocase $checkbox_c $vattributes_v_arr(type) ] } {
+    if { [info exists fav_arr(type) ] } {
+        if { [string match -nocase $checkbox_c $fav_arr(type) ] } {
             set type_checkbox_p 1
         }
     }
        
-    ns_log Notice "qfo::lol_replace.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get vattributes_v_arr '[array get vattributes_v_arr]'"
+    ns_log Notice "qfo::lol_replace.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
 
     # normalize form input names
     foreach {n v} [array get qfv_arr] {
@@ -156,7 +137,7 @@ ad_proc -private ::qfo::lol_replace {
         # if there is a 'selected' attribute, set it to '0'
 
         # val = value, as in attribute 'value'
-        foreach row_nvl $old_val_lol {
+        foreach row_nvl $fav_arr(value) {
             # index may be upper or lower case
             foreach {n v} $row_nvl {
                 set nlc [string tolower $n]
@@ -177,7 +158,7 @@ ad_proc -private ::qfo::lol_replace {
                     set name_n $row_v_arr(name)
                 } elseif { $att_name_exists_p } {
                     #  input type select multiple
-                    set name_n $att_name_n
+                    set name_n $fav_arr(name)
                 }
                 ns_log Notice "qfo::lol_replace.174 name_n '${name_n}'"
                 # Is qvf_arr(name) set to the value of this choice?
@@ -226,7 +207,7 @@ ad_proc -private ::qfo::lol_replace {
 
             set selected_count 0
             
-            foreach row_nvl $old_val_lol {
+            foreach row_nvl $fav_arr(value) {
                 foreach {n v} $row_nvl {
                     set nlc [string tolower $n]
                     set row_v_arr(${nlc}) $v
@@ -237,9 +218,9 @@ ad_proc -private ::qfo::lol_replace {
                 if { [info exists row_v_arr(value) ] } {
                     # Does the input case exist?
                     set selected_p 0
-                    if { [info exists qfv_v_arr(${att_name_n}) ] } {
+                    if { [info exists qfv_v_arr($fav_arr(name)) ] } {
                         # unqoute qfv_arr first
-                        set input_unquoted [qf_unquote $qfv_v_arr(${att_name_n}) ]
+                        set input_unquoted [qf_unquote $qfv_v_arr($fav_arr(name)) ]
                         # Instead of checking only if input matches original
                         # check also if original is *in* input, because
                         # input may be a list of multiple inputs of same name
@@ -253,7 +234,7 @@ ad_proc -private ::qfo::lol_replace {
                             } else {
                                 ns_log Warning "qfo::lol_replace.244: \
  Unexpected: 'selected' has multiple selected cases. \
- items for form element '${old_val_lol}', \
+ items for form element '$fav_arr(value)', \
  specifically item '${row_nvl}'. Unselected."
                             }
                         } 
@@ -278,17 +259,22 @@ ad_proc -private ::qfo::lol_replace {
             }
         } else {
             ns_log Warning "::qfo::lol_replace.261. Name attribute not found. \
- ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
+ array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
         }
     }
     if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
-        ns_log Notice "::qfo::lol_replace.270 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
-        set fa_larr(${fa_index}) [lreplace $old_lol $x $x $new_val_lol]
-        ns_log Notice "::qfo::lol_replace.272 ${fatts_array_name}(${fatts_array_index_name}) '$fa_larr(${fa_index})'"
+        ns_log Notice "::qfo::lol_replace.270  array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
+        ns_log Notice "::qfo::lol_replace.272  new_val_lol '${new_val_lol}'"
     } 
     # else, use defaults
-    return 1
+    set fav_arr(value) $new_val_lol
+    # rebuild original lol
+    foreach nlc [array names fav_arr] {
+        lappend new_qf_choices_lol $fan_arr(${nlc}) $fav_arr(${nlc})
+    }
+
+    return $new_qf_choices_lol
 }
 
 
@@ -1228,49 +1214,41 @@ ad_proc -public qfo_2g {
 
 
                 # Determine index of value attribute's value
-                set n2_idx 1
-                set m2_idx 1
-                set value_idx -1
-                set title_idx -1
                 foreach {n v} $fatts_arr(${fatts_arr_index}) {
                     set nlc [string tolower $n]
                     set fav_arr(${nlc}) $v
                     set fan_arr(${nlc}) $n
-                    switch -exact -- $nlc {
-                        value {
-                            set value_idx $n2_idx
-                        }
-                        title {
-                            set title_idx $m2_idx
-                        }
-                    }
-                    incr n2_idx 2
-                    incr m2_idx 2
                 }
+
 
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
-                    if { [lsearch -exact $invalid_field_val_list $f_hash] > -1 \
-                             && [string match "*html*" $doctype ] } {
-                        set error_msg " <strong class=\"form-label-error\">"
-                        append error_msg "#acs-tcl.lt_Problem_with_your_inp# "
-                        if { !$fatts_arr(${f_hash},empty_allowed_p) } {
-                            append error_msg "<span class=\"form-error\"> "
-                            append error_msg "#acs-templating.required#"
-                            append error_msg "</span> "
-                        }
-                        append error_msg "#acs-templating.Format# "
-                        append error_msg "</strong> "
-                        ##code error_msg doesn't belong in title, but in label right?
-                        if { $title_idx > -1 } {
-                            append fav_arr(title) $error_msg
-                            ::qfo::larr_replace \
-                                -array_name fatts_arr \
-                                -index $fatts_arr_index \
-                                -list_index $title_idx \
-                                -new_value $fav_arr(title)
+
+                    if { [string match "*html*" $doctype ] } {
+                        if { [lsearch -exact $invalid_field_val_list $f_hash] > -1 } {
+                            # Error, tell user
+                            set error_msg " <strong class=\"form-label-error\">"
+                            append error_msg "#acs-tcl.lt_Problem_with_your_inp# "
+                            if { !$fatts_arr(${f_hash},empty_allowed_p) } {
+                                append error_msg "<span class=\"form-error\"> "
+                                append error_msg "#acs-templating.required#"
+                                append error_msg "</span> "
+                            }
+                            append error_msg "#acs-templating.Format# "
+                            append error_msg $fatts_arr(${f_hash},input_hint)
+                            append error_msg "</strong> "
+                            if { [info exists fav_arr(label) ] } {
+                                append fav_arr(label) $error_msg
+                            } else {
+                                set fav_arr(title) $error_msg
+                                set fan_arr(title) $title_c
+                            }
                         } else {
-                            lappend fatts_arr(${fatts_arr_index}) $title_c $error_msg
+                            if { ![info exists fav_arr(title) ] } {
+                                set fav_arr(title) "#acs-templating.Format# "
+                                append fav_arr(title) $fatts_arr(${f_hash},input_hint)
+                                set fan_arr(title) $title_c 
+                            }
                         }
                     }
 
@@ -1281,28 +1259,27 @@ ad_proc -public qfo_2g {
                         if { $v2 ne "" \
                                  || ( $v2 eq "" \
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
-                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})' value_idx '${value_idx}'"
-                            if { $value_idx > -1 } {
-                                ::qfo::larr_replace \
-                                    -array_name fatts_arr \
-                                    -index $fatts_arr_index \
-                                    -list_index $value_idx \
-                                    -new_value $v2
-                            } else {
-                                lappend fatts_arr(${fatts_arr_index}) $value_c $v2
+                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+                                set fav_arr(value) $v2
+                            if { ![info exists fan_arr(value) ] } {
+                                set fan_arr(value) $value_c
                             }
                         }
                     } else {
                         # If there is a 'selected' attr, unselect it.
                         if { [info exists fav_arr(selected) ] } {
                             set fav_arr(selected) "0"
-                            set fa_list [list ]
-                            foreach nlc [array names fav_arr] {
-                                lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
-                            }
-                            set fatts_arr(${fatts_arr_index}) $fa_list
                         }
                     }
+
+                    set fa_list [list ]
+                    foreach nlc [array names fav_arr] {
+                        lappend fa_list $fan_arr(${nlc}) $fav_arr(${nlc})
+                    }
+                    set fatts_arr(${fatts_arr_index}) $fa_list
+
+                    # end has_datatype_p block
+
                 } else { 
                     switch -exact -nocase -- $fatts_arr(${f_hash},tag_type) {
                         radio -
@@ -1310,14 +1287,14 @@ ad_proc -public qfo_2g {
                         select {
                             # choice/choices name/values may not exist.
                             # qfo::lol_replace handles those cases also.
-                            if { $value_idx > -1 } {
-                                ::qfo::lol_replace \
-                                    -fatts_array_name fatts_arr \
-                                    -fatts_array_index_name fatts_arr_index \
-                                    -fatts_arr_list_index $value_idx \
-                                    -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
-                                    -qfv_array_name qfv_arr
-                            }  
+                            if { [info exists fav_arr(value) ] } {
+                                set fatts_arr(${fatts_arr_index}) [::qfo::lol_replace \
+                                                 -attributes_name_array_name fan_arr \
+                                                 -attributes_value_array_name fav_arr \
+                                                 -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
+                                                 -qfv_array_name qfv_arr ]
+
+                            }
                         }
                         default {
                             ns_log Warning "qfo_2g.1245 tag_type '${tag_type}' \
