@@ -1483,6 +1483,8 @@ ad_proc -public qf_input {
         if { [info exists attributes_arr(title) ] } {
             set label_title $attributes_arr(title)
             unset attributes_arr(title)
+            set title_idx [lsearch -exact $attributes_list "title" ]
+            set attributes_list [lreplace $attributes_list $title_idx $title_idx ]
         }
     }
     # prepare attributes to process

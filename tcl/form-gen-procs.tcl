@@ -1229,37 +1229,52 @@ ad_proc -public qfo_2g {
 
                 # Determine index of value attribute's value
                 set n2_idx 1
+                set m2_idx 1
                 set value_idx -1
+                set title_idx -1
                 foreach {n v} $fatts_arr(${fatts_arr_index}) {
                     set nlc [string tolower $n]
                     set fav_arr(${nlc}) $v
                     set fan_arr(${nlc}) $n
-                    if { $nlc eq $value_c } {
-                        set value_idx $n2_idx
+                    switch -exact -- $nlc {
+                        value {
+                            set value_idx $n2_idx
+                        }
+                        title {
+                            set title_idx $m2_idx
+                        }
                     }
                     incr n2_idx 2
-                }
-
-                if { [lsearch -exact $invalid_field_val_list $f_hash] > -1 \
-                         && [string match "*html*" $doctype ] } {
-                    set error_msg " <strong class=\"form-label-error\">"
-                    append error_msg "#acs-tcl.lt_Problem_with_your_input# "
-                    if { !$fatts_arr(${f_hash},empty_allowed_p) } {
-                        append error_msg "<span class=\"form-error\"> "
-                        append error_msg "#acs-templating.required#"
-                        append error_msg "</span> "
-                    }
-                    append error_msg "#acs-templating.Format# "
-                    append error_msg "</strong> "
-                    if { [info exists fav_arr(title) ] } {
-                        append fav_arr(title) $error_msg
-                    } else {
-                        set fav_arr(title) $error_msg
-                        set fan_arr(title) $title_c
-                    }
+                    incr m2_idx 2
                 }
 
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
+
+                    if { [lsearch -exact $invalid_field_val_list $f_hash] > -1 \
+                             && [string match "*html*" $doctype ] } {
+                        set error_msg " <strong class=\"form-label-error\">"
+                        append error_msg "#acs-tcl.lt_Problem_with_your_inp# "
+                        if { !$fatts_arr(${f_hash},empty_allowed_p) } {
+                            append error_msg "<span class=\"form-error\"> "
+                            append error_msg "#acs-templating.required#"
+                            append error_msg "</span> "
+                        }
+                        append error_msg "#acs-templating.Format# "
+                        append error_msg "</strong> "
+                        ##code error_msg doesn't belong in title, but in label right?
+                        if { $title_idx > -1 } {
+                            append fav_arr(title) $error_msg
+                            ::qfo::larr_replace \
+                                -array_name fatts_arr \
+                                -index $fatts_arr_index \
+                                -list_index $title_idx \
+                                -new_value $fav_arr(title)
+                        } else {
+                            lappend fatts_arr(${fatts_arr_index}) $title_c $error_msg
+                        }
+                    }
+
+
                     set n2 $fatts_arr(${f_hash},names)
                     if { [info exists qfv_arr(${n2}) ] } {
                         set v2 [qf_unquote $qfv_arr(${n2}) ]
