@@ -18,13 +18,13 @@ if { !$admin_p } {
     ad_redirect_for_registration
     ad_script_abort
 }
-
+set page_url [ad_conn url]
 
 set one_choice_tag_attribute_list [list [list label " label A " value a ] \
                                        [list label " label B " value b ] \
                                        [list label " label C " value c selected 1 ] ]
 
-set sample_abc_lol [list type $type1 name sample_abc label "Choose one" value $one_choice_tag_attribute_list ]
+set sample_abc_lol [list type $type1 name sample_abc label "Choose one<br>" value $one_choice_tag_attribute_list ]
 
 
 set multi_choice_tag_attribute_list [list \
@@ -32,23 +32,23 @@ set multi_choice_tag_attribute_list [list \
                                          [list name item_e label " label E " value e selected 0 ] \
                                          [list name item_f label " label F " value f ] ]
 
-set multiple_lol [list type $type2 label "Choose any" name sample_dce value $multi_choice_tag_attribute_list multiple 1 ]
+set multiple_lol [list type $type2 label "Choose any<br>" name sample_dce value $multi_choice_tag_attribute_list multiple 1 ]
 
 set f_lol_unused [list \
                       ]
 
 set f_lol [list \
-               [list name a_decimal datatype decimal ] \
-               [list name a_nat_num datatype natural_num ] \
-               [list name integer_1_to_6 datatype range_integer min 0 max 10 ] \
-               [list name integers_0_2_10 datatype range_integers min 0 max 10 ] \
+               [list name a_decimal datatype decimal label "Enter a decimal number" ] \
+               [list name a_nat_num datatype natural_num label "Enter a natural number" ] \
+               [list name integer_1_to_6 datatype range_integer min 0 max 6 "An integer between 0 and 6 inclusive" ] \
+               [list name integers_0_2_10 datatype range_integers min 0 max 10 label "An integer between 0 and 10 inclusive" ] \
                 $sample_abc_lol \
-               [list type text value "example textarea value" name "input_text" label "input text" size 40 maxlength 80 ] \
+               [list type text value "example textarea value" name "input_text" label "Enter some text<br>" size 40 maxlength 80 ] \
                $multiple_lol \
-               [list type submit name charlie value bravo tabindex 90 datatype text_nonempty] \
-               [list tabindex 88 type submit name submit value "#acs-kernel.common_Save#" datatype text_nonempty] \
-               [list name nonempty1 datatype text_nonempty ] \
-               [list name a_word datatype text_word ] \
+               [list name nonempty1 datatype text_nonempty label "You must enter something<br>" ] \
+               [list name a_word datatype text_word label "A word, just one --or leave emtpy<br>" ] \
+               [list type submit name charlie value bravo tabindex 90 datatype text_nonempty label "Use this alternate button to save, if you like:" ] \
+               [list tabindex 88 type submit name submit value "#acs-kernel.common_Save#" datatype text_nonempty label "When you are finished click this button:" ] \
 
               ]
 
@@ -93,7 +93,7 @@ if { $validated_p } {
 
 append content "<pre>\n"
 append content $form_html
-append content " &nbsp; &nbsp; &nbsp; <a href=\"test-qfo_g2\">clear</a>"
+append content " &nbsp; &nbsp; &nbsp; <a href=\"" ${page_url} "\">clear</a>"
 append content "</pre>"
 
 
