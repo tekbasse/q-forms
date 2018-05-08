@@ -1086,7 +1086,8 @@ ad_proc -public qfo_2g {
                                          -proc_name $fatts_arr(${f_hash},valida_proc) \
                                          -form_tag_type $fatts_arr(${f_hash},form_tag_type) \
                                          -form_tag_attrs $fatts_arr(${f_hash},form_tag_attrs) \
-                                         -q_tables_enabled_p $qtable_enabled_p ]
+                                         -q_tables_enabled_p $qtable_enabled_p \
+                                         -empty_allowed_p $fatts_arr(${f_hash},empty_allowed_p) ]
                         if { !$valid_p } {
                             lappend invalid_field_val_list $f_hash
                         }
@@ -1228,7 +1229,7 @@ ad_proc -public qfo_2g {
                         if { [lsearch -exact $invalid_field_val_list $f_hash] > -1 } {
                             # Error, tell user
                             set error_msg " <strong class=\"form-label-error\">"
-                            append error_msg "#acs-tcl.lt_Problem_with_your_inp# "
+                            append error_msg "#acs-tcl.lt_Problem_with_your_inp# <br> "
                             if { !$fatts_arr(${f_hash},empty_allowed_p) } {
                                 append error_msg "<span class=\"form-error\"> "
                                 append error_msg "#acs-templating.required#"
@@ -1405,6 +1406,7 @@ ad_proc -private qf_validate_input {
     {-q_tables_enabled_p "0"}
     {-form_tag_type ""}
     {-form_tag_attrs ""}
+    {-empty_allowed_p "0"}
 } {
     Returns '1' if value is validated. Otherwise returns '0'.
     <br><br>
@@ -1418,123 +1420,129 @@ ad_proc -private qf_validate_input {
 
     # Simplify any future cases, where 
     # proc_name is called with default ' {value}' explicitly added.
+    if { $input eq "" } {
 
-    set proc_name_len [llength $proc_name]
-    if { $proc_name_len > 1 } {
-        if { $proc_name_len eq 2 \
-                 && [lindex $proc_name 1] eq "{value}" } {
-            set proc_name [lindex $proc_name 0]
-            set proc_name_len 1
-        } else {
-            regsub -- {{value}} $proc_name "\${input}" proc_name
-            set proc_params_list [split $proc_name " "]
-            set proc_name [lindex $proc_params_list 0]
-        }
-    }
-    switch -exact -- $proc_name {
-        qf_is_decimal {
-            set valid_p [qf_is_decimal $input ]
-        }
-        qf_is_integer {
-            set valid_p [qf_is_integer $input ]
-        }
-        hf_are_safe_and_visible_characters_q {
-            set valid_p [hf_are_safe_and_visible_characters_q $input ]
-        }
-        hf_are_safe_and_printable_characters_q {
-            set valid_p [hf_are_safe_and_printable_characters_q $input ]
-        }
-        hf_list_filter_by_natural_number {
-            set input_list [split $input ";,\t "]
-            set filtered_list [hf_list_filter_by_natural_number $input_list ]
-            if { [llength $input_list ] == [llength $filtered_list] } {
-                set valid_p 1
-            } else {
-                set valid_p 0
-            }
-        }
-        util_url_valid_p {
-            set valid_p [util_url_valid_p $input ]
-        }
-        qf_email_valid_q {
-            set valid_p [qf_email_valid_q $input ]
-        }
-        qf_clock_scan {
-            set time_since_epoch [qf_clock_scan $input]
-            if { $time_since_epoch ne "" } {
-                set valid_p 1
-            }
-        }
-        qf_is_decimal {
-            set valid_p [qf_is_decimal $input ]
-        }
-        qf_is_natural_number {
-            set valid_p [qf_is_natural_number $input ]
-        }
-        ad_var_type_check_safefilename_p {
-            set valid_p [ad_var_type_check_safefilename_p $input ]
-        }
-        qf_domain_name_valid_q {
-            set valid_p [qf_domain_name_valid_q $input ]
-        }
-        ad_var_type_check_word_p {
-            set valid_p [qf_ad_var_type_check_word_p $input]
-        }
-        qf_is_boolean {
-            set valid_p [qf_is_boolean $input ]
-        }
-        qf_is_currency_like {
-            set valid_p [qf_is_currency_like $input]
-        }
-        qf_is_currency {
-            if { $proc_name_len eq 2 } {
-                set valid_p [qf_is_currency $input [lindex $proc_params_list 1]]
-            } else {
-                set valid_p [qf_is_currency $input]
-            }
-        }
-        default {
-            # Is default_proc allowed?
-            set allowed_p 0
-            set procs_list [parameter::get \
-                                -package_id [ad_conn package_id] \
-                                -parameter AllowedValidationProcs \
-                                -default ""]
+        set valid_p $empty_allowed_p
 
-            if { [lsearch -exact $procs_list $proc_name ] > -1 } {
-                set allowed_p 1
+    } else {
+
+        set proc_name_len [llength $proc_name]
+        if { $proc_name_len > 1 } {
+            if { $proc_name_len eq 2 \
+                     && [lindex $proc_name 1] eq "{value}" } {
+                set proc_name [lindex $proc_name 0]
+                set proc_name_len 1
+            } else {
+                regsub -- {{value}} $proc_name "\${input}" proc_name
+                set proc_params_list [split $proc_name " "]
+                set proc_name [lindex $proc_params_list 0]
             }
-            if { !$allowed_p && $q_tables_enabled_p } {
-                # Check for custom cases
-                set default_val ""
-                if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
-                    # more than one q-tables exist
-                    # Maybe change this to find one in a subsite.
-                    # something like qc_set_instance_id from q-control
+        }
+        switch -exact -- $proc_name {
+            qf_is_decimal {
+                set valid_p [qf_is_decimal $input ]
+            }
+            qf_is_integer {
+                set valid_p [qf_is_integer $input ]
+            }
+            hf_are_safe_and_visible_characters_q {
+                set valid_p [hf_are_safe_and_visible_characters_q $input ]
+            }
+            hf_are_safe_and_printable_characters_q {
+                set valid_p [hf_are_safe_and_printable_characters_q $input ]
+            }
+            hf_list_filter_by_natural_number {
+                set input_list [split $input ";,\t "]
+                set filtered_list [hf_list_filter_by_natural_number $input_list ]
+                if { [llength $input_list ] == [llength $filtered_list] } {
+                    set valid_p 1
+                } else {
+                    set valid_p 0
                 }
-                set custom_procs [parameter::get \
-                                      -package_id [ad_conn package_id] \
-                                      -parameter AllowedValidationProcs \
-                                      -default $default_val]
-                foreach p $custom_procs {
-                    if { [string match $p $proc_name] } {
-                        set allowed_p 1
+            }
+            util_url_valid_p {
+                set valid_p [util_url_valid_p $input ]
+            }
+            qf_email_valid_q {
+                set valid_p [qf_email_valid_q $input ]
+            }
+            qf_clock_scan {
+                set time_since_epoch [qf_clock_scan $input]
+                if { $time_since_epoch ne "" } {
+                    set valid_p 1
+                }
+            }
+            qf_is_decimal {
+                set valid_p [qf_is_decimal $input ]
+            }
+            qf_is_natural_number {
+                set valid_p [qf_is_natural_number $input ]
+            }
+            ad_var_type_check_safefilename_p {
+                set valid_p [ad_var_type_check_safefilename_p $input ]
+            }
+            qf_domain_name_valid_q {
+                set valid_p [qf_domain_name_valid_q $input ]
+            }
+            ad_var_type_check_word_p {
+                set valid_p [qf_ad_var_type_check_word_p $input]
+            }
+            qf_is_boolean {
+                set valid_p [qf_is_boolean $input ]
+            }
+            qf_is_currency_like {
+                set valid_p [qf_is_currency_like $input]
+            }
+            qf_is_currency {
+                if { $proc_name_len eq 2 } {
+                    set valid_p [qf_is_currency $input [lindex $proc_params_list 1]]
+                } else {
+                    set valid_p [qf_is_currency $input]
+                }
+            }
+            default {
+                # Is default_proc allowed?
+                set allowed_p 0
+                set procs_list [parameter::get \
+                                    -package_id [ad_conn package_id] \
+                                    -parameter AllowedValidationProcs \
+                                    -default ""]
+
+                if { [lsearch -exact $procs_list $proc_name ] > -1 } {
+                    set allowed_p 1
+                }
+                if { !$allowed_p && $q_tables_enabled_p } {
+                    # Check for custom cases
+                    set default_val ""
+                    if {[catch { set default_val [parameter::get_from_package_key -package_key q-tables -parameter AllowedValidationProcs -default "" ] } ] } {
+                        # more than one q-tables exist
+                        # Maybe change this to find one in a subsite.
+                        # something like qc_set_instance_id from q-control
                     }
-                }
-                if { !$allowed_p } {
-                    ns_log Warning "qf_validate_input.1153: Broken UI. \
+                    set custom_procs [parameter::get \
+                                          -package_id [ad_conn package_id] \
+                                          -parameter AllowedValidationProcs \
+                                          -default $default_val]
+                    foreach p $custom_procs {
+                        if { [string match $p $proc_name] } {
+                            set allowed_p 1
+                        }
+                    }
+                    if { !$allowed_p } {
+                        ns_log Warning "qf_validate_input.1153: Broken UI. \
  Unknown validation proc '${proc_name}' proc_params_list '${proc_params_list}'"
 
 
-                } else {
-                    ns_log Notice "qf_validate_input.1158: processing safe_eval '${proc_params_list}'"
-                    set valid_p [safe_eval $proc_params_list]
+                    } else {
+                        ns_log Notice "qf_validate_input.1158: processing safe_eval '${proc_params_list}'"
+                        set valid_p [safe_eval $proc_params_list]
+                    }
                 }
-            }
-            if { !$allowed_p } {
-                ns_log Warning "qf_validate_input.1230: Broken UI. \
+                if { !$allowed_p } {
+                    ns_log Warning "qf_validate_input.1230: Broken UI. \
  proc_name '${proc_name}' form_tag_type '${form_tag_type}' \
  form_tag_attrs '${form_tag_attrs}'"
+                }
             }
         }
     }    
