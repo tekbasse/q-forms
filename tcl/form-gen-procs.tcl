@@ -65,9 +65,9 @@ ad_proc -private ::qfo::larr_replace {
 } { 
     upvar 1 $array_name a_larr
     set i $list_index
-    ns_log Notice "::qfo::larr_replace.69 ${array_name}(${index}) '$a_larr(${index})'"
+#    ns_log Notice "::qfo::larr_replace.69 ${array_name}(${index}) '$a_larr(${index})'"
     set a_larr(${index}) [lreplace $a_larr(${index}) $i $i $new_value]
-    ns_log Notice "::qfo::larr_replace.71 ${array_name}(${index}) '$a_larr(${index})'"
+#    ns_log Notice "::qfo::larr_replace.71 ${array_name}(${index}) '$a_larr(${index})'"
     return 1
 }
 
@@ -115,7 +115,7 @@ ad_proc -private ::qfo::lol_remake {
         }
     }
     
-    ns_log Notice "qfo::lol_remake.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
+#    ns_log Notice "qfo::lol_remake.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
 
     # normalize form input names
     foreach {n v} [array get qfv_arr] {
@@ -160,7 +160,7 @@ ad_proc -private ::qfo::lol_remake {
                     #  input type select multiple
                     set name_n $fav_arr(name)
                 }
-                ns_log Notice "qfo::lol_remake.174 name_n '${name_n}'"
+#                ns_log Notice "qfo::lol_remake.174 name_n '${name_n}'"
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
                 if { [info exists qfv_v_arr(${name_n}) ] } {
@@ -169,7 +169,7 @@ ad_proc -private ::qfo::lol_remake {
                     # Instead of checking only if input matches original
                     # check also if original is *in* input, because
                     # input may be a list of multiple inputs of same name.
-                    ns_log Notice "qfo::lol_remake.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
+#                    ns_log Notice "qfo::lol_remake.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                     if { $input_unquoted eq $row_v_arr(value) \
                              || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                         set selected_p 1
@@ -184,11 +184,11 @@ ad_proc -private ::qfo::lol_remake {
                 foreach nlc [array names row_v_arr] {
                     lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
                 }
-                ns_log Notice "qfo::lol_remake 191. \
- new_row_nvl '${new_row_nvl}'"
+                #ns_log Notice "qfo::lol_remake 191. \
+# new_row_nvl '${new_row_nvl}'"
             } else {
-                ns_log Notice "qfo::lol_remake 192. \
- new_row_nvl '${new_row_nvl}'"
+                #ns_log Notice "qfo::lol_remake 192. \
+# new_row_nvl '${new_row_nvl}'"
                 # selection must be a separator or the like.
                 set new_row_nvl $row_nvl
             }
@@ -225,7 +225,7 @@ ad_proc -private ::qfo::lol_remake {
                         # check also if original is *in* input, because
                         # input may be a list of multiple inputs of same name
                         # intentional or not.
-                        ns_log Notice "qfo::lol_remake.237 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
+                        #ns_log Notice "qfo::lol_remake.237 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                         if { $input_unquoted eq $row_v_arr(value) \
                                  || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                             incr selected_count
@@ -262,12 +262,7 @@ ad_proc -private ::qfo::lol_remake {
  array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
         }
     }
-    if { [llength $new_val_lol ] > 0 } {
-        # replace the default choice selections with the ones from input
-        ns_log Notice "::qfo::lol_remake.270  array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
-        ns_log Notice "::qfo::lol_remake.272  new_val_lol '${new_val_lol}'"
-    } 
-    # else, use defaults
+
     set fav_arr(value) $new_val_lol
     # rebuild original lol
     foreach nlc [array names fav_arr] {
@@ -614,6 +609,7 @@ ad_proc -public qfo_2g {
     set datatype_c "datatype"
     set form_tag_attrs_c "form_tag_attrs"
     set form_tag_type_c "form_tag_type"
+    set hidden_c "hidden"
     set input_c "input"
     set label_c "label"
     set multiple_c "multiple"
@@ -625,7 +621,7 @@ ad_proc -public qfo_2g {
     set type_c "type"
     set value_c "value"
     set title_c "title"
-
+    set ignore_list [list $submit_c $button_c $hidden_c]
     # Array for holding datatype 'sets' defined by select/choice/choices:
     # fchoices_larr(element_name)
 
@@ -728,7 +724,7 @@ ad_proc -public qfo_2g {
             # This field is partly defined by datatype
             set datatype $hfv_arr(datatype)
 
-            ns_log Notice "qfo_2g.490: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
+#            ns_log Notice "qfo_2g.490: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
 
             set dt_idx $datatype
             append dt_idx $comma_c $form_tag_type_c
@@ -741,7 +737,7 @@ ad_proc -public qfo_2g {
                 set hfv_arr(${nlc}) $v
                 set hfn_arr(${nlc}) $n
             }
-            ns_log Notice "qfo_2g.500. array get hfv_arr '[array get hfv_arr]'"
+#            ns_log Notice "qfo_2g.500. array get hfv_arr '[array get hfv_arr]'"
         } 
 
         # tag attributes provided from field definition
@@ -757,7 +753,7 @@ ad_proc -public qfo_2g {
             set hfv_arr(${nlc}) $v
             set hfn_arr(${nlc}) $n
         }
-        ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
+#        ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
 
         
         # "tag_type" in inde refers to attribute's 'type' not $tag_type
@@ -780,7 +776,7 @@ ad_proc -public qfo_2g {
                  && [info exists hfv_arr(type) ] } {
             set type $hfv_arr(type)
             #set fatts_arr(${f_hash},tag_type) $type
-            ns_log Notice "qfo_2g.630: type '${type}'"
+           # ns_log Notice "qfo_2g.630: type '${type}'"
             switch -exact -nocase -- $type {
                 select {
                     if { [info exists hfv_arr(multiple) ] } {
@@ -847,9 +843,9 @@ ad_proc -public qfo_2g {
 
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 # If there is no label, add one.
-                if { ![info exists fav_arr(label)] \
-                         && $type ne $submit_c \
-                         && $type ne $button_c } {
+                if { ![info exists hfv_arr(label)] \
+                         && [lsearch -exact $ignore_list $type] == -1 } {
+#                    ns_log Notice "qfo_2g.855 array get hfv_arr '[array get hfv_arr]'"
                     set hfv_arr(label) $hfv_arr(name)
                     set hfn_arr(label) $label_c
                 }
@@ -1008,7 +1004,7 @@ ad_proc -public qfo_2g {
                                   multiple_key_as_list $multiple_key_as_list \
                                   hash_check $hash_check \
                                   post_only $post_only ]
-        ns_log Notice "qfo_2g.891 array get qfi_arr '[array get qfi_arr]'"
+        #ns_log Notice "qfo_2g.891 array get qfi_arr '[array get qfi_arr]'"
     } 
 
     # Make sure every qfi_arr(x) exists for each field
@@ -1032,9 +1028,9 @@ ad_proc -public qfo_2g {
     # For now, dynamically generated fields need to be 
     # created in fields_array or be detected and filtered
     # by calling qf_get_inputs_as_array *before* qfo_2g
-    ns_log Notice "qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
+    #ns_log Notice "qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
 
-    ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
+    #ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
 
     # qfv = field value
     foreach f_hash $qfi_fields_list {
@@ -1057,7 +1053,7 @@ ad_proc -public qfo_2g {
     # Don't use qfi_arr anymore, as it may contain extraneous input
     # Use qfv_arr for input array
     array unset qfi_arr
-    ns_log Notice "qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
+    #ns_log Notice "qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
@@ -1079,7 +1075,7 @@ ad_proc -public qfo_2g {
 
                 if { [info exists fatts_arr(${f_hash},valida_proc)] } {
                     set name $fatts_arr(${f_hash},names)
-                    ns_log Notice "qfo_2g.900. Validating '${name}'"
+#                    ns_log Notice "qfo_2g.900. Validating '${name}'"
                     if { [info exists qfv_arr(${name}) ] } {
                         set valid_p [qf_validate_input \
                                          -input $qfv_arr(${name}) \
@@ -1092,8 +1088,10 @@ ad_proc -public qfo_2g {
                             lappend invalid_field_val_list $f_hash
                         }
                     } else {
-                        ns_log Notice "qfo_2g.870: field '${f_hash}' \
+                        if { [lsearch -exact $ignore_list $fatts_arr(${f_hash},tag_type) ] == -1 } {
+                            ns_log Notice "qfo_2g.870: field '${f_hash}' \
  no validation proc. found"
+                        }
                     }
                 } else {
                     lappend nonexsting_field_val_list $f_hash
@@ -1127,9 +1125,9 @@ ad_proc -public qfo_2g {
             set all_valid_p [expr { $all_valid_p && $valid_p } ]
         }
         set validated_p $all_valid_p
-        ns_log Notice "qfo_2g.1117: Form input validated_p '${validated_p}' \
- invalid_field_val_list '${invalid_field_val_list}' \
- nonexisting_field_val_list '${nonexisting_field_val_list}'"
+#        ns_log Notice "qfo_2g.1117: Form input validated_p '${validated_p}' \
+# invalid_field_val_list '${invalid_field_val_list}' \
+# nonexisting_field_val_list '${nonexisting_field_val_list}'"
     } else {
         # form not submitted
 
@@ -1260,7 +1258,7 @@ ad_proc -public qfo_2g {
                         if { $v2 ne "" \
                                  || ( $v2 eq "" \
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
-                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
+#                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qf# v_arr(${n2}) '$qfv_arr(${n2})'"
                             set fav_arr(value) $v2
                             if { ![info exists fan_arr(value) ] } {
                                 set fan_arr(value) $value_c
