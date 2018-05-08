@@ -3,13 +3,6 @@ set context [list ]
 
 set doc(type) {<!DOCTYPE html>}
 
-# choice
-set type1 "radio"
-set type1 "select"
-# choices
-set type2 "checkbox"
-set type2 "select"
-
 
 set user_id [ad_conn user_id]
 set instance_id [ad_conn package_id]
@@ -19,6 +12,20 @@ if { !$admin_p } {
     ad_script_abort
 }
 set page_url [ad_conn url]
+
+if { [string match "*a" $page_url ] } {
+    # choice
+    set type1 "select"
+    # choices
+    set type2 "select"
+} else {
+    # b form demo
+    # choice
+    set type1 "radio"
+    # choices
+    set type2 "checkbox"
+}
+
 
 set one_choice_tag_attribute_list [list [list label " label A " value a ] \
                                        [list label " label B " value b ] \
