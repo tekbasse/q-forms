@@ -71,7 +71,7 @@ ad_proc -private ::qfo::larr_replace {
     return 1
 }
 
-ad_proc -private ::qfo::lol_replace {
+ad_proc -private ::qfo::lol_remake {
     -attributes_name_array_name
     -attributes_value_array_name
     -is_multiple_p
@@ -114,8 +114,8 @@ ad_proc -private ::qfo::lol_replace {
             set type_checkbox_p 1
         }
     }
-       
-    ns_log Notice "qfo::lol_replace.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
+    
+    ns_log Notice "qfo::lol_remake.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
 
     # normalize form input names
     foreach {n v} [array get qfv_arr] {
@@ -153,14 +153,14 @@ ad_proc -private ::qfo::lol_replace {
             if { [info exists row_v_arr(value) ] } {
 
                 if { [info exists row_v_arr(name) ] \
-                     && $type_checkbox_p } {
+                         && $type_checkbox_p } {
                     #  input type checkbox
                     set name_n $row_v_arr(name)
                 } elseif { $att_name_exists_p } {
                     #  input type select multiple
                     set name_n $fav_arr(name)
                 }
-                ns_log Notice "qfo::lol_replace.174 name_n '${name_n}'"
+                ns_log Notice "qfo::lol_remake.174 name_n '${name_n}'"
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
                 if { [info exists qfv_v_arr(${name_n}) ] } {
@@ -169,7 +169,7 @@ ad_proc -private ::qfo::lol_replace {
                     # Instead of checking only if input matches original
                     # check also if original is *in* input, because
                     # input may be a list of multiple inputs of same name.
-                    ns_log Notice "qfo::lol_replace.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
+                    ns_log Notice "qfo::lol_remake.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                     if { $input_unquoted eq $row_v_arr(value) \
                              || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                         set selected_p 1
@@ -184,10 +184,10 @@ ad_proc -private ::qfo::lol_replace {
                 foreach nlc [array names row_v_arr] {
                     lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
                 }
-                ns_log Notice "qfo::lol_replace 191. \
+                ns_log Notice "qfo::lol_remake 191. \
  new_row_nvl '${new_row_nvl}'"
             } else {
-                ns_log Notice "qfo::lol_replace 192. \
+                ns_log Notice "qfo::lol_remake 192. \
  new_row_nvl '${new_row_nvl}'"
                 # selection must be a separator or the like.
                 set new_row_nvl $row_nvl
@@ -225,14 +225,14 @@ ad_proc -private ::qfo::lol_replace {
                         # check also if original is *in* input, because
                         # input may be a list of multiple inputs of same name
                         # intentional or not.
-                        ns_log Notice "qfo::lol_replace.237 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
+                        ns_log Notice "qfo::lol_remake.237 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                         if { $input_unquoted eq $row_v_arr(value) \
                                  || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                             incr selected_count
                             if { $selected_count < 2 } {
                                 set selected_p 1
                             } else {
-                                ns_log Warning "qfo::lol_replace.244: \
+                                ns_log Warning "qfo::lol_remake.244: \
  Unexpected: 'selected' has multiple selected cases. \
  items for form element '$fav_arr(value)', \
  specifically item '${row_nvl}'. Unselected."
@@ -258,14 +258,14 @@ ad_proc -private ::qfo::lol_replace {
                 lappend new_val_lol $new_row_nvl
             }
         } else {
-            ns_log Warning "::qfo::lol_replace.261. Name attribute not found. \
+            ns_log Warning "::qfo::lol_remake.261. Name attribute not found. \
  array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
         }
     }
     if { [llength $new_val_lol ] > 0 } {
         # replace the default choice selections with the ones from input
-        ns_log Notice "::qfo::lol_replace.270  array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
-        ns_log Notice "::qfo::lol_replace.272  new_val_lol '${new_val_lol}'"
+        ns_log Notice "::qfo::lol_remake.270  array get fan_arr '[array get fan_arr]' array get fav_arr '[array get fav_arr]'"
+        ns_log Notice "::qfo::lol_remake.272  new_val_lol '${new_val_lol}'"
     } 
     # else, use defaults
     set fav_arr(value) $new_val_lol
@@ -472,9 +472,9 @@ ad_proc -public qfo_2g {
 
     ::qdt::data_types -array_name qdt_types_arr \
         -local_data_types_lists $field_types_lists
-#    set datatype "text_word"
- #           ns_log Notice "qfo_2g.290: array get qdt_types_arr(${datatype},form_tag_attrs) '[array get qdt_types_arr(${datatype},form_tag_attrs) ]' array get qdt_types_arr(${datatype},form_tag_type) '[array get qdt_types_arr(${datatype},form_tag_type) ]'"
-#    ns_log Notice "qfo_2g.292: array get qdt_types_arr text_word '[array get qdt_types_arr "text_word*"]'"
+    #    set datatype "text_word"
+    #           ns_log Notice "qfo_2g.290: array get qdt_types_arr(${datatype},form_tag_attrs) '[array get qdt_types_arr(${datatype},form_tag_attrs) ]' array get qdt_types_arr(${datatype},form_tag_type) '[array get qdt_types_arr(${datatype},form_tag_type) ]'"
+    #    ns_log Notice "qfo_2g.292: array get qdt_types_arr text_word '[array get qdt_types_arr "text_word*"]'"
     ##ns_log Notice "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p } {
         # Apply customizations from table defined in q-tables
@@ -759,7 +759,7 @@ ad_proc -public qfo_2g {
         }
         ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
 
-       
+        
         # "tag_type" in inde refers to attribute's 'type' not $tag_type
         if { [info exists hfv_arr(type) ] } {
             set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
@@ -767,7 +767,7 @@ ad_proc -public qfo_2g {
         if { $tag_type eq "" } {
             # Let's try to guess tag_type
             if { [info exists hfv_arr(rows) ] \
-                    || [info exists hfv_arr(cols) ] } {
+                     || [info exists hfv_arr(cols) ] } {
                 set tag_type "textarea"
             } else {
                 set tag_type $default_tag_type
@@ -776,7 +776,7 @@ ad_proc -public qfo_2g {
         
         set multiple_names_p ""
         if { ( [string match -nocase "*input*" $tag_type ] \
-                  || $tag_type eq "" ) \
+                   || $tag_type eq "" ) \
                  && [info exists hfv_arr(type) ] } {
             set type $hfv_arr(type)
             #set fatts_arr(${f_hash},tag_type) $type
@@ -1057,7 +1057,7 @@ ad_proc -public qfo_2g {
     # Don't use qfi_arr anymore, as it may contain extraneous input
     # Use qfv_arr for input array
     array unset qfi_arr
-        ns_log Notice "qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
+    ns_log Notice "qfo_2g.1018 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
@@ -1261,7 +1261,7 @@ ad_proc -public qfo_2g {
                                  || ( $v2 eq "" \
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
                             ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qfv_arr(${n2}) '$qfv_arr(${n2})'"
-                                set fav_arr(value) $v2
+                            set fav_arr(value) $v2
                             if { ![info exists fan_arr(value) ] } {
                                 set fan_arr(value) $value_c
                             }
@@ -1287,13 +1287,13 @@ ad_proc -public qfo_2g {
                         checkbox -
                         select {
                             # choice/choices name/values may not exist.
-                            # qfo::lol_replace handles those cases also.
+                            # qfo::lol_remake handles those cases also.
                             if { [info exists fav_arr(value) ] } {
-                                set fatts_arr(${fatts_arr_index}) [::qfo::lol_replace \
-                                                 -attributes_name_array_name fan_arr \
-                                                 -attributes_value_array_name fav_arr \
-                                                 -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
-                                                 -qfv_array_name qfv_arr ]
+                                set fatts_arr(${fatts_arr_index}) [::qfo::lol_remake \
+                                                                       -attributes_name_array_name fan_arr \
+                                                                       -attributes_value_array_name fav_arr \
+                                                                       -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
+                                                                       -qfv_array_name qfv_arr ]
 
                             }
                         }
@@ -1344,12 +1344,12 @@ ad_proc -public qfo_2g {
                 switch -- $fatts_arr(${f_hash},form_tag_type) {
                     input {
                         ##ns_log Notice "qfo_2g.1001: qf_input \
-## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                               ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
                         qf_input $atts_list
                     }
                     textarea {
                         ##ns_log Notice "qfo_2g.1003: qf_textarea \
-## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                                  ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
                         qf_textarea $atts_list
                     }
                     default {
