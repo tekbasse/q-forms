@@ -50,6 +50,8 @@ A local copy is available at <a href="LICENSE.html">q-forms/www/doc/LICENSE.html
 features
 </h3>
 <ul><li>
+A form builder by declaration that is also an input validation event handler via <code>qfo_2g</code>. User interface operations are passed to the calling page once vallidation passes.
+</li><li>
 Low learning-curve:<ul><li>Uses tcl context.</li><li>Procedures match tags.</li><li>TCL list friendly.</li></ul>
 </li><li>
 Built-in API defaults: Takes less keystrokes to build a form than typing html manually.
