@@ -1616,7 +1616,7 @@ ad_proc -public ::qfo::form_list_def_to_array {
                 }
                 default {
                     if { !$ignore_parse_issues_p } {
-                        ns_log Warning "qfo_form_list_def_to_array.1241: \
+                        ns_log Warning "::qfo::form_list_def_to_array.1241: \
  No 'name' attribute found, and type '$v_arr(type)' \
  not of type 'checkbox' or 'select multiple' for element '${element_nvl}'"
                     }
@@ -1624,14 +1624,14 @@ ad_proc -public ::qfo::form_list_def_to_array {
             }
         } else {
             if { !$ignore_parse_issues_p } {
-                ns_log Warning "qfo_form_list_def_to_array.1249: \
+                ns_log Warning "::qfo::form_list_def_to_array.1249: \
  No 'name' or 'type' attribute found for element '${element_nvl}'"
             }
         }
         array unset v_arr
         array unset n_arr
     }
-    ##ns_log Notice "qfo_form_list_def_to_array.1267: ${list_of_lists_name} '${elements_lol}'"
-    ##ns_log Notice "qfo_form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
+    ##ns_log Notice "::qfo::form_list_def_to_array.1267: ${list_of_lists_name} '${elements_lol}'"
+    ##ns_log Notice "::qfo::form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
     return $fields_ordered_list
 }

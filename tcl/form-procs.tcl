@@ -636,7 +636,7 @@ ad_proc -public qf_fieldset {
     append tag_html [qf_insert_attributes ${tag_attributes_list}]
     append tag_html ">"
 
-    if { [info exists $attributes_arr(label) ] } {
+    if { [info exists attributes_arr(label) ] } {
         append tag_html "<legend>" $attributes_arr(label) "</legend>"
     }
 

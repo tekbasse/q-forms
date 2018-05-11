@@ -64,7 +64,7 @@ aa_register_case -cats {api smoke} qf_form_gen_checks {
                                        ] ] \
                        ]
 
-            qfo_form_list_def_to_array \
+            ::qfo::form_list_def_to_array \
                 -array_name fields_arr \
                 -list_of_lists_name fd \
                 -ignore_parse_issues_p 0
