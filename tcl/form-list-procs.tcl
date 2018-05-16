@@ -160,7 +160,7 @@ ad_proc -public qfz_listcl {
             # modify sort_order_list
             set sort_order_new_list [list $primary_sort_col_new]
             foreach ii $sort_order_list {
-                if { [expr { abs($ii) } ] ne $primary_sort_col_pos } {
+                if { [expr { abs( ${ii} ) } ] ne $primary_sort_col_pos } {
                     lappend sort_order_new_list $ii
                     # ns_log Notice "resource-status-summary-1.tcl(93): ii '$ii' sort_order_new_list '$sort_order_new_list'"
                 }
@@ -191,10 +191,10 @@ ad_proc -public qfz_listcl {
             # Following lsort is in a catch statement so that if the sort errors, it defaults to ascii sort.
             # Sort table_lists by column number $col2sort_wo_sign, where 0 is left most column
             
-            if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists] } result]} {
+            if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists] } result] } {
                 # lsort errored, probably due to bad sort_type. Fall back to -ascii sort_type, or fail..
                 set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists]
-                ns_log Notice "resource-status-summary-1(121): lsort fell back to sort_type -ascii due to error: $result"
+                ns_log Notice "resource-status-summary-1(121): lsort fell back to sort_type -ascii due to error: ${result}"
             }
             #ns_log Notice "resource-status-summary-1.tcl(123): lsort $sort_type $sort_order -index $col2sort_wo_sign table_sorted_lists"
         }
@@ -671,3 +671,113 @@ ad_proc -public qfz_listcl {
 
     return 1
 }
+
+ad_proc -private hf_pagination_by_items {
+    item_count
+    items_per_page
+    first_item_displayed
+} {
+    Returns a list of 3 pagination components.
+    The first is a list of page_number and start_row pairs for pages before the current page.
+    The second contains page_number and start_row for the current page.
+    Third is the same value pair for pages after the current page.  
+    See hosting-farm/lib/paginiation-bar for an implementation example. 
+} {
+    # based on ecds_pagination_by_items
+    if { $items_per_page > 0 && $item_count > 0 && $first_item_displayed > 0 && $first_item_displayed <= $item_count } {
+        set bar_list [list]
+        set end_page [expr { ( $item_count + $items_per_page - 1 ) / $items_per_page } ]
+
+        set current_page [expr { ( $first_item_displayed + $items_per_page - 1 ) / $items_per_page } ]
+
+        # first row of current page is { (( $current_page - 1)  * $items_per_page ) + 1 }
+
+        # create bar_list with no pages beyond end_page
+
+        if { $item_count > [expr { $items_per_page * 81 } ] } {
+            # use exponential page referencing
+            set relative_step 0
+            set next_bar_list [list]
+            set prev_bar_list [list]
+            # 0.69314718056 = log(2)  
+            set max_search_points [expr { int( ( log( $end_page ) / 0.69314718056 ) + 1 ) } ]
+            for {set exponent 0} { $exponent <= $max_search_points } { incr exponent 1 } {
+                # exponent refers to a page, relative_step refers to a relative row
+                set relative_step_row [expr { int( pow( 2, $exponent ) ) } ]
+                set relative_step_page $relative_step_row
+                lappend next_bar_list $relative_step_page
+                set prev_bar_list [linsert $prev_bar_list 0 [expr { -1 * $relative_step_page } ]]
+            }
+
+            # template_bar_list and relative_bar_list contain page numbers
+            set template_bar_list [concat $prev_bar_list 0 $next_bar_list]
+            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list]
+            
+            # translalte bar_list relative values to absolute rows
+            foreach {relative_page} $relative_bar_list {
+                set new_page [expr { int ( $relative_page + $current_page ) } ]
+                if { $new_page < $end_page } {
+                    lappend bar_list $new_page 
+                }
+            }
+
+        } elseif {  $item_count > [expr { $items_per_page * 10 } ] } {
+            # use linear, stepped page referencing
+
+            set next_bar_list [list 1 2 3 4 5]
+            set prev_bar_list [list -5 -4 -3 -2 -1]
+            set template_bar_list [concat $prev_bar_list 0 $next_bar_list]
+            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list]
+            # translalte bar_list relative values to absolute rows
+            foreach {relative_page} $relative_bar_list {
+                set new_page [expr { int ( $relative_page + $current_page ) } ]
+                if { $new_page < $end_page } {
+                    lappend bar_list $new_page 
+                }
+            }
+            # add absolute page references
+            for {set page_number 10} { $page_number <= $end_page } { incr page_number 10 } {
+                lappend bar_list $page_number
+                set bar_list [linsert $bar_list 0 [expr { -1 * $page_number } ] ]
+            }
+
+        } else {
+            # use complete page reference list
+            for {set page_number 1} { $page_number <= $end_page } { incr page_number 1 } {
+                lappend bar_list $page_number
+            }
+        }
+
+        # add absolute reference for first page, last page
+        lappend bar_list $end_page
+        set bar_list [linsert $bar_list 0 1]
+
+        # clean up list
+        # now we need to sort and remove any remaining nonpositive integers and duplicates
+        set filtered_bar_list [lsort -unique -increasing -integer [lsearch -all -glob -inline $bar_list {[0-9]*} ]]
+        # delete any cases of page zero
+        set zero_index [lsearch $filtered_bar_list 0]
+        set bar_list [lreplace $filtered_bar_list $zero_index $zero_index]
+
+        # generate list of lists for code in ecommerce/lib
+        set prev_bar_list_pair [list]
+        set current_bar_list_pair [list]
+        set next_bar_list_pair [list]
+        foreach page $bar_list {
+            set start_item [expr { ( ( $page - 1 ) * $items_per_page ) + 1 } ]
+            if { $page < $current_page } {
+                lappend prev_bar_list_pair $page $start_item
+            } elseif { $page eq $current_page } {
+                lappend current_bar_list_pair $page $start_item
+            } elseif { $page > $current_page } {
+                lappend next_bar_list_pair $page $start_item
+            }
+        }
+        set bar_list_set [list $prev_bar_list_pair $current_bar_list_pair $next_bar_list_pair]
+    } else {
+        ns_log Warning "hf_pagination_by_items: parameter value(s) out of bounds for $item_count $items_per_page $first_item_displayed"
+    }
+
+    return $bar_list_set
+}
+
