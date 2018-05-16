@@ -251,7 +251,8 @@ ad_proc -public qfz_listcl {
         set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
         set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
         if { $page_ref eq "" } {
-            set page_ref "#hosting-farm.page_number# ${page_num}"
+            set page_ref "#acs-templating.Page# "
+            append page_ref ${page_num}
         }
     }
 
@@ -268,7 +269,7 @@ ad_proc -public qfz_listcl {
             set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
             if { $page_ref eq "" } {
-                set page_ref "#hosting-farm.page_number# ${page_num}"
+                set page_ref "#acs-templating.Page# ${page_num}"
             }
         }
         lappend next_bar " <a href=\"${base_url}?this_start_row=${start_row}${s_url_add}\">${page_ref}</a> "
@@ -300,13 +301,13 @@ ad_proc -public qfz_listcl {
     set nbr_desc "9"
     # increasing
     set title_asc "#acs-templating.ascending_order#"
-    set title_asc_by_nbr "'${nbr_asc}' #hosting-farm.first#"
-    set title_asc_by_text "'${text_asc}' #hosting-farm.first#"
+    set title_asc_by_nbr "'${nbr_asc}' #acs-kernel.common_first#"
+    set title_asc_by_text "'${text_asc}' #acs-kernel.common_first#"
     # decreasing
 
     set title_desc "#acs-templating.descending_order#"
-    set title_desc_by_nbr "'${nbr_desc}' #hosting-farm.first#"
-    set title_desc_by_text "'${text_desc}' #hosting-farm.first#"
+    set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
+    set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
 
     set table_titles_w_links_list [list ]
     set column_count 0
