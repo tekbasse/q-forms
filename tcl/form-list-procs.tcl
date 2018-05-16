@@ -11,45 +11,67 @@ ad_library {
 
 
 ad_proc -public qfz_listcl {
+    -items_per_page
+    -table_list_of_lists_varname
+    -table_titles_list_varname
+    {-sort_type_list ""}
     {-item_count ""}
-    {-items_per_page ""}
-    {-this_start_row ""}
-    {-data_list_of_lists ""}
+    {-this_start_row "1"}
     {-base_url ""}
     {-previous_nav_url_varname ""}
     {-next_nav_url_varname ""}
+    {-separator "&nbsp;"}
     {-list_length_limit ""}
     {-list_offset ""}
-    {-before_each_column_html_varname ""}
-    {-after_each_column_html_varname ""}
-    {-page_num_p ""}
+    {-page_num_p "0"}
+    {-s_varname ""}
+    {-p_varname ""}
 } {
     Creates a user customizable list from a list of lists.
+    <br><br>
+    Required parameters:
+    <br><br>
+    <code>items_per_page</code> - number of rows (items) per page
+    <code>table_list_of_lists_varname</code> Variable holding a table defined as a list of lists, where each list is a row containing values of columns from first to last.
+    <code>table_titles_list_varname</code> Variable name containing a list of titles of the columns in <code>table_list_of_lists</code>, in cooresponding order. That is first in list is title of first column in table.
+    <br><br>
+    Optional parameters:
+    <code>item_count</code> - number of rows (items) in the table.
+    <code>this_start_row</code> - start row (item sequence number) for this page. First row is 1 even though tcl usually uses 0.
+    <code>base_url</code> - url for building page links
+    <code>separator</code> - html used between page numbers in pagination bar, defaults to '&nbsp;'
+    <code>list_limit</code> - limits the list to this many items.
+    <code>list_offset</code> - offset the list to start at some point other than the first item.
+    <code>page_num_p</code> - Answers question: Use the page number in pagniation bar's display? If not, the first value of the left-most (primary sort) column is used.
+    <code>s_varname</code> s is a sort_order_list as defined by the code and passed via a form. It's an 'a' delimited list of column indexes of table to be sorted in reverse order, so that primary sort is the first in the list. Secondary sort is the second in the list and on.
+    <code>p_varname</code> p is a change of the sort_order_list to now make this index the primary sort. See code for details.
+    <code>sort_type_list</code> - A list of types of sort to use for each column when using <code>lsort -index X</code> to sort a table by a specific column. The default value for each column is "-ascii", per tcl's default. When specifying sort_type_list, define a type to use for each column. For example:
+    \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
+
 } {
+    upvar 1 $table_lists_of_lists_varname table_lists
+    upvar 1 $table_titles_list_varname table_titles_list
+    upvar 1 $previous_nav_url_varname prev_url
+    upvar 1 $next_nav_url_varname next_url
+    upvar 1 $s_varname s
+    upvar 1 $p_varname p
+
     # adapting from:
     # hosting-farm/lib/resource-status-summary-1.tcl
-    # Returns summary list of assets with status, highest scores first
     # This version requires the entire table to be loaded for processing.
-    # TODO: make another version that uses pg's select limit and offset.. to scale well. Probably won't be able to use page_num_p ==0.
+    # TODO: make another version that uses pg's select limit and offset.. 
+    # to scale well. Probably won't be able to use page_num_p ==0.
 
-    # REQUIRED:
-    # @param item_count          number of items
-    # @param items_per_page      number of items per page
-    # @param this_start_row      start row (item number) for this page
-
-
-    # OPTIONAL:
-    # @param base_url             url for building page links
-    # @param separator            html used between page numbers, defaults to &nbsp;
-    # @param list_limit           limits the list to that many items.
-    # @param list_offset          offset the list to start at some point other than the first item.
-    # @param before_columns_html  inserts html that goes between each column
-    # @param after_columns_html   ditto
-    # @param page_num_p           Answers Q: Use the page number in pagniation bar?
-    #                             If not, uses the first value of the left-most (primary sort) column
-    if { ![info exists page_num_p ] } {
-        set page_num_p 0
+    # normalize page_num_p's value
+    set page_num_p [qf_is_true $page_num_p]
+    
+    if { base_url eq "" } {
+        set base_url [ad_conn url]
     }
+    
+    set nav_html ""
+    set page_html ""
+    
     # General process flow:
     # 1. Get table as list_of_lists
     # 2. Sort unformatted columns by row values
@@ -57,40 +79,21 @@ ad_proc -public qfz_listcl {
     # 4. Sort UI -- build
     #     columns, column_order, and cell data vary between compact_p vs. default, keep in mind with sort UI
     # 5. Format output -- compact_p vs. regular
-    set nav_html ""
-    set page_html ""
-
-
+    
+    
     # ================================================
     # 1. Get table as list_of_lists
     # ================================================
     # don't process list_offset or list_limit here.
-    set asset_stts_smmry_lists [hf_asset_summary_status "" $interval_remaining]
-    ### for demo, setting item_count here
-    set item_count [llength $asset_stts_smmry_lists]
-    set items_per_page 12
-    if { ![info exists base_url] } {
-        set base_url [ad_conn url]
-    }
-    #if { ![info exists base_url] } {
-    #    set base_url [ns_conn url]
-    #}
-    #if { ![info exists base_url] } {
-    #    set base_url [ad_conn path_url]
-    #}
-
-    set this_start_row_exists_p [info exists this_start_row]
-    set s_exists_p [info exists s]
-    set p_exists_p [info exists p]
-    if { !$this_start_row_exists_p || ( $this_start_row_exists_p && ![qf_is_natural_number $this_start_row] ) } {
+    
+    if { ![qf_is_natural_number $this_start_row ] } {
         set this_start_row 1
     }
-    if { ![info exists separator] } {
-        set separator "&nbsp;"
+    if  { $item_count eq "" } {
+        set item_count [llength $table_lists]
     }
-
-    # columns:
-    # as_label as_name as_type metric latest_sample percent_quota projected_eop score score_message
+    set s_exists_p [info exists s]
+    set p_exists_p [info exists p]
 
 
     # ================================================
@@ -102,20 +105,15 @@ ad_proc -public qfz_listcl {
     #     p primary_sort_col_new (via form)
     #     table_lists (table represented as a list of lists
     # ================================================
-    set table_lists $asset_stts_smmry_lists
+
     set table_cols_count [llength [lindex $table_lists 0]]
     set table_index_last [expr { $table_cols_count - 1 } ]
-    #set table_titles_list [list "Item&nbsp;ID" "Title" "Status" "Description" "Due&nbsp;Date" "Creation&nbsp;Date"]
-    # Replace #hosting-farm.Metric# with #acs-subsite.parameters# ?
-    # Replace #hosting-farm.Health_score# with acs-subsite.status ?
-    # Replace #accounts-ledger.Amount# with #hosting-farm.Sample# ?
-    set table_titles_list [list "#acs-lang.Label#" "#accounts-ledger.Name#" "#accounts-ledger.Type#" "#hosting-farm.Metric#" "#accounts-ledger.Amount#" "#hosting-farm.Quota#" "#hosting-farm.Projected#" "#hosting-farm.Health_score#" "#accounts-ledger.Message#"]
-    # as_label as_name as_type metric latest_sample percent_quota projected_eop score score_message
-    #ns_log Notice "resource-status-summary-1(45): table_cols_count $table_cols_count table_index_last $table_index_last "
 
     # defaults and inputs
-    set sort_type_list [list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" "-real" "-real" "-integer" "-ascii"]
-    #set sort_stack_list \[lrange \[list 0 1 2 3 4 5 6 7 8 9 10\] 0 $table_index_last \]
+    if { $sort_type_list eq "" } {
+        set sort_type_list [lrepeat $table_cols_count "-ascii"]
+    }
+
     set i 0
     set sort_stack_list [list ]
     while { $i < $table_cols_count } {
@@ -143,7 +141,7 @@ ad_proc -public qfz_listcl {
         # Converting sort_order_scalar to a list
         set sort_order_list [split $sort_order_scalar a]
         set sort_order_list [lrange $sort_order_list 0 $table_index_last]
-        
+##code        
     }
 
     # Has a sort order change been requested?
