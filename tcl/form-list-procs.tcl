@@ -18,8 +18,7 @@ ad_proc -public qfsp_listcl {
     {-item_count ""}
     {-this_start_row "1"}
     {-base_url ""}
-    {-previous_nav_url_varname ""}
-    {-next_nav_url_varname ""}
+    {-nav_bar_html_varname ""}
     {-separator "&nbsp;"}
     {-list_length_limit ""}
     {-list_offset ""}
@@ -81,8 +80,6 @@ ad_proc -public qfsp_listcl {
 } {
     upvar 1 $table_lists_of_lists_varname table_lists
     upvar 1 $table_titles_list_varname table_titles_list
-    upvar 1 $previous_nav_url_varname prev_url
-    upvar 1 $next_nav_url_varname next_url
     upvar 1 $s_varname s
     upvar 1 $p_varname p
 
@@ -99,7 +96,6 @@ ad_proc -public qfsp_listcl {
         set base_url [ad_conn url]
     }
     
-    set nav_html ""
     set page_html ""
     
     # General process flow:
@@ -107,9 +103,6 @@ ad_proc -public qfsp_listcl {
     # 2. Sort unformatted columns by row values
     # 3. Pagination_bar -- calcs including list_limit and list_offset, build UI
     # 4. Sort UI -- build
-    #     columns, column_order, and cell data vary between compact_p vs. default, keep in mind with sort UI
-    # 5. Format output -- compact_p vs. regular
-    
     
     # ================================================
     # 1. Get table as list_of_lists
@@ -163,7 +156,8 @@ ad_proc -public qfsp_listcl {
         # Sort table
         # A sort order has been requested
         # $s is in the form of a string of integers delimited by the letter a. 
-        # Each integer is a column number ie list index, where 0 is first column.
+        # Each integer is a column number ie list index, 
+        # where 0 is first column.
         # A positive integer sorts column increasing.
         # A negative integer sorts column decreasing.
         # Primary sort column is listed first, followed by secondary sort etc.
@@ -198,20 +192,17 @@ ad_proc -public qfsp_listcl {
                 }
             }
             set sort_order_list $sort_order_new_list
-            # ns_log Notice "qfsp_listcl(97): end if primary_sort_col_new.. "
         }
     }
 
     if { ( $s ne "" ) || ( $p ne "" ) } {
-        # ns_log Notice "qfsp_listcl(101): sort_order_scalar '$sort_order_scalar' sort_order_list '$sort_order_list'"
-        # Create a reverse index list for index countdown, because primary sort is last, secondary sort is second to last..
+        # Create a reverse index list for index countdown, 
+        # because primary sort is last, secondary sort is second to last..
         # sort_stack_list 0 1 2 3..
         set sort_rev_order_list [lsort -integer -decreasing [lrange $sort_stack_list 0 [expr { [llength $sort_order_list] - 1 } ] ] ]
         # sort_rev_order_list ..3 2 1 0
-        #ns_log Notice "qfsp_listcl(104): sort_rev_order_list '$sort_rev_order_list' "
         foreach ii $sort_rev_order_list {
             set col2sort [lindex $sort_order_list $ii]
-            # ns_log Notice "qfsp_listcl(107): ii $ii col2sort '$col2sort' llength col2sort [llength $col2sort] sort_rev_order_list '$sort_rev_order_list' sort_order_list '$sort_order_list'"
             if { [string range $col2sort 0 0] eq "-" } {
                 set col2sort_wo_sign [string range $col2sort 1 end]
                 set sort_order "-decreasing"
@@ -220,20 +211,20 @@ ad_proc -public qfsp_listcl {
                 set sort_order "-increasing"
             }
             set sort_type [lindex $sort_type_list $col2sort_wo_sign]
-            # Following lsort is in a catch statement so that if the sort errors, it defaults to ascii sort.
-            # Sort table_lists by column number $col2sort_wo_sign, where 0 is left most column
-            
+
             if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists] } result] } {
-                # lsort errored, probably due to bad sort_type. Fall back to -ascii sort_type, or fail..
+                # lsort errored, probably due to bad sort_type. 
+                # Fall back to -ascii sort_type, or fail..
                 set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists]
-                ns_log Notice "qfsp_listcl(121): lsort fell back to sort_type -ascii due to error: ${result}"
+                ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
+ -ascii for index '${col2sort_wo_sign}' due to error: '${result}'"
             }
-            #ns_log Notice "qfsp_listcl(123): lsort $sort_type $sort_order -index $col2sort_wo_sign table_sorted_lists"
         }
     }
 
     # ================================================
-    # 3. Pagination_bar -- calcs including list_limit and list_offset, build UI
+    # 3. Pagination_bar -- 
+    #    calcs including list_limit and list_offset, build UI
     # ================================================
     # if $s exists, add it to to pagination urls.
 
@@ -246,7 +237,8 @@ ad_proc -public qfsp_listcl {
         append s_urlcoded a
     }
     set s_urlcoded [string range $s_urlcoded 0 end-1]
-    set s_url_add "&amp;s=${s_urlcoded}"
+    set s_url_add "&amp;s="
+    append s_url_add ${s_urlcoded}
 
     # Sanity check 
     if { $this_start_row > $item_count } {
@@ -266,10 +258,14 @@ ad_proc -public qfsp_listcl {
             set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
             if { $page_ref eq "" } {
-                set page_ref "#hosting-farm.page_number# ${page_num}"
+                set page_ref "#acs-templating.Page# "
+                append page_ref ${page_num}
             }
         }
-        lappend prev_bar " <a href=\"${base_url}?this_start_row=${start_row}${s_url_add}\">${page_ref}</a> "    
+        set this_start_row_link "<a href=\""
+        append this_start_row_link ${base_url} "?this_start_row=" ${start_row}
+        append this_start_row_link ${s_url_add} "\">" ${page_ref} "</a>"
+        lappend prev_bar $this_start_row_link
     } 
     set prev_bar [join $prev_bar $separator]
 
@@ -288,7 +284,6 @@ ad_proc -public qfsp_listcl {
         }
     }
 
-    #set current_bar "[lindex $current_bar_list 0]"
     set current_bar $page_ref
 
     set next_bar_list [lindex $bar_list_set 2]
@@ -296,22 +291,26 @@ ad_proc -public qfsp_listcl {
         if { $s eq "" } {
             set page_ref $page_num
         } else {
-            #        set item_index [expr { ( $page_num - 1 ) * $items_per_page + 1 } ]
             set item_index [expr { ( $page_num - 1 ) * $items_per_page  } ]
             set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
             if { $page_ref eq "" } {
-                set page_ref "#acs-templating.Page# ${page_num}"
+                set page_ref "#acs-templating.Page# "
+                append page_ref ${page_num}
             }
         }
-        lappend next_bar " <a href=\"${base_url}?this_start_row=${start_row}${s_url_add}\">${page_ref}</a> "
+        set next_bar_link " <a href=\""
+        append next_bar_link ${base_url} "?this_start_row=" ${start_row}
+        append next_bar_link ${s_url_add} "\">" ${page_ref} "</a> "
+        lappend next_bar $next_bar_link
     }
     set next_bar [join $next_bar $separator]
 
 
     # add start_row to sort_urls.
     if { $this_start_row_exists_p } {
-        set page_url_add "&amp;this_start_row=${this_start_row}"
+        set page_url_add "&amp;this_start_row="
+        append page_url_add ${this_start_row}
     } else {
         set page_url_add ""
     }
@@ -319,13 +318,11 @@ ad_proc -public qfsp_listcl {
     # ================================================
     # 4. Sort UI -- build
     # ================================================
-
-
-    # Sort's abbreviated title should be context sensitive, changing depending on sort type.
+    # Sort's abbreviated title should be context sensitive, 
+    # changing depending on sort type.
     # sort_type_list is indexed by sort_column nbr (0...)
-
-    # for UX, chagnged "ascending order" to "A first" or "1 First", and "Descending order" to "Z first" or "9 first".
-
+    # for UX, chagnged "ascending order" to "A first" or "1 First", 
+    # and "Descending order" to "Z first" or "9 first".
 
     set text_asc "A"
     set text_desc "Z"
@@ -336,7 +333,6 @@ ad_proc -public qfsp_listcl {
     set title_asc_by_nbr "'${nbr_asc}' #acs-kernel.common_first#"
     set title_asc_by_text "'${text_asc}' #acs-kernel.common_first#"
     # decreasing
-
     set title_desc "#acs-templating.descending_order#"
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
@@ -345,7 +341,8 @@ ad_proc -public qfsp_listcl {
     set column_count 0
     set primary_sort_col [lindex $sort_order_list $column_count]
 
-    # column_sort_decreases_list tells which columns are sorted in decreasing order.
+    # column_sort_decreases_list tells which columns are
+    # sorted in decreasing order.
     set column_sort_decreases_list [list ]
     set column_sorted_list [list ]
     for {set i 0} {$i < $table_cols_count} {incr i} {
@@ -367,7 +364,8 @@ ad_proc -public qfsp_listcl {
     }
 
     foreach title $table_titles_list {
-        # figure out column data type for sort button (text or nbr) (column order not changed yet)
+        # Figure out column data type for sort button (text or nbr).
+        # The column order is not changed yet.
         set column_type [string range [lindex $sort_type_list $column_count] 1 end]
         if { $column_type eq "integer" || $column_type eq "real" } {
             set abbrev_asc $nbr_asc
@@ -380,47 +378,90 @@ ad_proc -public qfsp_listcl {
             set title_asc $title_asc_by_text
             set title_desc $title_desc_by_text
         }
-        # is column sort decreasing? If so, let's reverse the order of column's sort links.
+
+        # Is column sort decreasing? 
+        # If so, let's reverse the order of column's sort links.
         set decreasing_p [lindex $column_sort_decreases_list $column_count]
         set column_sorted_p [lindex $column_sorted_list $column_count]
         set sort_link_delim ""
-        # sort button should be active if an available choice, and inactive if already chosen (primary sort case)
-        # sorted columns should reflect existing sort case, so if column is sorted descending integer, then 9:1 not 1:9.
-        # sorted columnns should be aligned vertically to mimmick column value orientation.
+        # Sort button should be active if an available choice, 
+        # and inactive if already chosen (primary sort case).
+        # Sorted columns should reflect existing sort case, 
+        # so if column is sorted descending integer, then '9:1' not '1:9'.
+        # Sorted columnns should be aligned vertically,
+        # to reflect column value orientation.
 
-        # For now, just inactivate the left most sort link that was most recently pressed (if it has been)
+        # For now, just inactivate the left most sort link 
+        # that was most recently pressed (if it has been).
         set title_new $title
 
-
-
-        if { $primary_sort_col eq "" || ( $primary_sort_col ne "" && $column_count ne [expr { abs($primary_sort_col) } ] ) } {
+        if { $primary_sort_col eq "" \
+                 || ( $primary_sort_col ne "" \
+                          && $column_count ne [expr { abs( $primary_sort_col ) } ] ) } {
             if { $column_sorted_p } {
-                # ns_log Notice "qfsp_listcl(150): column_count $column_count s_urlcoded '$s_urlcoded'"
                 if { $decreasing_p } {
                     # reverse class styles
-                    set sort_top "<a href=\"$base_url?s=${s_urlcoded}&amp;p=${column_count}${page_url_add}\" title=\"${title_asc}\" class=\"sortedlast\">${abbrev_asc}</a>"
-                    set sort_bottom "<a href=\"$base_url?s=${s_urlcoded}&amp;p=-${column_count}${page_url_add}\" title=\"${title_desc}\" class=\"sortedfirst\">${abbrev_desc}</a>"
+                    set sort_top "<a href=\""
+                    append sort_top ${base_url} "?s=" ${s_urlcoded}
+                    append sort_top "&amp;p=" ${column_count} ${page_url_add}
+                    append sort_top "\" title=\"" ${title_asc}
+                    append sort_top "\" class=\"sortedlast\">"
+                    append sort_top ${abbrev_asc} "</a>"
+                    set sort_bottom "<a href=\""
+                    append sort_bottom ${base_url} "?s=" ${s_urlcoded}
+                    append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
+                    append sort_bottom "\" title=\"" ${title_desc}
+                    append sort_bottom "\" class=\"sortedfirst\">"
+                    append sort_bottom ${abbrev_desc} "</a>"
                 } else {
-                    set sort_top "<a href=\"$base_url?s=${s_urlcoded}&amp;p=${column_count}${page_url_add}\" title=\"${title_asc}\" class=\"sortedfirst\">${abbrev_asc}</a>"
-                    set sort_bottom "<a href=\"$base_url?s=${s_urlcoded}&amp;p=-${column_count}${page_url_add}\" title=\"${title_desc}\" class=\"sortedlast\">${abbrev_desc}</a>"
+                    set sort_top "<a href=\"" ${base_url} "?s=" ${s_urlcoded}
+                    append sort_top "&amp;p=" ${column_count} ${page_url_add}
+                    append sort_top "\" title=\"" ${title_asc}
+                    append sort_top "\" class=\"sortedfirst\">"
+                    append sort_top ${abbrev_asc} "</a>"
+                    set sort_bottom "<a href=\"" ${base_url} "?s=" ${s_urlcoded}
+                    append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
+                    append sort_bottom "\" title=\"" ${title_desc}
+                    append sort_bottom "\" class=\"sortedlast\">" 
+                    append sort_bottom ${abbrev_desc} "</a>"
                 }
             } else {
-                # Don't align sort order vertically.. just use normal horizontal alignment
-                set sort_top "<a href=\"$base_url?s=${s_urlcoded}&amp;p=${column_count}${page_url_add}\" title=\"${title_asc}\" class=\"unsorted\">${abbrev_asc}</a>"
-                set sort_bottom "<a href=\"$base_url?s=${s_urlcoded}&amp;p=-${column_count}${page_url_add}\" title=\"${title_desc}\" class=\"unsorted\">${abbrev_desc}</a>"
+                # Not sorted, so don't align sort order vertically.. 
+                # Just use normal horizontal alignment.
+                set sort_top "<a href=\""
+                append sort_top ${base_url} "?s=" ${s_urlcoded}
+                append sort_top "&amp;p=" ${column_count} ${page_url_add}
+                append sort_top "\" title=\"" ${title_asc}
+                append sort_top "\" class=\"unsorted\">" ${abbrev_asc} "</a>"
+                set sort_bottom "<a href=\"" 
+                append sort_bottom ${base_url} "?s=" ${s_urlcoded}
+                append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
+                append sort_bottom "\" title=\"" ${title_desc}
+                append sort_bottom "\" class=\"unsorted\">" ${abbrev_desc} "</a>"
                 set sort_link_delim ":"
             }
         } else {
             if { $decreasing_p } {
-                # ns_log Notice "qfsp_listcl(154): column_count $column_count title $title s_urlcoded '$s_urlcoded'"
-                # decreasing primary sort chosen last, no need to make the link active
-                set sort_top "<a href=\"$base_url?s=${s_urlcoded}&amp;p=${column_count}${page_url_add}\" title=\"${title_asc}\" class=\"sortedlast\">${abbrev_asc}</a>"
-                set sort_bottom "<span class=\"sortedfirst\">${abbrev_desc}</span>"
+                # Decreasing primary sort is chosen last, 
+                # no need to make the link active
+                set sort_top "<a href=\""
+                append sort_top ${base_url} "?s=" ${s_urlcoded} 
+                append sort_top "&amp;p=" ${column_count} ${page_url_add}
+                append sort_top "\" title=\"" ${title_asc}
+                append sort_top "\" class=\"sortedlast\">" ${abbrev_asc} "</a>"
+                set sort_bottom "<span class=\"sortedfirst\">"
+                append sort_bottom ${abbrev_desc} "</span>"
             } else {
-                # ns_log Notice "qfsp_listcl(158): column_count $column_count title $title s_urlcoded '$s_urlcoded'"
-                # increasing primary sort chosen last, no need to make the link active
-                set sort_top "<span class=\"sortedfirst\">${abbrev_asc}</span>"
-                set sort_bottom "<a href=\"$base_url?s=${s_urlcoded}&amp;p=-${column_count}${page_url_add}\" title=\"${title_desc}\" class=\"sortedlast\">${abbrev_desc}</a>"
+                # Increasing primary sort is chosen last, 
+                # no need to make the link active
+                set sort_top "<span class=\"sortedfirst\">"
+                append sort_top ${abbrev_asc} "</span>"
+                set sort_bottom "<a href=\""
+                append sort_bottom ${base_url} "?s=" ${s_urlcoded}
+                append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
+                append sort_bottom "\" title=\"" ${title_desc}
+                append sort_bottom "\" class=\"sortedlast\">"
+                append sort_bottom ${abbrev_desc} "</a>"
             }
         }
         if { $column_sorted_p } {
@@ -429,9 +470,9 @@ ad_proc -public qfsp_listcl {
             append title_new "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"
         }
         if { $decreasing_p } {
-            append title_new "${sort_bottom}${sort_link_delim}${sort_top}"
+            append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
         } else {
-            append title_new "${sort_top}${sort_link_delim}${sort_bottom}"
+            append title_new ${sort_top} ${sort_link_delim} ${sort_bottom}
         }
         append title_new "</div>"
         lappend table_titles_w_links_list $title_new
@@ -452,6 +493,7 @@ ad_proc -public qfsp_listcl {
         lappend table_paged_sorted_lists [lindex $table_sorted_lists $row_num]
     }
     set table_sorted_lists $table_paged_sorted_lists
+
     # Result: table_sorted_lists
     # Number of sorted columns:
     set sort_cols_count [llength $sort_order_list]
@@ -459,79 +501,48 @@ ad_proc -public qfsp_listcl {
     # ================================================
     # Display customizations
 
-    # loop through display table rows, formatting data
-    set table_formated_lists [list ]
-    foreach row_list $table_sorted_lists {
-        # label name type metric amount quota projected health_score message
-        set label [lindex $row_list 0]
-        set name [lindex $row_list 1]
-        set type [lindex $row_list 2]
-        set metric [lindex $row_list 3]
-        set amount [lindex $row_list 4]
-        set quota [lindex $row_list 5]
-        set projected [lindex $row_list 6]
-        set health_score [lindex $row_list 7]
-        set message [lindex $row_list 8]
-        set label2 "<a href=\"[string tolower $type]?name=$name\">$label</a>"
-        if { $metric eq "traffic" } {
-            set amount2 [qal_pretty_bytes_iec $amount]
-            set projected2 [qal_pretty_bytes_iec $projected]
-        } else {
-            set amount2 [qal_pretty_bytes_dec $amount]
-            set projected2 [qal_pretty_bytes_dec $projected]
-        }
-        set quota2 [format "%d%%" $quota]
-        # keep row_new_list same length as row_list.. or subsequent sort related references break. 
-        set row_new_list [list $label2 $name $type $metric $amount2 $quota2 $projected2 $health_score $message]
-        lappend table_formatted_lists $row_new_list
-    }
-
-    # Add Row of Titles to Table
-    set table_sorted_lists [linsert $table_formatted_lists 0 [lrange $table_titles_list 0 $table_index_last]]
 
     # To remove a column from display:
     # 1. Blank the column reference from sort_stack_list (and sort_rev_order_list if it were used..)
     #    where  sort_stack_list is a sequential list: 0 1 2 3..
+    #    so, removal of '1' becomes 0 "" 2 3..
     #    Don't remove the reference, or later column tracking for unsorted removals will break.
-    # 2. Reset table_cols_count
-    # Following additional requirements are for the compact_p option:
-    # 3. Remove the column reference from table_titles_list
-    #    set table_titles_list \[list "#acs-lang.Label#" "#accounts-ledger.Name#" "#accounts-ledger.Type#" "#hosting-farm.Metric#" "#accounts-ledger.Amount#" "#hosting-farm.Quota#" "#hosting-farm.Projected#" "#hosting-farm.Health_score#" "#accounts-ledger.Message#"]
-
-    # Blank the column reference: Name ref 1
-    set sort_stack_list [lreplace $sort_stack_list 1 1 ""]
-    #set sort_rev_order_list [lsort -integer -decreasing [lrange $sort_stack_list 0 [expr { [llength $sort_order_list] - 1 } ] ] ]
-    #set table_titles_list [lreplace $table_titles_list 1 1]
-    incr table_cols_count -1
-
-    # ================================================
+    # 2. Reduce table_cols_count by number of columns removed
 
 
 
     # ================================================
     # Change the order of columns
+    # ================================================
     # so that the primary sort col is left, secondary is 2nd from left etc.
+
     # parameters: table_sorted_lists
     set table_col_sorted_lists [list ]
-    # Rebuild the table, one row at a time, adding the primary, secondary etc. columns in order
+
+    # Rebuild the table, one row at a time, 
+    # Add the primary sorted column, then secondary sorted columns in order
     foreach table_row_list $table_sorted_lists {
         set table_row_new [list ]
+
         # Track the columns that aren't sorted
         set unsorted_list $sort_stack_list
         foreach ii $sort_order_list {
             set ii_pos [expr { abs( $ii ) } ]
             lappend table_row_new [lindex $table_row_list $ii_pos]
-            # Blank the reference instead of removing it, or the $ii reference won't work. lsearch is slower
+            # Blank the reference instead of removing it, 
+            # or the $ii reference won't work. lsearch is slower
             set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos ""]
         }
-        # Now that the sorted columns are added to the row, add the remaining columns
 
+        # Now that the sorted columns are added to the row, 
+        # add the remaining columns
         foreach ui $unsorted_list {
             if { $ui ne "" } {
                 # Add unsorted column to row
                 lappend table_row_new [lindex $table_row_list $ui]
             }
         }
+
         # Confirm that all columns have been accounted for.
         set table_row_new_cols [llength $table_row_new]
         if { $table_row_new_cols != $table_cols_count } {
@@ -544,40 +555,20 @@ ad_proc -public qfsp_listcl {
     # ================================================
     # Add UI Options column to table?
     # Not at this time. Keep here in case a variant needs the code at some point.
-    if { 0 } {
-        set table2_lists [list ]
-        set row_count 0
-        foreach row_list $table_col_sorted_lists {
-            set new_row_list $row_list
-            if { $row_count > 0 } {
-                set new_row_list $row_list
-                set item_id [string trim [lindex $row_list 0]]
-                set view   "<a href=\"viewa?item_id=$item_id\">view</a>"
-                set edit   "<a href=\"edita?item_id=$item_id\">edit</a>"
-                set delete "<a href=\"deletea?item_id=$item_id\">delete</a>"
-                set options_col "$view $edit $delete"
-            } else {
-                # First row is a title row. Add title
-                set options_col "Options"
-            }
-            lappend new_row_list $options_col
-            
-            # Add the revised row to the new table
-            lappend table2_lists $new_row_list
-            incr row_count
-        }
-    } else {
-        set table2_lists $table_col_sorted_lists
-    }
+    ##code The above code needs a way to designate columns to not sort
+    # Ignored columns should by their nature and UI, be on the opposite
+    # side of the sorted cases. So, have api include a list,
+    # and convert that list to a logic array, ignore_col_p_arr().
+
 
     # ================================================
-    # 5. Format output -- compact_p vs. regular etc.
+    # 5. Format output 
     # Add attributes to the TABLE tag
-    #set table2_atts_list [list border 1 cellspacing 0 cellpadding 2]
     set table2_atts_list [list style "background-color: #cec;"]
 
     # Add cell formatting to TD tags
     set cell_formating_list [list ]
+
     # Let's try to get fancy, have the rows alternate color after the first row, 
     # and have the sorted columns slightly lighter in color to highlight them
     # base alternating row colors:
@@ -588,7 +579,6 @@ ad_proc -public qfsp_listcl {
     set color_odd_scol "oddlight"
 
     # Set the default title row and column TD formats before columns sorted:
-
     set title_td_attrs_list [list ]
     set column_nbr 0
     foreach title $table_titles_list {
@@ -611,11 +601,16 @@ ad_proc -public qfsp_listcl {
     set cell_table_lists [list $title_td_attrs_list $odd_row_list $even_row_list]
 
     # Rebuild the even/odd rows adding the colors
-    # If the column order changes, then formatting of the TD tags may change, too.
-    # So, re-order the formatting columns, inserting the appropriate color at each cell.
-    # Use the same looping logic from when the table columns changed order to avoid inconsistencies
+    # When column order changes, 
+    # then formatting of the TD tags may change, too.
+    # So, re-order the formatting columns, 
+    # insert the appropriate color at each cell.
+    # Use the same looping logic from when the table columns changed order
+    # to avoid inconsistencies
+    ##code  This looping should be integrated into the first loop.
 
-    # Rebuild the cell format table, one row at a time, adding the primary, secondary etc. columns in order
+    # Rebuild the cell format table, one row at a time, 
+    # add the primary sort column, secondary sort column etc. columns in order
     set row_count 0
     set cell_table_sorted_lists [list ]
     foreach td_row_list $cell_table_lists {
@@ -634,7 +629,8 @@ ad_proc -public qfsp_listcl {
                 }
                 set class_pos [lsearch -exact $cell_format_list "class"]
                 if { $class_pos > -1 } {
-                    # combine the class values instead of appending more attributes
+                    # Combine the class values 
+                    # instead of appending more attributes
                     incr class_pos
                     set attr_value [lindex $cell_format_list $class_pos]
                     set new_attr_value $attr_value
@@ -642,13 +638,15 @@ ad_proc -public qfsp_listcl {
                     set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value]
                 } else {
                     lappend cell_format_list class $color
-                }            
+                }      
             }
             lappend td_row_new $cell_format_list
-            # Blank the reference instead of removing it, or the $ii_pos reference won't work. lsearch is slower
+            # Blank the reference instead of removing it, 
+            # or the $ii_pos reference won't work. lsearch is slower
             set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos ""]
         }
-        # Now that the sorted columns are added to the row, add the remaining columns
+        # Now that the sorted columns are added to the row, 
+        # add the remaining columns
         foreach ui $unsorted_list {
             if { $ui ne "" } {
                 set cell_format_list [lindex $td_row_list $ui]
@@ -698,7 +696,7 @@ ad_proc -public qfsp_listcl {
 
 
     # this builds the html table and assigns it to table2_html
-    set table2_html [qss_list_of_lists_to_html_table $table2_lists $table2_atts_list $cell_table_sorted_lists]
+    #set table2_html [qss_list_of_lists_to_html_table $table2_lists $table2_atts_list $cell_table_sorted_lists]
     # add table2_html to adp output
     append page_html $table2_html
 
