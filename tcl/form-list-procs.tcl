@@ -27,7 +27,7 @@ ad_proc -public qfsp_listcl {
     {-s_varname ""}
     {-p_varname ""}
 } {
-    Creates a user customizable list from a list of lists.
+    Creates a user customizable sorted list from a list of lists.
     <br><br>
     Currently this does not sort timestamps by time, 
     and all columns are shown (not hidden). 
@@ -122,8 +122,13 @@ ad_proc -public qfsp_listcl {
     if  { $item_count eq "" } {
         set item_count [llength $table_lists]
     }
-    set s_exists_p [info exists s]
-    set p_exists_p [info exists p]
+    if { ![info exists s ] } {
+        set s ""
+    }
+    if { ![info exists p ] } {
+        set p ""
+    }
+
 
 
     # ================================================
@@ -131,9 +136,9 @@ ad_proc -public qfsp_listcl {
     # ================================================
     # Sort Table Columns
     # arguments
-    #     s sort_order_list (via form)
-    #     p primary_sort_col_new (via form)
-    #     table_lists (table represented as a list of lists
+    #     s            sort_order_list (via form post)
+    #     p            primary_sort_col_new (via form post)
+    #     table_lists  table represented as a list of lists
     # ================================================
 
     set table_cols_count [llength [lindex $table_lists 0]]
@@ -144,22 +149,21 @@ ad_proc -public qfsp_listcl {
         set sort_type_list [lrepeat $table_cols_count "-ascii"]
     }
 
-    set i 0
     set sort_stack_list [list ]
-    while { $i < $table_cols_count } {
+    for {set i 0} { $i < $table_cols_count } { incr i } {
         lappend sort_stack_list $i
-        incr i
     }
+
     set sort_order_list [list ]
     set sort_rev_order_list [list ]
     set table_sorted_lists $table_lists
 
     # Sort table?
-    if { $s_exists_p && $s ne "" } {
+    if { $s ne "" } {
         # Sort table
         # A sort order has been requested
         # $s is in the form of a string of integers delimited by the letter a. 
-        # Each integer is a column number.
+        # Each integer is a column number ie list index, where 0 is first column.
         # A positive integer sorts column increasing.
         # A negative integer sorts column decreasing.
         # Primary sort column is listed first, followed by secondary sort etc.
@@ -167,49 +171,47 @@ ad_proc -public qfsp_listcl {
         # Validate sort order, because it is user input via web
         # $s' first check and change to sort_order_scalar
         regsub -all -- {[^\-0-9a]} $s {} sort_order_scalar
-        # ns_log Notice "resource-status-summary-1.tcl(73): sort_order_scalar $sort_order_scalar"
+        # ns_log Notice "qfsp_listcl(73): sort_order_scalar $sort_order_scalar"
         # Converting sort_order_scalar to a list
         set sort_order_list [split $sort_order_scalar a]
         set sort_order_list [lrange $sort_order_list 0 $table_index_last]
     }
 
     # Has a sort order change been requested?
-    if { $p_exists_p && $p ne "" } {
+    if { $p ne "" } {
         # A new primary sort requested
         # This is a similar reference to s, but only one integer.
         # Since this is the first time used as a primary, 
         # additional validation and processing is required.
         # Validate user input, fail silently
+
         regsub -all -- {[^\-0-9]+} $p {} primary_sort_col_new
         # primary_sort_col_pos = primary sort column's position
         # primary_sort_col_new = a negative or positive column position. 
         set primary_sort_col_pos [expr { abs( $primary_sort_col_new ) } ]
-        # ns_log Notice "resource-status-summary-1.tcl(85): primary_sort_col_new $primary_sort_col_new"
         if { $primary_sort_col_new ne "" && $primary_sort_col_pos < $table_cols_count } {
-            # ns_log Notice "resource-status-summary-1.tcl(87): primary_sort_col_new $primary_sort_col_new primary_sort_col_pos $primary_sort_col_pos"
             # modify sort_order_list
             set sort_order_new_list [list $primary_sort_col_new]
             foreach ii $sort_order_list {
                 if { [expr { abs( ${ii} ) } ] ne $primary_sort_col_pos } {
                     lappend sort_order_new_list $ii
-                    # ns_log Notice "resource-status-summary-1.tcl(93): ii '$ii' sort_order_new_list '$sort_order_new_list'"
                 }
             }
             set sort_order_list $sort_order_new_list
-            # ns_log Notice "resource-status-summary-1.tcl(97): end if primary_sort_col_new.. "
+            # ns_log Notice "qfsp_listcl(97): end if primary_sort_col_new.. "
         }
     }
 
-    if { ( $s_exists_p && $s ne "" ) || ( $p_exists_p && $p ne "" ) } {
-        # ns_log Notice "resource-status-summary-1.tcl(101): sort_order_scalar '$sort_order_scalar' sort_order_list '$sort_order_list'"
+    if { ( $s ne "" ) || ( $p ne "" ) } {
+        # ns_log Notice "qfsp_listcl(101): sort_order_scalar '$sort_order_scalar' sort_order_list '$sort_order_list'"
         # Create a reverse index list for index countdown, because primary sort is last, secondary sort is second to last..
         # sort_stack_list 0 1 2 3..
         set sort_rev_order_list [lsort -integer -decreasing [lrange $sort_stack_list 0 [expr { [llength $sort_order_list] - 1 } ] ] ]
         # sort_rev_order_list ..3 2 1 0
-        #ns_log Notice "resource-status-summary-1.tcl(104): sort_rev_order_list '$sort_rev_order_list' "
+        #ns_log Notice "qfsp_listcl(104): sort_rev_order_list '$sort_rev_order_list' "
         foreach ii $sort_rev_order_list {
             set col2sort [lindex $sort_order_list $ii]
-            # ns_log Notice "resource-status-summary-1.tcl(107): ii $ii col2sort '$col2sort' llength col2sort [llength $col2sort] sort_rev_order_list '$sort_rev_order_list' sort_order_list '$sort_order_list'"
+            # ns_log Notice "qfsp_listcl(107): ii $ii col2sort '$col2sort' llength col2sort [llength $col2sort] sort_rev_order_list '$sort_rev_order_list' sort_order_list '$sort_order_list'"
             if { [string range $col2sort 0 0] eq "-" } {
                 set col2sort_wo_sign [string range $col2sort 1 end]
                 set sort_order "-decreasing"
@@ -224,9 +226,9 @@ ad_proc -public qfsp_listcl {
             if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists] } result] } {
                 # lsort errored, probably due to bad sort_type. Fall back to -ascii sort_type, or fail..
                 set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists]
-                ns_log Notice "resource-status-summary-1(121): lsort fell back to sort_type -ascii due to error: ${result}"
+                ns_log Notice "qfsp_listcl(121): lsort fell back to sort_type -ascii due to error: ${result}"
             }
-            #ns_log Notice "resource-status-summary-1.tcl(123): lsort $sort_type $sort_order -index $col2sort_wo_sign table_sorted_lists"
+            #ns_log Notice "qfsp_listcl(123): lsort $sort_type $sort_order -index $col2sort_wo_sign table_sorted_lists"
         }
     }
 
@@ -393,7 +395,7 @@ ad_proc -public qfsp_listcl {
 
         if { $primary_sort_col eq "" || ( $primary_sort_col ne "" && $column_count ne [expr { abs($primary_sort_col) } ] ) } {
             if { $column_sorted_p } {
-                # ns_log Notice "resource-status-summary-1.tcl(150): column_count $column_count s_urlcoded '$s_urlcoded'"
+                # ns_log Notice "qfsp_listcl(150): column_count $column_count s_urlcoded '$s_urlcoded'"
                 if { $decreasing_p } {
                     # reverse class styles
                     set sort_top "<a href=\"$base_url?s=${s_urlcoded}&amp;p=${column_count}${page_url_add}\" title=\"${title_asc}\" class=\"sortedlast\">${abbrev_asc}</a>"
@@ -410,12 +412,12 @@ ad_proc -public qfsp_listcl {
             }
         } else {
             if { $decreasing_p } {
-                # ns_log Notice "resource-status-summary-1.tcl(154): column_count $column_count title $title s_urlcoded '$s_urlcoded'"
+                # ns_log Notice "qfsp_listcl(154): column_count $column_count title $title s_urlcoded '$s_urlcoded'"
                 # decreasing primary sort chosen last, no need to make the link active
                 set sort_top "<a href=\"$base_url?s=${s_urlcoded}&amp;p=${column_count}${page_url_add}\" title=\"${title_asc}\" class=\"sortedlast\">${abbrev_asc}</a>"
                 set sort_bottom "<span class=\"sortedfirst\">${abbrev_desc}</span>"
             } else {
-                # ns_log Notice "resource-status-summary-1.tcl(158): column_count $column_count title $title s_urlcoded '$s_urlcoded'"
+                # ns_log Notice "qfsp_listcl(158): column_count $column_count title $title s_urlcoded '$s_urlcoded'"
                 # increasing primary sort chosen last, no need to make the link active
                 set sort_top "<span class=\"sortedfirst\">${abbrev_asc}</span>"
                 set sort_bottom "<a href=\"$base_url?s=${s_urlcoded}&amp;p=-${column_count}${page_url_add}\" title=\"${title_desc}\" class=\"sortedlast\">${abbrev_desc}</a>"
@@ -533,7 +535,7 @@ ad_proc -public qfsp_listcl {
         # Confirm that all columns have been accounted for.
         set table_row_new_cols [llength $table_row_new]
         if { $table_row_new_cols != $table_cols_count } {
-            ns_log Notice "resource-status-summary-1.tcl(203): Warning: table_row_new has ${table_row_new_cols} instead of ${table_cols_count} columns."
+            ns_log Notice "qfsp_listcl(203): Warning: table_row_new has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
         lappend table_col_sorted_lists $table_row_new
