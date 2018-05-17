@@ -18,15 +18,18 @@ ad_proc -public qfsp_table {
     {-item_count ""}
     {-this_start_row "1"}
     {-base_url ""}
-    {-prev_nav_link_html_varname "__qfsp_prev_nav_link_html"}
-    {-current_nav_links_html_varname "__qfsp_current_nav_links_html"}
-    {-next_nav_link_html_varname "__qfsp_next_nav_link_html"}
+    {-prev_nav_links_html_varname "__qfsp_prev_nav_links_html"}
+    {-current_nav_pos_html_varname "__qfsp_current_nav_pos_html"}
+    {-next_nav_links_html_varname "__qfsp_next_nav_links_html"}
     {-separator "&nbsp;"}
+    {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
+    {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
     {-list_length_limit ""}
     {-list_offset ""}
     {-page_num_p "0"}
     {-s_varname ""}
     {-p_varname ""}
+
 } {
     Creates a user customizable sorted list from a list of lists.
     <br><br>
@@ -82,9 +85,9 @@ ad_proc -public qfsp_table {
 } {
     upvar 1 $table_lists_of_lists_varname table_lists
     upvar 1 $table_titles_list_varname table_titles_list
-    upvar 1 $prev_nav_link_html_varname prev_nav_link_html
-    upvar 1 $current_nav_links_html_varname current_nav_links_html
-    upvar 1 $next_nav_link_html_varname next_nav_link_html
+    upvar 1 $prev_nav_links_html_varname prev_nav_links_html
+    upvar 1 $current_nav_pos_html_varname current_nav_pos_html
+    upvar 1 $next_nav_links_html_varname next_nav_links_html
 
     upvar 1 $s_varname s
     upvar 1 $p_varname p
@@ -234,8 +237,30 @@ ad_proc -public qfsp_table {
     # ================================================
     # if $s exists, add it to to pagination urls.
 
+    # constants
+    set page_num_prefix "#acs-templating.Page# "
+    set a_href_h "<a href=\""
+    set amp_s_h "&amp;s="
+    set amp_p_h "&amp;p="
+    set amp_h "&amp;"
+    set eq_h "="
+    set da_h "-"
+    set qm_h "?"
+    set q_s_h "?s="
+    set sp " "
+    set class_att_h "\" class=\""
+    set title_att_h "\" title=\""
+    set this_start_row_h "this_start_row="
+    set dquote_end_h "\">"
+    set a_end_h "</a>"
+    set span_end_h "</span>"
+    set sortedlast "sortedlast"
+    set sortedfirst "sortedfirst"
+    set unsorted "unsorted"
+    set span_h "<span "
+    set colon ":"
+    set div_end_h "</div>"
     # Add the sort links to the titles.
-
     # urlcode sort_order_list
     set s_urlcoded ""
     foreach sort_i $sort_order_list {
@@ -243,7 +268,7 @@ ad_proc -public qfsp_table {
         append s_urlcoded a
     }
     set s_urlcoded [string range $s_urlcoded 0 end-1]
-    set s_url_add "&amp;s="
+    set s_url_add $amp_s_h
     append s_url_add ${s_urlcoded}
 
     # Sanity check 
@@ -264,16 +289,16 @@ ad_proc -public qfsp_table {
             set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
             if { $page_ref eq "" } {
-                set page_ref "#acs-templating.Page# "
+                set page_ref $page_num_prefix
                 append page_ref ${page_num}
             }
         }
-        set this_start_row_link "<a href=\""
-        append this_start_row_link ${base_url} "?this_start_row=" ${start_row}
-        append this_start_row_link ${s_url_add} "\">" ${page_ref} "</a>"
+        set this_start_row_link ${a_href_h}
+        append this_start_row_link ${base_url} $qm_h $this_start_row_h ${start_row}
+        append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
         lappend prev_bar_list $this_start_row_link
     } 
-    set prev_nav_link_html [join $prev_bar_list $separator]
+    set prev_nav_links_html [join $prev_bar_list $separator]
 
     set current_bar_list [lindex $bar_list_set 1]
     set page_num [lindex $current_bar_list 0]
@@ -285,12 +310,12 @@ ad_proc -public qfsp_table {
         set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
         set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
         if { $page_ref eq "" } {
-            set page_ref "#acs-templating.Page# "
+            set page_ref $page_num_prefix
             append page_ref ${page_num}
         }
     }
-##verify current_nav_links works
-    set current_nav_links $page_ref
+
+    set current_nav_pos_html $page_ref
 
     set next_bar_list [lindex $bar_list_set 2]
     foreach {page_num start_row} $next_bar_list {
@@ -301,21 +326,23 @@ ad_proc -public qfsp_table {
             set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
             if { $page_ref eq "" } {
-                set page_ref "#acs-templating.Page# "
+                set page_ref $page_num_prefix
                 append page_ref ${page_num}
             }
         }
-        set next_bar_link " <a href=\""
-        append next_bar_link ${base_url} "?this_start_row=" ${start_row}
-        append next_bar_link ${s_url_add} "\">" ${page_ref} "</a> "
+        set next_bar_link ${sp}
+        append next_bar_link ${a_href_h}
+        append next_bar_link ${base_url} ${qm_h} ${this_start_row_h} ${start_row}
+        append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
         lappend next_bar_list $next_bar_link
     }
-    set next_nav_link_html [join $next_bar_list $separator]
+    set next_nav_links_html [join $next_bar_list $separator]
 
 
     # add start_row to sort_urls.
     if { $this_start_row_exists_p } {
-        set page_url_add "&amp;this_start_row="
+        set page_url_add ${amp_h}
+        append page_url ${this_start_row_h}
         append page_url_add ${this_start_row}
     } else {
         set page_url_add ""
@@ -407,80 +434,90 @@ ad_proc -public qfsp_table {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
                     # reverse class styles
-                    set sort_top "<a href=\""
-                    append sort_top ${base_url} "?s=" ${s_urlcoded}
-                    append sort_top "&amp;p=" ${column_count} ${page_url_add}
-                    append sort_top "\" title=\"" ${title_asc}
-                    append sort_top "\" class=\"sortedlast\">"
-                    append sort_top ${abbrev_asc} "</a>"
-                    set sort_bottom "<a href=\""
-                    append sort_bottom ${base_url} "?s=" ${s_urlcoded}
-                    append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
-                    append sort_bottom "\" title=\"" ${title_desc}
-                    append sort_bottom "\" class=\"sortedfirst\">"
-                    append sort_bottom ${abbrev_desc} "</a>"
+                    set sort_top ${a_href_h}
+                    append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
+                    append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                    append sort_top ${title_att_h} ${title_asc}
+                    append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
+                    append sort_top ${abbrev_asc} ${a_end_h}
+                    set sort_bottom ${a_href_h}
+                    append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                    append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                    append sort_bottom ${title_att_h} ${title_desc}
+                    append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                    append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
-                    set sort_top "<a href=\"" ${base_url} "?s=" ${s_urlcoded}
-                    append sort_top "&amp;p=" ${column_count} ${page_url_add}
-                    append sort_top "\" title=\"" ${title_asc}
-                    append sort_top "\" class=\"sortedfirst\">"
-                    append sort_top ${abbrev_asc} "</a>"
-                    set sort_bottom "<a href=\"" ${base_url} "?s=" ${s_urlcoded}
-                    append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
-                    append sort_bottom "\" title=\"" ${title_desc}
-                    append sort_bottom "\" class=\"sortedlast\">" 
-                    append sort_bottom ${abbrev_desc} "</a>"
+                    set sort_top ${a_href_h} ${base_url} ${q_s_h} ${s_urlcoded}
+                    append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                    append sort_top ${title_att_h} ${title_asc}
+                    append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                    append sort_top ${abbrev_asc} ${a_end_h}
+                    set sort_bottom ${a_href_h} ${base_url} ${q_s_h} ${s_urlcoded}
+                    append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                    append sort_bottom ${title_att_h} ${title_desc}
+                    append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
+                    append sort_bottom ${abbrev_desc} ${a_end_h}
                 }
             } else {
                 # Not sorted, so don't align sort order vertically.. 
                 # Just use normal horizontal alignment.
-                set sort_top "<a href=\""
-                append sort_top ${base_url} "?s=" ${s_urlcoded}
-                append sort_top "&amp;p=" ${column_count} ${page_url_add}
-                append sort_top "\" title=\"" ${title_asc}
-                append sort_top "\" class=\"unsorted\">" ${abbrev_asc} "</a>"
-                set sort_bottom "<a href=\"" 
-                append sort_bottom ${base_url} "?s=" ${s_urlcoded}
-                append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
-                append sort_bottom "\" title=\"" ${title_desc}
-                append sort_bottom "\" class=\"unsorted\">" ${abbrev_desc} "</a>"
-                set sort_link_delim ":"
+                set sort_top ${a_href_h}
+                append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
+                append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                append sort_top ${title_att_h} ${title_asc}
+                append sort_top ${class_att_h} ${unsorted} ${dquote_end_h}
+                set sort_bottom ${a_href_h} 
+                append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                append sort_bottom ${title_att_h} ${title_desc}
+                append sort_bottom ${class_att_h} ${unsorted} ${dquote_end_h}
+                append sort_bottom ${abbrev_desc} ${a_end_h}
+                set sort_link_delim ${colon}
             }
         } else {
             if { $decreasing_p } {
                 # Decreasing primary sort is chosen last, 
                 # no need to make the link active
-                set sort_top "<a href=\""
-                append sort_top ${base_url} "?s=" ${s_urlcoded} 
-                append sort_top "&amp;p=" ${column_count} ${page_url_add}
-                append sort_top "\" title=\"" ${title_asc}
-                append sort_top "\" class=\"sortedlast\">" ${abbrev_asc} "</a>"
-                set sort_bottom "<span class=\"sortedfirst\">"
-                append sort_bottom ${abbrev_desc} "</span>"
+                set sort_top ${a_href_h}
+                append sort_top ${base_url} ${q_s_h} ${s_urlcoded} 
+                append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                append sort_top ${title_att_h} ${title_asc}
+                append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
+                append sort_top ${abbrev_asc} ${a_end_h}
+                set sort_bottom ${span_h} ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                append sort_bottom ${abbrev_desc} ${span_end_h}
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
-                set sort_top "<span class=\"sortedfirst\">"
-                append sort_top ${abbrev_asc} "</span>"
-                set sort_bottom "<a href=\""
-                append sort_bottom ${base_url} "?s=" ${s_urlcoded}
-                append sort_bottom "&amp;p=-" ${column_count} ${page_url_add}
-                append sort_bottom "\" title=\"" ${title_desc}
-                append sort_bottom "\" class=\"sortedlast\">"
-                append sort_bottom ${abbrev_desc} "</a>"
+                set sort_top ${span_h} ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                append sort_top ${abbrev_asc} ${span_end_h}
+                set sort_bottom ${a_href_h}
+                append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                append sort_bottom ${title_att_h} ${title_desc}
+                append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
+                append sort_bottom ${abbrev_desc} ${a_end_h}
             }
         }
+        set end_div ""
         if { $column_sorted_p } {
-            append title_new "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"
+            append title_new $title_sorted_div_html
+            if { $title_sorted_div_html ne "" } {
+                set end_div ${div_end_h}
+            }
         } else {
-            append title_new "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"
+            append title_new $title_unsorted_div_html
+            if { $title_unsorted_div_html ne "" } {
+                set end_div ${div_end_h}
+            }
         }
         if { $decreasing_p } {
             append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
         } else {
             append title_new ${sort_top} ${sort_link_delim} ${sort_bottom}
         }
-        append title_new "</div>"
+        
+        append title_new $end_div
         lappend table_titles_w_links_list $title_new
         incr column_count
     }
@@ -562,9 +599,10 @@ ad_proc -public qfsp_table {
     # Add UI Options column to table?
     # Not at this time. Keep here in case a variant needs the code at some point.
     ##code The above code needs a way to designate columns to not sort
-    # Ignored columns should by their nature and UI, be on the opposite
-    # side of the sorted cases. So, have api include a list,
-    # and convert that list to a logic array, ignore_col_p_arr().
+    # static (vs sortable) columns should by their nature and UI,
+    # be on the opposite side of the sorted cases. 
+    # So, have api include a list,
+    # and convert that list to a logic array, static_col_p_arr().
 
 
     # ================================================
