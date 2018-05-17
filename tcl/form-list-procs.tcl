@@ -10,7 +10,7 @@ ad_library {
 }
 
 
-ad_proc -public qfz_listcl {
+ad_proc -public qfsp_listcl {
     -items_per_page
     -table_list_of_lists_varname
     -table_titles_list_varname
@@ -29,23 +29,53 @@ ad_proc -public qfz_listcl {
 } {
     Creates a user customizable list from a list of lists.
     <br><br>
+    Currently this does not sort timestamps by time, 
+    and all columns are shown (not hidden). 
+    To sort by timestamp, 
+    use '-dictionary' sort type,
+    and a consistent length format for the column values, 
+    such as ISO-8601 format: "YYYY-MM-DD HH:MM:SS". See: http://wiki.tcl.tk/1277
+    <br><br>
     Required parameters:
     <br><br>
     <code>items_per_page</code> - number of rows (items) per page
-    <code>table_list_of_lists_varname</code> Variable holding a table defined as a list of lists, where each list is a row containing values of columns from first to last.
-    <code>table_titles_list_varname</code> Variable name containing a list of titles of the columns in <code>table_list_of_lists</code>, in cooresponding order. That is first in list is title of first column in table.
+    <code>table_list_of_lists_varname</code> 
+    - Variable holding a table defined as a list of lists, 
+    where each list is a row containing values of columns from first to last.
+    <code>table_titles_list_varname</code> 
+    - Variable name containing a list of titles of the columns in 
+    <code>table_list_of_lists</code>, in cooresponding order. 
+    That is first in list is title of first column in table.
     <br><br>
     Optional parameters:
     <code>item_count</code> - number of rows (items) in the table.
-    <code>this_start_row</code> - start row (item sequence number) for this page. First row is 1 even though tcl usually uses 0.
+    <code>this_start_row</code> 
+    - start row (item sequence number) for this page. First row is 1 even though tcl usually uses 0.
     <code>base_url</code> - url for building page links
-    <code>separator</code> - html used between page numbers in pagination bar, defaults to '&nbsp;'
+    <code>separator</code> 
+    - html used between page numbers in pagination bar, defaults to '&nbsp;'
     <code>list_limit</code> - limits the list to this many items.
-    <code>list_offset</code> - offset the list to start at some point other than the first item.
-    <code>page_num_p</code> - Answers question: Use the page number in pagniation bar's display? If not, the first value of the left-most (primary sort) column is used.
-    <code>s_varname</code> s is a sort_order_list as defined by the code and passed via a form. It's an 'a' delimited list of column indexes of table to be sorted in reverse order, so that primary sort is the first in the list. Secondary sort is the second in the list and on.
-    <code>p_varname</code> p is a change of the sort_order_list to now make this index the primary sort. See code for details.
-    <code>sort_type_list</code> - A list of types of sort to use for each column when using <code>lsort -index X</code> to sort a table by a specific column. The default value for each column is "-ascii", per tcl's default. When specifying sort_type_list, define a type to use for each column. For example:
+    <code>list_offset</code> 
+    - offset the list to start at some point other than the first item.
+    <code>page_num_p</code> 
+    - Answers question: Use the page number in pagniation bar's display? 
+    If not, the first value of the left-most (primary sort) column is used.
+    <code>s_varname</code> 
+    - 's' is a sort_order_list as defined by the code and passed via a form. 
+    It's an 'a' delimited list of column indexes of table 
+    to be sorted in reverse order, 
+    so that primary sort is the first in the list. 
+    Secondary sort is the second in the list and on.
+    <code>p_varname</code>
+    - 'p' is a change of the sort_order_list 
+    to now make this index the primary sort index. See code for details.
+    <code>sort_type_list</code> 
+    - A list of types of sort to use for each column when using 
+    <code>lsort -index &lt;column&gt; -ascii &lt;list_of_lists&gt;</code> 
+    to sort a table by a specific column. 
+    The default value for each column is "-ascii", per tcl's default. 
+    When specifying sort_type_list, define a type to use for each column. 
+    For example:
     \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
 
 } {
@@ -141,15 +171,15 @@ ad_proc -public qfz_listcl {
         # Converting sort_order_scalar to a list
         set sort_order_list [split $sort_order_scalar a]
         set sort_order_list [lrange $sort_order_list 0 $table_index_last]
-##code        
     }
 
     # Has a sort order change been requested?
     if { $p_exists_p && $p ne "" } {
-        # new primary sort requested
-        # This is a similar reference to $s, but only one integer.
-        # Since this is the first time used as a primary, additional validation and processing is required.
-        # validate user input, fail silently
+        # A new primary sort requested
+        # This is a similar reference to s, but only one integer.
+        # Since this is the first time used as a primary, 
+        # additional validation and processing is required.
+        # Validate user input, fail silently
         regsub -all -- {[^\-0-9]+} $p {} primary_sort_col_new
         # primary_sort_col_pos = primary sort column's position
         # primary_sort_col_new = a negative or positive column position. 
