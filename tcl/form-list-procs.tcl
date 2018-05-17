@@ -1,6 +1,6 @@
 ad_library {
 
-    routines for presenting tcl list of lists as a paginated html list
+    routines for presenting tcl list of lists as a paginated html table
     @creation-date 14 May 2018
     @Copyright (c) 2018 Benjamin Brink
     @license GNU General Public License 2, see project home or http://www.gnu.org/licenses/gpl.html
@@ -10,7 +10,7 @@ ad_library {
 }
 
 
-ad_proc -public qfsp_listcl {
+ad_proc -public qfsp_table {
     -items_per_page
     -table_list_of_lists_varname
     -table_titles_list_varname
@@ -18,7 +18,9 @@ ad_proc -public qfsp_listcl {
     {-item_count ""}
     {-this_start_row "1"}
     {-base_url ""}
-    {-nav_bar_html_varname ""}
+    {-prev_nav_link_html_varname "__qfsp_prev_nav_link_html"}
+    {-current_nav_links_html_varname "__qfsp_current_nav_links_html"}
+    {-next_nav_link_html_varname "__qfsp_next_nav_link_html"}
     {-separator "&nbsp;"}
     {-list_length_limit ""}
     {-list_offset ""}
@@ -80,6 +82,10 @@ ad_proc -public qfsp_listcl {
 } {
     upvar 1 $table_lists_of_lists_varname table_lists
     upvar 1 $table_titles_list_varname table_titles_list
+    upvar 1 $prev_nav_link_html_varname prev_nav_link_html
+    upvar 1 $current_nav_links_html_varname current_nav_links_html
+    upvar 1 $next_nav_link_html_varname next_nav_link_html
+
     upvar 1 $s_varname s
     upvar 1 $p_varname p
 
@@ -246,8 +252,8 @@ ad_proc -public qfsp_listcl {
     }
 
     set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row]
-    set prev_bar [list]
-    set next_bar [list]
+    set prev_bar_list [list]
+    set next_bar_list [list]
 
     set prev_bar_list [lindex $bar_list_set 0]
     foreach {page_num start_row} $prev_bar_list {
@@ -265,9 +271,9 @@ ad_proc -public qfsp_listcl {
         set this_start_row_link "<a href=\""
         append this_start_row_link ${base_url} "?this_start_row=" ${start_row}
         append this_start_row_link ${s_url_add} "\">" ${page_ref} "</a>"
-        lappend prev_bar $this_start_row_link
+        lappend prev_bar_list $this_start_row_link
     } 
-    set prev_bar [join $prev_bar $separator]
+    set prev_nav_link_html [join $prev_bar_list $separator]
 
     set current_bar_list [lindex $bar_list_set 1]
     set page_num [lindex $current_bar_list 0]
@@ -283,8 +289,8 @@ ad_proc -public qfsp_listcl {
             append page_ref ${page_num}
         }
     }
-
-    set current_bar $page_ref
+##verify current_nav_links works
+    set current_nav_links $page_ref
 
     set next_bar_list [lindex $bar_list_set 2]
     foreach {page_num start_row} $next_bar_list {
@@ -302,9 +308,9 @@ ad_proc -public qfsp_listcl {
         set next_bar_link " <a href=\""
         append next_bar_link ${base_url} "?this_start_row=" ${start_row}
         append next_bar_link ${s_url_add} "\">" ${page_ref} "</a> "
-        lappend next_bar $next_bar_link
+        lappend next_bar_list $next_bar_link
     }
-    set next_bar [join $next_bar $separator]
+    set next_nav_link_html [join $next_bar_list $separator]
 
 
     # add start_row to sort_urls.
