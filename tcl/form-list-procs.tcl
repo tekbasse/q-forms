@@ -10,7 +10,7 @@ ad_library {
 }
 
 
-ad_proc -public qfsp_table {
+ad_proc -public qfsp_table_g2 {
     -items_per_page
     -table_list_of_lists_varname
     -table_titles_list_varname
@@ -31,10 +31,24 @@ ad_proc -public qfsp_table {
     {-p_varname ""}
 
 } {
-    Creates a user customizable sorted list from a list of lists.
+    Creates a user customizable sorted list from a list of lists by
+    creating a one row header with html. <br>
+    Outputs are:
+    <br><br><pre>
+    prev_nav_links_html_varname    These three variables hold components
+    current_nav_pos_html_varname   of a nav bar.
+    next_nav_links_html_varname
+
+    table_list_of_lists_varname    This table gets sorted and re-ordered.
+    heading_row_html_varname       This heading row includes html 
+                                   for form-based UI for p and s parameters.
+    heading_row_list_varname       This heading row has columns
+                                   re-organized same as table_list_of_lists.
+    </pre>
     <br><br>
-    Currently this does not sort timestamps by time, 
-    and all columns are shown (not hidden). 
+
+    <br><br>
+
     To sort by timestamp, 
     use '-dictionary' sort type,
     and a consistent length format for the column values, 
