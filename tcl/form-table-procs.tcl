@@ -10,40 +10,44 @@ ad_library {
 }
 
 
-ad_proc -public qfsp_table_g2 {
+ad_proc -public qfo_sp_table_g2 {
     -items_per_page
     -table_list_of_lists_varname
     -table_titles_list_varname
-    {-sort_type_list ""}
-    {-item_count ""}
-    {-this_start_row "1"}
     {-base_url ""}
-    {-prev_nav_links_html_varname "__qfsp_prev_nav_links_html"}
-    {-current_nav_pos_html_varname "__qfsp_current_nav_pos_html"}
-    {-next_nav_links_html_varname "__qfsp_next_nav_links_html"}
-    {-separator "&nbsp;"}
-    {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
-    {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
+    {-item_count ""}
     {-list_length_limit ""}
     {-list_offset ""}
+    {-nav_current_pos_html_varname "__qfsp_nav_current_pos_html"}
+    {-nav_next_links_html_varname "__qfsp_nav_next_links_html"}
+    {-nav_prev_links_html_varname "__qfsp_nav_prev_links_html"}
+    {-p_varname "__qfsp_p"}
     {-page_num_p "0"}
-    {-s_varname ""}
-    {-p_varname ""}
+    {-s_varname "__qfsp_s"}
+    {-separator "&nbsp;"}
+    {-sort_type_list ""}
+    {-table_html_varname "__qfsp_table_html"}
+    {-table_tag_attributes_list "style {background-color: #cec;}"}
+    {-table_titles_w_links_list_varname "__qfsp_table_titles_w_links_list"}
+    {-this_start_row "1"}
+    {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
+    {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
 
 } {
     Creates a user customizable sorted list from a list of lists by
     creating a one row header with html. <br>
     Outputs are:
     <br><br><pre>
-    prev_nav_links_html_varname    These three variables hold components
-    current_nav_pos_html_varname   of a nav bar.
-    next_nav_links_html_varname
+    nav_prev_links_html_varname        These three variables hold components
+    nav_current_pos_html_varname       of a nav bar.
+    nav_next_links_html_varname
 
-    table_list_of_lists_varname    This table gets sorted and re-ordered.
-    heading_row_html_varname       This heading row includes html 
-                                   for form-based UI for p and s parameters.
-    heading_row_list_varname       This heading row has columns
-                                   re-organized same as table_list_of_lists.
+    table_list_of_lists_varname        This table gets sorted and re-ordered.
+    table_titles_w_links_list_varname  This heading row includes html 
+                                       for form-based UI for p and s parameters
+
+    table_titles_list_varname          This heading row has columns
+                                       re-organized same as table_list_of_lists
     </pre>
     <br><br>
 
@@ -99,10 +103,10 @@ ad_proc -public qfsp_table_g2 {
 } {
     upvar 1 $table_lists_of_lists_varname table_lists
     upvar 1 $table_titles_list_varname table_titles_list
-    upvar 1 $prev_nav_links_html_varname prev_nav_links_html
-    upvar 1 $current_nav_pos_html_varname current_nav_pos_html
-    upvar 1 $next_nav_links_html_varname next_nav_links_html
-
+    upvar 1 $nav_prev_links_html_varname nav_prev_links_html
+    upvar 1 $nav_current_pos_html_varname nav_current_pos_html
+    upvar 1 $nav_next_links_html_varname nav_next_links_html
+    upvar 1 $table_html_varname table_html
     upvar 1 $s_varname s
     upvar 1 $p_varname p
 
@@ -312,7 +316,7 @@ ad_proc -public qfsp_table_g2 {
         append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
         lappend prev_bar_list $this_start_row_link
     } 
-    set prev_nav_links_html [join $prev_bar_list $separator]
+    set nav_prev_links_html [join $prev_bar_list $separator]
 
     set current_bar_list [lindex $bar_list_set 1]
     set page_num [lindex $current_bar_list 0]
@@ -329,7 +333,7 @@ ad_proc -public qfsp_table_g2 {
         }
     }
 
-    set current_nav_pos_html $page_ref
+    set nav_current_pos_html $page_ref
 
     set next_bar_list [lindex $bar_list_set 2]
     foreach {page_num start_row} $next_bar_list {
@@ -350,7 +354,7 @@ ad_proc -public qfsp_table_g2 {
         append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
         lappend next_bar_list $next_bar_link
     }
-    set next_nav_links_html [join $next_bar_list $separator]
+    set nav_next_links_html [join $next_bar_list $separator]
 
 
     # add start_row to sort_urls.
@@ -535,7 +539,7 @@ ad_proc -public qfsp_table_g2 {
         lappend table_titles_w_links_list $title_new
         incr column_count
     }
-    set table_titles_list $table_titles_w_links_list
+    #set table_titles_list $table_titles_w_links_list
 
     # Begin building the paginated table here. Table rows have been sorted.
 
@@ -622,7 +626,7 @@ ad_proc -public qfsp_table_g2 {
     # ================================================
     # 5. Format output 
     # Add attributes to the TABLE tag
-    set table2_atts_list [list style "background-color: #cec;"]
+    set table_tag_attributes_list 
 
     # Add cell formatting to TD tags
     set cell_formating_list [list ]
@@ -639,7 +643,7 @@ ad_proc -public qfsp_table_g2 {
     # Set the default title row and column TD formats before columns sorted:
     set title_td_attrs_list [list ]
     set column_nbr 0
-    foreach title $table_titles_list {
+    foreach title $table_titles_w_links_list {
         set column_type [string range [lindex $sort_type_list $column_nbr] 1 end]
         # Title row TD formats in title_td_attrs_list
         # even row TD attributes in even_row_list
@@ -753,10 +757,8 @@ ad_proc -public qfsp_table_g2 {
     # ================================================
 
 
-    # this builds the html table and assigns it to table2_html
-    #set table2_html [qss_list_of_lists_to_html_table $table2_lists $table2_atts_list $cell_table_sorted_lists]
-    # add table2_html to adp output
-    append page_html $table2_html
+    # this builds the html table and assigns it to table_html
+    set table_html [qss_list_of_lists_to_html_table $table2_lists $table_tag_attributes_list $cell_table_sorted_lists]
 
     return 1
 }
