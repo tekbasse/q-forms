@@ -627,6 +627,11 @@ ad_proc -public qfo_sp_table_g2 {
     # Track the columns that aren't sorted, part 1
     set unsorted_list $int_sequence_list
 
+##code move 'hide' paradigm to definition of int_sequence_list, so
+    # that column is hidden everywhere (and simplifies code)
+    # Also define how int_sequence_list is used. That is as a map.
+    # index is position in working table, which references at first the same
+    # column and later, perhaps a different column..
 
     # columns_hide_index_list
     if { [llength $columns_hide_index_list ] > 0 } {
