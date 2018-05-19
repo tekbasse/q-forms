@@ -15,9 +15,9 @@ ad_proc -public qfo_sp_table_g2 {
     -table_list_of_lists_varname
     -table_titles_list_varname
     {-base_url ""}
+    {-hide_cols_index_list ""}
     {-item_count ""}
     {-list_length_limit ""}
-    {-list_offset ""}
     {-nav_current_pos_html_varname "__qfsp_nav_current_pos_html"}
     {-nav_next_links_html_varname "__qfsp_nav_next_links_html"}
     {-nav_prev_links_html_varname "__qfsp_nav_prev_links_html"}
@@ -28,7 +28,9 @@ ad_proc -public qfo_sp_table_g2 {
     {-sort_type_list ""}
     {-table_html_varname "__qfsp_table_html"}
     {-table_tag_attributes_list "style {background-color: #cec;}"}
-    {-table_titles_w_links_list_varname "__qfsp_table_titles_w_links_list"}
+    {-table_titles_html_list_varname ""}
+    {-table_titles_sorted_html_list_varname ""}
+    {-table_titles_sorted_list_varname ""}
     {-this_start_row "1"}
     {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
     {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
@@ -43,7 +45,7 @@ ad_proc -public qfo_sp_table_g2 {
     nav_next_links_html_varname
 
     table_list_of_lists_varname        This table gets sorted and re-ordered.
-    table_titles_w_links_list_varname  This heading row includes html 
+    table_titles_html_list_varname  This heading row includes html 
                                        for form-based UI for p and s parameters
 
     table_titles_list_varname          This heading row has columns
@@ -52,7 +54,6 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
 
     <br><br>
-
     To sort by timestamp, 
     use '-dictionary' sort type,
     and a consistent length format for the column values, 
@@ -61,44 +62,60 @@ ad_proc -public qfo_sp_table_g2 {
     Required parameters:
     <br><br>
     <code>items_per_page</code> - number of rows (items) per page
+    <br><br>
     <code>table_list_of_lists_varname</code> 
     - Variable holding a table defined as a list of lists, 
     where each list is a row containing values of columns from first to last.
+    <br><br>
     <code>table_titles_list_varname</code> 
     - Variable name containing a list of titles of the columns in 
+    <br><br>
     <code>table_list_of_lists</code>, in cooresponding order. 
     That is first in list is title of first column in table.
     <br><br>
     Optional parameters:
+    <br><br>
     <code>item_count</code> - number of rows (items) in the table.
+    <br><br>
     <code>this_start_row</code> 
     - start row (item sequence number) for this page. First row is 1 even though tcl usually uses 0.
+    <br><br>
     <code>base_url</code> - url for building page links
+    <br><br>
     <code>separator</code> 
     - html used between page numbers in pagination bar, defaults to '&nbsp;'
+    <br><br>
     <code>list_limit</code> - limits the list to this many items.
-    <code>list_offset</code> 
-    - offset the list to start at some point other than the first item.
+    <br><br>
     <code>page_num_p</code> 
     - Answers question: Use the page number in pagniation bar's display? 
     If not, the first value of the left-most (primary sort) column is used.
+    <br><br>
     <code>s_varname</code> 
     - 's' is a sort_order_list as defined by the code and passed via a form. 
     It's an 'a' delimited list of column indexes of table 
     to be sorted in reverse order, 
     so that primary sort is the first in the list. 
     Secondary sort is the second in the list and on.
+    <br><br>
     <code>p_varname</code>
     - 'p' is a change of the sort_order_list 
     to now make this index the primary sort index. See code for details.
+    <br><br>
     <code>sort_type_list</code> 
     - A list of types of sort to use for each column when using 
+    <br><br>
     <code>lsort -index &lt;column&gt; -ascii &lt;list_of_lists&gt;</code> 
     to sort a table by a specific column. 
     The default value for each column is "-ascii", per tcl's default. 
     When specifying sort_type_list, define a type to use for each column. 
     For example:
     \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
+    Note: <strong>To indicate that a column is unsortable use "-ignore"</strong>
+    <br><br>
+    <code>hide_cols_index_list</code> - To hide a column from display,
+    add its tcl index number to this list.
+    The first index in a tcl list is '0', second index is '1'..
 
 } {
     upvar 1 $table_lists_of_lists_varname table_lists
@@ -117,10 +134,10 @@ ad_proc -public qfo_sp_table_g2 {
     # to scale well. Probably won't be able to use page_num_p ==0.
 
     # normalize page_num_p's value
-    set page_num_p [qf_is_true $page_num_p]
+    set page_num_p [qf_is_true $page_num_p ]
     
     if { base_url eq "" } {
-        set base_url [ad_conn url]
+        set base_url [ad_conn url ]
     }
     
     set page_html ""
@@ -128,19 +145,19 @@ ad_proc -public qfo_sp_table_g2 {
     # General process flow:
     # 1. Get table as list_of_lists
     # 2. Sort unformatted columns by row values
-    # 3. Pagination_bar -- calcs including list_limit and list_offset, build UI
+    # 3. Pagination_bar -- calcs including list_limit, build UI
     # 4. Sort UI -- build
     
     # ================================================
     # 1. Get table as list_of_lists
     # ================================================
-    # don't process list_offset or list_limit here.
+    # don't process list_limit here.
     
     if { ![qf_is_natural_number $this_start_row ] } {
         set this_start_row 1
     }
     if  { $item_count eq "" } {
-        set item_count [llength $table_lists]
+        set item_count [llength $table_lists ]
     }
     if { ![info exists s ] } {
         set s ""
@@ -161,21 +178,21 @@ ad_proc -public qfo_sp_table_g2 {
     #     table_lists  table represented as a list of lists
     # ================================================
 
-    set table_cols_count [llength [lindex $table_lists 0]]
+    set table_cols_count [llength [lindex $table_lists 0 ] ]
     set table_index_last [expr { $table_cols_count - 1 } ]
 
     # defaults and inputs
     if { $sort_type_list eq "" } {
-        set sort_type_list [lrepeat $table_cols_count "-ascii"]
+        set sort_type_list [lrepeat $table_cols_count "-ascii" ]
     }
 
-    set sort_stack_list [list ]
+    set int_sequence_list [list ]
     for {set i 0} { $i < $table_cols_count } { incr i } {
-        lappend sort_stack_list $i
+        lappend int_sequence_list $i
     }
 
     set sort_order_list [list ]
-    set sort_rev_order_list [list ]
+    set int_sequence_reverse_list [list ]
     set table_sorted_lists $table_lists
 
     # Sort table?
@@ -191,11 +208,11 @@ ad_proc -public qfo_sp_table_g2 {
 
         # Validate sort order, because it is user input via web
         # $s' first check and change to sort_order_scalar
-        regsub -all -- {[^\-0-9a]} $s {} sort_order_scalar
+        regsub -all -- {[^\-0-9a ]} $s {} sort_order_scalar
         # ns_log Notice "qfsp_listcl(73): sort_order_scalar $sort_order_scalar"
         # Converting sort_order_scalar to a list
-        set sort_order_list [split $sort_order_scalar a]
-        set sort_order_list [lrange $sort_order_list 0 $table_index_last]
+        set sort_order_list [split $sort_order_scalar a ]
+        set sort_order_list [lrange $sort_order_list 0 $table_index_last ]
     }
 
     # Has a sort order change been requested?
@@ -206,13 +223,13 @@ ad_proc -public qfo_sp_table_g2 {
         # additional validation and processing is required.
         # Validate user input, fail silently
 
-        regsub -all -- {[^\-0-9]+} $p {} primary_sort_col_new
+        regsub -all -- {[^\-0-9 ]+} $p {} primary_sort_col_new
         # primary_sort_col_pos = primary sort column's position
         # primary_sort_col_new = a negative or positive column position. 
         set primary_sort_col_pos [expr { abs( $primary_sort_col_new ) } ]
         if { $primary_sort_col_new ne "" && $primary_sort_col_pos < $table_cols_count } {
             # modify sort_order_list
-            set sort_order_new_list [list $primary_sort_col_new]
+            set sort_order_new_list [list $primary_sort_col_new ]
             foreach ii $sort_order_list {
                 if { [expr { abs( ${ii} ) } ] ne $primary_sort_col_pos } {
                     lappend sort_order_new_list $ii
@@ -225,24 +242,26 @@ ad_proc -public qfo_sp_table_g2 {
     if { ( $s ne "" ) || ( $p ne "" ) } {
         # Create a reverse index list for index countdown, 
         # because primary sort is last, secondary sort is second to last..
-        # sort_stack_list 0 1 2 3..
-        set sort_rev_order_list [lsort -integer -decreasing [lrange $sort_stack_list 0 [expr { [llength $sort_order_list] - 1 } ] ] ]
-        # sort_rev_order_list ..3 2 1 0
-        foreach ii $sort_rev_order_list {
-            set col2sort [lindex $sort_order_list $ii]
-            if { [string range $col2sort 0 0] eq "-" } {
-                set col2sort_wo_sign [string range $col2sort 1 end]
+        # int_sequence_list 0 1 2 3..
+        set sort_order_reverse_list [lsort -integer -decreasing [lrange $int_sequence_list 0 [expr { [llength $sort_order_list ] - 1 } ] ] ]
+        # sort_order_reverse_list ..3 2 1 0
+
+
+        foreach ii $sort_order_reverse_list {
+            set col2sort [lindex $sort_order_list $ii ]
+            if { [string range $col2sort 0 0 ] eq "-" } {
+                set col2sort_wo_sign [string range $col2sort 1 end ]
                 set sort_order "-decreasing"
             } else { 
                 set col2sort_wo_sign $col2sort
                 set sort_order "-increasing"
             }
-            set sort_type [lindex $sort_type_list $col2sort_wo_sign]
+            set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
 
-            if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists] } result] } {
+            if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
                 # lsort errored, probably due to bad sort_type. 
                 # Fall back to -ascii sort_type, or fail..
-                set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists]
+                set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
                 ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
  -ascii for index '${col2sort_wo_sign}' due to error: '${result}'"
             }
@@ -251,7 +270,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     # ================================================
     # 3. Pagination_bar -- 
-    #    calcs including list_limit and list_offset, build UI
+    #    calcs including list_limit and build UI
     # ================================================
     # if $s exists, add it to to pagination urls.
 
@@ -285,7 +304,7 @@ ad_proc -public qfo_sp_table_g2 {
         append s_urlcoded $sort_i
         append s_urlcoded a
     }
-    set s_urlcoded [string range $s_urlcoded 0 end-1]
+    set s_urlcoded [string range $s_urlcoded 0 end-1 ]
     set s_url_add $amp_s_h
     append s_url_add ${s_urlcoded}
 
@@ -294,18 +313,18 @@ ad_proc -public qfo_sp_table_g2 {
         set this_start_row $item_count
     }
 
-    set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row]
-    set prev_bar_list [list]
-    set next_bar_list [list]
+    set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row ]
+    set prev_bar_list [list ]
+    set next_bar_list [list ]
 
-    set prev_bar_list [lindex $bar_list_set 0]
+    set prev_bar_list [lindex $bar_list_set 0 ]
     foreach {page_num start_row} $prev_bar_list {
         if { $page_num_p } {
             set page_ref $page_num
         } else {
             set item_index [expr { ( $start_row - 1 ) } ]
-            set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
-            set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
+            set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index ] $col2sort_wo_sign ]
+            set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val ] 10 ]
             if { $page_ref eq "" } {
                 set page_ref $page_num_prefix
                 append page_ref ${page_num}
@@ -316,17 +335,17 @@ ad_proc -public qfo_sp_table_g2 {
         append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
         lappend prev_bar_list $this_start_row_link
     } 
-    set nav_prev_links_html [join $prev_bar_list $separator]
+    set nav_prev_links_html [join $prev_bar_list $separator ]
 
-    set current_bar_list [lindex $bar_list_set 1]
-    set page_num [lindex $current_bar_list 0]
-    set start_row [lindex $current_bar_list 1]
+    set current_bar_list [lindex $bar_list_set 1 ]
+    set page_num [lindex $current_bar_list 0 ]
+    set start_row [lindex $current_bar_list 1 ]
     if { $s eq "" } {
         set page_ref $page_num
     } else {
         set item_index [expr { ( $start_row - 1 ) } ]
-        set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
-        set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
+        set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index ] $col2sort_wo_sign ]
+        set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val ] 10 ]
         if { $page_ref eq "" } {
             set page_ref $page_num_prefix
             append page_ref ${page_num}
@@ -335,14 +354,14 @@ ad_proc -public qfo_sp_table_g2 {
 
     set nav_current_pos_html $page_ref
 
-    set next_bar_list [lindex $bar_list_set 2]
+    set next_bar_list [lindex $bar_list_set 2 ]
     foreach {page_num start_row} $next_bar_list {
         if { $s eq "" } {
             set page_ref $page_num
         } else {
             set item_index [expr { ( $page_num - 1 ) * $items_per_page  } ]
-            set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index] $col2sort_wo_sign]
-            set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val] 10]
+            set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index ] $col2sort_wo_sign ]
+            set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val ] 10 ]
             if { $page_ref eq "" } {
                 set page_ref $page_num_prefix
                 append page_ref ${page_num}
@@ -354,7 +373,7 @@ ad_proc -public qfo_sp_table_g2 {
         append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
         lappend next_bar_list $next_bar_link
     }
-    set nav_next_links_html [join $next_bar_list $separator]
+    set nav_next_links_html [join $next_bar_list $separator ]
 
 
     # add start_row to sort_urls.
@@ -374,7 +393,7 @@ ad_proc -public qfo_sp_table_g2 {
     # sort_type_list is indexed by sort_column nbr (0...)
     # for UX, chagnged "ascending order" to "A first" or "1 First", 
     # and "Descending order" to "Z first" or "9 first".
-
+    # And, so it's coded: A:Z, Z:A, 1:9, 9:1, but customizable:
     set text_asc "A"
     set text_desc "Z"
     set nbr_asc "1"
@@ -388,9 +407,9 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
 
-    set table_titles_w_links_list [list ]
+    set table_titles_html_list [list ]
     set column_count 0
-    set primary_sort_col [lindex $sort_order_list $column_count]
+    set primary_sort_col [lindex $sort_order_list $column_count ]
 
     # column_sort_decreases_list tells which columns are
     # sorted in decreasing order.
@@ -401,39 +420,61 @@ ad_proc -public qfo_sp_table_g2 {
         lappend column_sorted_list 0
     }
     foreach sort_i $sort_order_list {
-        if { [string range $sort_i 0 0] eq "-" } {
-            set col_sort_i [string range $sort_i 1 end]
+        if { [string range $sort_i 0 0 ] eq "-" } {
+            set col_sort_i [string range $sort_i 1 end ]
             set decreasing_p 1
         } else {
             set col_sort_i $sort_i
             set decreasing_p 0
         }
         if { $decreasing_p } {
-            set column_sort_decreases_list [lreplace $column_sort_decreases_list $col_sort_i $col_sort_i $decreasing_p]
+            set column_sort_decreases_list [lreplace $column_sort_decreases_list $col_sort_i $col_sort_i $decreasing_p ]
         }
-        set column_sorted_list [lreplace $column_sorted_list $col_sort_i $col_sort_i 1]
+        set column_sorted_list [lreplace $column_sorted_list $col_sort_i $col_sort_i 1 ]
     }
 
     foreach title $table_titles_list {
         # Figure out column data type for sort button (text or nbr).
         # The column order is not changed yet.
-        set column_type [string range [lindex $sort_type_list $column_count] 1 end]
-        if { $column_type eq "integer" || $column_type eq "real" } {
-            set abbrev_asc $nbr_asc
-            set abbrev_desc $nbr_desc
-            set title_asc $title_asc_by_nbr
-            set title_desc $title_desc_by_nbr
-        } else {
-            set abbrev_asc $text_asc
-            set abbrev_desc $text_desc
-            set title_asc $title_asc_by_text
-            set title_desc $title_desc_by_text
+        set column_type [string range [lindex $sort_type_list $column_count ] 1 end ]
+        switch -exact -- $column_type {
+            integer -
+            real {
+                set abbrev_asc $nbr_asc
+                set abbrev_desc $nbr_desc
+                set title_asc $title_asc_by_nbr
+                set title_desc $title_desc_by_nbr
+                set ignore_p 0
+            }
+            ascii -
+            dictonary {
+                set abbrev_asc $text_asc
+                set abbrev_desc $text_desc
+                set title_asc $title_asc_by_text
+                set title_desc $title_desc_by_text
+                set ignore_p 0
+            }
+            ignore {
+                set abbrev_asc ""
+                set abbrev_desc ""
+                set title_asc ""
+                set title_desc ""
+                set ignore_p 1
+            }
+            default {
+                set abbrev_asc ""
+                set abbrev_desc ""
+                set title_asc ""
+                set title_desc ""
+                set ignore_p 1
+                ns_log "qfo_sp_table_g2.441 column_type '${column_type}' unrecognized."
+            }
         }
 
         # Is column sort decreasing? 
         # If so, let's reverse the order of column's sort links.
-        set decreasing_p [lindex $column_sort_decreases_list $column_count]
-        set column_sorted_p [lindex $column_sorted_list $column_count]
+        set decreasing_p [lindex $column_sort_decreases_list $column_count ]
+        set column_sorted_p [lindex $column_sorted_list $column_count ]
         set sort_link_delim ""
         # Sort button should be active if an available choice, 
         # and inactive if already chosen (primary sort case).
@@ -447,6 +488,7 @@ ad_proc -public qfo_sp_table_g2 {
         set title_new $title
 
         if { $primary_sort_col eq "" \
+                 || $ignore_p \
                  || ( $primary_sort_col ne "" \
                           && $column_count ne [expr { abs( $primary_sort_col ) } ] ) } {
             if { $column_sorted_p } {
@@ -492,7 +534,7 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_bottom ${abbrev_desc} ${a_end_h}
                 set sort_link_delim ${colon}
             }
-        } else {
+        } elseif { !$ignore_p } {
             if { $decreasing_p } {
                 # Decreasing primary sort is chosen last, 
                 # no need to make the link active
@@ -518,7 +560,7 @@ ad_proc -public qfo_sp_table_g2 {
             }
         }
         set end_div ""
-        if { $column_sorted_p } {
+        if { $column_sorted_p && !$ignore_p } {
             append title_new $title_sorted_div_html
             if { $title_sorted_div_html ne "" } {
                 set end_div ${div_end_h}
@@ -529,17 +571,17 @@ ad_proc -public qfo_sp_table_g2 {
                 set end_div ${div_end_h}
             }
         }
-        if { $decreasing_p } {
-            append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
-        } else {
-            append title_new ${sort_top} ${sort_link_delim} ${sort_bottom}
+        if { !$ignore_p } {
+            if { $decreasing_p } {
+                append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
+            } else {
+                append title_new ${sort_top} ${sort_link_delim} ${sort_bottom}
+            }
         }
-        
         append title_new $end_div
-        lappend table_titles_w_links_list $title_new
+        lappend table_titles_html_list $title_new
         incr column_count
     }
-    #set table_titles_list $table_titles_w_links_list
 
     # Begin building the paginated table here. Table rows have been sorted.
 
@@ -551,24 +593,30 @@ ad_proc -public qfo_sp_table_g2 {
         set last_row $lindex_last
     }
     for { set row_num $lindex_start } { $row_num <= $last_row } {incr row_num} {
-        lappend table_paged_sorted_lists [lindex $table_sorted_lists $row_num]
+        lappend table_paged_sorted_lists [lindex $table_sorted_lists $row_num ]
     }
     set table_sorted_lists $table_paged_sorted_lists
 
     # Result: table_sorted_lists
     # Number of sorted columns:
-    set sort_cols_count [llength $sort_order_list]
+    set sort_cols_count [llength $sort_order_list ]
+
 
     # ================================================
     # Display customizations
 
-
     # To remove a column from display:
-    # 1. Blank the column reference from sort_stack_list (and sort_rev_order_list if it were used..)
-    #    where  sort_stack_list is a sequential list: 0 1 2 3..
+    # 1. Blank the column reference from:
+    #    int_sequence_list and 
+    #    int_sequence_reverse_list (if it is used)
+
+    #    where  int_sequence_list is a sequential list: 0 1 2 3..
     #    so, removal of '1' becomes 0 "" 2 3..
     #    Don't remove the reference, or later column tracking for unsorted removals will break.
     # 2. Reduce table_cols_count by number of columns removed
+
+
+    # hide_cols_index_list
 
 
 
@@ -582,17 +630,22 @@ ad_proc -public qfo_sp_table_g2 {
 
     # Rebuild the table, one row at a time, 
     # Add the primary sorted column, then secondary sorted columns in order
+
+    # Track the columns that aren't sorted
+    set unsorted_list $int_sequence_list
+    foreach ii $sort_order_list {
+        set ii_pos [expr { abs( $ii ) } ]
+        # Blank the reference instead of removing it, 
+        # or the $ii reference won't work later on..
+        set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos "" ]
+    }
+
     foreach table_row_list $table_sorted_lists {
         set table_row_new [list ]
 
-        # Track the columns that aren't sorted
-        set unsorted_list $sort_stack_list
         foreach ii $sort_order_list {
             set ii_pos [expr { abs( $ii ) } ]
-            lappend table_row_new [lindex $table_row_list $ii_pos]
-            # Blank the reference instead of removing it, 
-            # or the $ii reference won't work. lsearch is slower
-            set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos ""]
+            lappend table_row_new [lindex $table_row_list $ii_pos ]
         }
 
         # Now that the sorted columns are added to the row, 
@@ -600,18 +653,39 @@ ad_proc -public qfo_sp_table_g2 {
         foreach ui $unsorted_list {
             if { $ui ne "" } {
                 # Add unsorted column to row
-                lappend table_row_new [lindex $table_row_list $ui]
+                lappend table_row_new [lindex $table_row_list $ui ]
             }
         }
 
         # Confirm that all columns have been accounted for.
-        set table_row_new_cols [llength $table_row_new]
+        set table_row_new_cols [llength $table_row_new ]
         if { $table_row_new_cols != $table_cols_count } {
             ns_log Notice "qfsp_listcl(203): Warning: table_row_new has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
         lappend table_col_sorted_lists $table_row_new
     }
+
+    # Repeat for the variation  title rows: 
+    #  table_titles_list
+    set table_titles_sorted_list [list ]
+    #  table_titles_html_list
+    set table_titles_sorted_html_list [list ]
+    foreach ii $sort_order_list {
+        set ii_pos [expr { abs( $ii ) } ]
+        lappend table_titles_sorted_list [lindex $table_titles_list $ii_pos ]
+        lappend table_titles_sorted_html_list [lindex $table_titles_html_list $ii_pos ]
+    }
+    # Now that the sorted columns are added to the rows, 
+    # add the remaining columns
+    foreach ui $unsorted_list {
+        if { $ui ne "" } {
+            # Add unsorted column to row
+            lappend table_titles_sorted_list [lindex $table_titles_list $ui ]
+            lappend table_titles_sorted_html_list [lindex $table_titles_html_list $ui ]
+        }
+    }
+     
 
     # ================================================
     # Add UI Options column to table?
@@ -643,24 +717,24 @@ ad_proc -public qfo_sp_table_g2 {
     # Set the default title row and column TD formats before columns sorted:
     set title_td_attrs_list [list ]
     set column_nbr 0
-    foreach title $table_titles_w_links_list {
-        set column_type [string range [lindex $sort_type_list $column_nbr] 1 end]
+    foreach title $table_titles_html_list {
+        set column_type [string range [lindex $sort_type_list $column_nbr ] 1 end ]
         # Title row TD formats in title_td_attrs_list
         # even row TD attributes in even_row_list
         # odd row TD attributes in odd_row_list
         if { $column_type eq "integer" ||$column_type eq "real" } {
-            lappend title_td_attrs_list [list class "rightj border1"]
+            lappend title_td_attrs_list [list class "rightj border1" ]
             # Value is a number, so right justify
-            lappend even_row_list [list class "rightj smallest border1"]
-            lappend odd_row_list [list class "rightj smallest border1"]
+            lappend even_row_list [list class "rightj smallest border1" ]
+            lappend odd_row_list [list class "rightj smallest border1" ]
         } else {
-            lappend title_td_attrs_list [list class "border1"]
-            lappend even_row_list [list class "smallest border1"]
-            lappend odd_row_list [list class "smallest border1"]
+            lappend title_td_attrs_list [list class "border1" ]
+            lappend even_row_list [list class "smallest border1" ]
+            lappend odd_row_list [list class "smallest border1" ]
         }
         incr column_nbr
     }
-    set cell_table_lists [list $title_td_attrs_list $odd_row_list $even_row_list]
+    set cell_table_lists [list $title_td_attrs_list $odd_row_list $even_row_list ]
 
     # Rebuild the even/odd rows adding the colors
     # When column order changes, 
@@ -678,26 +752,26 @@ ad_proc -public qfo_sp_table_g2 {
     foreach td_row_list $cell_table_lists {
         set td_row_new [list ]
         # Track the rows that aren't sorted
-        set unsorted_list $sort_stack_list
+        set unsorted_list $int_sequence_list
         foreach ii $sort_order_list {
             set ii_pos [expr { abs( $ii ) } ]
-            set cell_format_list [lindex $td_row_list $ii_pos]
+            set cell_format_list [lindex $td_row_list $ii_pos ]
             if { $row_count > 0 } {
                 # add the appropriate background color
-                if { [f::even_p $row_count] } {
+                if { [f::even_p $row_count ] } {
                     set color $color_even_scol
                 } else {
                     set color $color_odd_scol
                 }
-                set class_pos [lsearch -exact $cell_format_list "class"]
+                set class_pos [lsearch -exact $cell_format_list "class" ]
                 if { $class_pos > -1 } {
                     # Combine the class values 
                     # instead of appending more attributes
                     incr class_pos
-                    set attr_value [lindex $cell_format_list $class_pos]
+                    set attr_value [lindex $cell_format_list $class_pos ]
                     set new_attr_value $attr_value
                     append new_attr_value " $color"
-                    set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value]
+                    set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
                 } else {
                     lappend cell_format_list class $color
                 }      
@@ -705,28 +779,28 @@ ad_proc -public qfo_sp_table_g2 {
             lappend td_row_new $cell_format_list
             # Blank the reference instead of removing it, 
             # or the $ii_pos reference won't work. lsearch is slower
-            set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos ""]
+            set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos "" ]
         }
         # Now that the sorted columns are added to the row, 
         # add the remaining columns
         foreach ui $unsorted_list {
             if { $ui ne "" } {
-                set cell_format_list [lindex $td_row_list $ui]
+                set cell_format_list [lindex $td_row_list $ui ]
                 if { $row_count > 0 } {
                     # add the appropriate background color
-                    if { [f::even_p $row_count] } {
+                    if { [f::even_p $row_count ] } {
                         set color $color_even_row
                     } else {
                         set color $color_odd_row
                     }
-                    set class_pos [lsearch -exact $cell_format_list "class"]
+                    set class_pos [lsearch -exact $cell_format_list "class" ]
                     if { $class_pos > -1 } {
                         # combine the class values instead of appending more attributes
                         incr class_pos
-                        set attr_value [lindex $cell_format_list $class_pos]
+                        set attr_value [lindex $cell_format_list $class_pos ]
                         set new_attr_value $attr_value
                         append new_attr_value " $color"
-                        set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value]
+                        set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
                     } else {
                         lappend cell_format_list class $color
                     }
@@ -740,9 +814,9 @@ ad_proc -public qfo_sp_table_g2 {
         incr row_count
     }
 
-    set table_row_count [llength $table2_lists]
-    set row_odd_format [lindex $cell_table_sorted_lists 1]
-    set row_even_format [lindex $cell_table_sorted_lists 2]
+    set table_row_count [llength $table2_lists ]
+    set row_odd_format [lindex $cell_table_sorted_lists 1 ]
+    set row_even_format [lindex $cell_table_sorted_lists 2 ]
     if { $table_row_count > 3 } { 
         # Repeat the odd/even rows for the length of the table (table2_lists)
         for {set row_i 3} {$row_i < $table_row_count} { incr row_i } {
@@ -758,7 +832,7 @@ ad_proc -public qfo_sp_table_g2 {
 
 
     # this builds the html table and assigns it to table_html
-    set table_html [qss_list_of_lists_to_html_table $table2_lists $table_tag_attributes_list $cell_table_sorted_lists]
+    set table_html [qss_list_of_lists_to_html_table $table2_lists $table_tag_attributes_list $cell_table_sorted_lists ]
 
     return 1
 }
@@ -776,7 +850,7 @@ ad_proc -private hf_pagination_by_items {
 } {
     # based on ecds_pagination_by_items
     if { $items_per_page > 0 && $item_count > 0 && $first_item_displayed > 0 && $first_item_displayed <= $item_count } {
-        set bar_list [list]
+        set bar_list [list ]
         set end_page [expr { ( $item_count + $items_per_page - 1 ) / $items_per_page } ]
 
         set current_page [expr { ( $first_item_displayed + $items_per_page - 1 ) / $items_per_page } ]
@@ -788,8 +862,8 @@ ad_proc -private hf_pagination_by_items {
         if { $item_count > [expr { $items_per_page * 81 } ] } {
             # use exponential page referencing
             set relative_step 0
-            set next_bar_list [list]
-            set prev_bar_list [list]
+            set next_bar_list [list ]
+            set prev_bar_list [list ]
             # 0.69314718056 = log(2)  
             set max_search_points [expr { int( ( log( $end_page ) / 0.69314718056 ) + 1 ) } ]
             for {set exponent 0} { $exponent <= $max_search_points } { incr exponent 1 } {
@@ -797,12 +871,12 @@ ad_proc -private hf_pagination_by_items {
                 set relative_step_row [expr { int( pow( 2, $exponent ) ) } ]
                 set relative_step_page $relative_step_row
                 lappend next_bar_list $relative_step_page
-                set prev_bar_list [linsert $prev_bar_list 0 [expr { -1 * $relative_step_page } ]]
+                set prev_bar_list [linsert $prev_bar_list 0 [expr { -1 * $relative_step_page } ] ]
             }
 
             # template_bar_list and relative_bar_list contain page numbers
-            set template_bar_list [concat $prev_bar_list 0 $next_bar_list]
-            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list]
+            set template_bar_list [concat $prev_bar_list 0 $next_bar_list ]
+            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list ]
             
             # translalte bar_list relative values to absolute rows
             foreach {relative_page} $relative_bar_list {
@@ -815,10 +889,10 @@ ad_proc -private hf_pagination_by_items {
         } elseif {  $item_count > [expr { $items_per_page * 10 } ] } {
             # use linear, stepped page referencing
 
-            set next_bar_list [list 1 2 3 4 5]
-            set prev_bar_list [list -5 -4 -3 -2 -1]
-            set template_bar_list [concat $prev_bar_list 0 $next_bar_list]
-            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list]
+            set next_bar_list [list 1 2 3 4 5 ]
+            set prev_bar_list [list -5 -4 -3 -2 -1 ]
+            set template_bar_list [concat $prev_bar_list 0 $next_bar_list ]
+            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list ]
             # translalte bar_list relative values to absolute rows
             foreach {relative_page} $relative_bar_list {
                 set new_page [expr { int ( $relative_page + $current_page ) } ]
@@ -841,19 +915,19 @@ ad_proc -private hf_pagination_by_items {
 
         # add absolute reference for first page, last page
         lappend bar_list $end_page
-        set bar_list [linsert $bar_list 0 1]
+        set bar_list [linsert $bar_list 0 1 ]
 
         # clean up list
         # now we need to sort and remove any remaining nonpositive integers and duplicates
-        set filtered_bar_list [lsort -unique -increasing -integer [lsearch -all -glob -inline $bar_list {[0-9]*} ]]
+        set filtered_bar_list [lsort -unique -increasing -integer [lsearch -all -glob -inline $bar_list {[0-9 ]*} ] ]
         # delete any cases of page zero
-        set zero_index [lsearch $filtered_bar_list 0]
-        set bar_list [lreplace $filtered_bar_list $zero_index $zero_index]
+        set zero_index [lsearch $filtered_bar_list 0 ]
+        set bar_list [lreplace $filtered_bar_list $zero_index $zero_index ]
 
         # generate list of lists for code in ecommerce/lib
-        set prev_bar_list_pair [list]
-        set current_bar_list_pair [list]
-        set next_bar_list_pair [list]
+        set prev_bar_list_pair [list ]
+        set current_bar_list_pair [list ]
+        set next_bar_list_pair [list ]
         foreach page $bar_list {
             set start_item [expr { ( ( $page - 1 ) * $items_per_page ) + 1 } ]
             if { $page < $current_page } {
@@ -864,7 +938,7 @@ ad_proc -private hf_pagination_by_items {
                 lappend next_bar_list_pair $page $start_item
             }
         }
-        set bar_list_set [list $prev_bar_list_pair $current_bar_list_pair $next_bar_list_pair]
+        set bar_list_set [list $prev_bar_list_pair $current_bar_list_pair $next_bar_list_pair ]
     } else {
         ns_log Warning "hf_pagination_by_items: parameter value(s) out of bounds for $item_count $items_per_page $first_item_displayed"
     }
