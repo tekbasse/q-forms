@@ -25,18 +25,17 @@ ad_proc -public qfo_sp_table_g2 {
     {-separator "&nbsp;"}
     {-sort_type_list ""}
     {-table_html_varname "__qfsp_table_html"}
-    {-table_lists_varname ""}
+    {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_list" }
-    {-table_sorted_ordered_lists_varname "" }
+    {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists" }
     {-table_tag_attributes_list "style {background-color: #cec;}"}
     {-this_start_row "1"}
     {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
     {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
-    {-titles_html_list_varname ""}
+    {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
-    {-titles_reordered_html_list_varname "__qfsp_titles_reordered_"}
-    {-titles_reordered_list_varname ""}
-
+    {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
+    {-titles_reordered_list_varname "__qfsp_reordered_list"}
 } {
     Creates a user customizable sorted list from a list of lists by
     creating a one row header with html. <br>
@@ -642,7 +641,7 @@ ad_proc -public qfo_sp_table_g2 {
     # so that the primary sort col is left, secondary is 2nd from left etc.
 
     # parameters: table_sorted_lists
-    set table_col_sorted_lists [list ]
+    set table_sorted_reordered_lists [list ]
 
     # Rebuild the table, one row at a time, 
     # Add the primary sorted column, then secondary sorted columns in order
@@ -679,7 +678,7 @@ ad_proc -public qfo_sp_table_g2 {
             ns_log Notice "qfsp_listcl(203): Warning: table_row_new has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
-        lappend table_col_sorted_lists $table_row_new
+        lappend table_sorted_reordered_lists $table_row_new
     }
 
     # Repeat for the variation  title rows: 
@@ -702,7 +701,7 @@ ad_proc -public qfo_sp_table_g2 {
         }
     }
      
-
+##code Make sure to link these into the parameter/upvar paradigm:
     # ================================================
     # Add UI Options column to table?
     # Not at this time. Keep here in case a variant needs the code at some point.
