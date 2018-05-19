@@ -11,12 +11,10 @@ ad_library {
 
 
 ad_proc -public qfo_sp_table_g2 {
-    -items_per_page
-    -table_list_of_lists_varname
-    -table_titles_list_varname
     {-base_url ""}
-    {-hide_cols_index_list ""}
+    {-columns_hide_index_list ""}
     {-item_count ""}
+    {-items_per_page "12" }
     {-list_length_limit ""}
     {-nav_current_pos_html_varname "__qfsp_nav_current_pos_html"}
     {-nav_next_links_html_varname "__qfsp_nav_next_links_html"}
@@ -27,13 +25,17 @@ ad_proc -public qfo_sp_table_g2 {
     {-separator "&nbsp;"}
     {-sort_type_list ""}
     {-table_html_varname "__qfsp_table_html"}
+    {-table_lists_varname ""}
+    {-table_sorted_lists_varname "__qfsp_table_sorted_list" }
+    {-table_sorted_ordered_lists_varname "" }
     {-table_tag_attributes_list "style {background-color: #cec;}"}
-    {-table_titles_html_list_varname ""}
-    {-table_titles_sorted_html_list_varname ""}
-    {-table_titles_sorted_list_varname ""}
     {-this_start_row "1"}
     {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
     {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
+    {-titles_html_list_varname ""}
+    {-titles_list_varname "__qfsp_titles_list"}
+    {-titles_reordered_html_list_varname "__qfsp_titles_reordered_"}
+    {-titles_reordered_list_varname ""}
 
 } {
     Creates a user customizable sorted list from a list of lists by
@@ -45,10 +47,10 @@ ad_proc -public qfo_sp_table_g2 {
     nav_next_links_html_varname
 
     table_list_of_lists_varname        This table gets sorted and re-ordered.
-    table_titles_html_list_varname  This heading row includes html 
+    titles_html_list_varname  This heading row includes html 
                                        for form-based UI for p and s parameters
 
-    table_titles_list_varname          This heading row has columns
+    titles_list_varname          This heading row has columns
                                        re-organized same as table_list_of_lists
     </pre>
     <br><br>
@@ -67,7 +69,7 @@ ad_proc -public qfo_sp_table_g2 {
     - Variable holding a table defined as a list of lists, 
     where each list is a row containing values of columns from first to last.
     <br><br>
-    <code>table_titles_list_varname</code> 
+    <code>titles_list_varname</code> 
     - Variable name containing a list of titles of the columns in 
     <br><br>
     <code>table_list_of_lists</code>, in cooresponding order. 
@@ -113,20 +115,22 @@ ad_proc -public qfo_sp_table_g2 {
     \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
     Note: <strong>To indicate that a column is unsortable use "-ignore"</strong>
     <br><br>
-    <code>hide_cols_index_list</code> - To hide a column from display,
+    <code>columns_hide_index_list</code> - To hide a column from display,
     add its tcl index number to this list.
     The first index in a tcl list is '0', second index is '1'..
 
 } {
-    upvar 1 $table_lists_of_lists_varname table_lists
-    upvar 1 $table_titles_list_varname table_titles_list
-    upvar 1 $nav_prev_links_html_varname nav_prev_links_html
     upvar 1 $nav_current_pos_html_varname nav_current_pos_html
     upvar 1 $nav_next_links_html_varname nav_next_links_html
-    upvar 1 $table_html_varname table_html
-    upvar 1 $s_varname s
+    upvar 1 $nav_prev_links_html_varname nav_prev_links_html
     upvar 1 $p_varname p
-
+    upvar 1 $s_varname s
+    upvar 1 $table_html_varname table_html
+    upvar 1 $table_lists_varname table_lists
+    upvar 1 $titles_list_varname titles_list
+    upvar 1 $titles_reordered_html_list titles_reordered_html_list
+    upvar 1 $titles_reordered_list titles_reordered_list
+        
     # adapting from:
     # hosting-farm/lib/resource-status-summary-1.tcl
     # This version requires the entire table to be loaded for processing.
@@ -231,8 +235,14 @@ ad_proc -public qfo_sp_table_g2 {
             # modify sort_order_list
             set sort_order_new_list [list $primary_sort_col_new ]
             foreach ii $sort_order_list {
-                if { [expr { abs( ${ii} ) } ] ne $primary_sort_col_pos } {
-                    lappend sort_order_new_list $ii
+                set ii_num [expr { abs( ${ii} ) } ]
+                if { $ii_num ne $primary_sort_col_pos } {
+                    if { [lsearch -exact -integer $columns_hide_index_list $ii_num] < 0 } {
+                        lappend sort_order_new_list $ii
+                    } else {
+                        ns_log Warning "qfo_sp_table_g2.631: column ii '${ii}'\
+ not sorted. Found in columns_hide_index_list '${columns_hide_index_list}'"
+                    }
                 }
             }
             set sort_order_list $sort_order_new_list
@@ -407,7 +417,7 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
 
-    set table_titles_html_list [list ]
+    set titles_html_list [list ]
     set column_count 0
     set primary_sort_col [lindex $sort_order_list $column_count ]
 
@@ -433,7 +443,7 @@ ad_proc -public qfo_sp_table_g2 {
         set column_sorted_list [lreplace $column_sorted_list $col_sort_i $col_sort_i 1 ]
     }
 
-    foreach title $table_titles_list {
+    foreach title $titles_list {
         # Figure out column data type for sort button (text or nbr).
         # The column order is not changed yet.
         set column_type [string range [lindex $sort_type_list $column_count ] 1 end ]
@@ -579,7 +589,7 @@ ad_proc -public qfo_sp_table_g2 {
             }
         }
         append title_new $end_div
-        lappend table_titles_html_list $title_new
+        lappend titles_html_list $title_new
         incr column_count
     }
 
@@ -615,9 +625,15 @@ ad_proc -public qfo_sp_table_g2 {
     #    Don't remove the reference, or later column tracking for unsorted removals will break.
     # 2. Reduce table_cols_count by number of columns removed
 
+    # columns_hide_index_list
+    if { [llength $columns_hide_index_list ] > 0 } {
+        foreach col_idx $columns_hide_index_list {
+            # Checked for possible collision with sorted list indexes in log631
+##code
 
-    # hide_cols_index_list
 
+        }
+    }
 
 
     # ================================================
@@ -667,22 +683,22 @@ ad_proc -public qfo_sp_table_g2 {
     }
 
     # Repeat for the variation  title rows: 
-    #  table_titles_list
-    set table_titles_sorted_list [list ]
-    #  table_titles_html_list
-    set table_titles_sorted_html_list [list ]
+    #  titles_list
+    set titles_reordered_list [list ]
+    #  titles_html_list
+    set titles_reordered_html_list [list ]
     foreach ii $sort_order_list {
         set ii_pos [expr { abs( $ii ) } ]
-        lappend table_titles_sorted_list [lindex $table_titles_list $ii_pos ]
-        lappend table_titles_sorted_html_list [lindex $table_titles_html_list $ii_pos ]
+        lappend titles_reordered_list [lindex $titles_list $ii_pos ]
+        lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
     }
     # Now that the sorted columns are added to the rows, 
     # add the remaining columns
     foreach ui $unsorted_list {
         if { $ui ne "" } {
             # Add unsorted column to row
-            lappend table_titles_sorted_list [lindex $table_titles_list $ui ]
-            lappend table_titles_sorted_html_list [lindex $table_titles_html_list $ui ]
+            lappend titles_reordered_list [lindex $titles_list $ui ]
+            lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
         }
     }
      
@@ -717,7 +733,7 @@ ad_proc -public qfo_sp_table_g2 {
     # Set the default title row and column TD formats before columns sorted:
     set title_td_attrs_list [list ]
     set column_nbr 0
-    foreach title $table_titles_html_list {
+    foreach title $titles_html_list {
         set column_type [string range [lindex $sort_type_list $column_nbr ] 1 end ]
         # Title row TD formats in title_td_attrs_list
         # even row TD attributes in even_row_list
