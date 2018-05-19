@@ -624,13 +624,16 @@ ad_proc -public qfo_sp_table_g2 {
     #    Don't remove the reference, or later column tracking for unsorted removals will break.
     # 2. Reduce table_cols_count by number of columns removed
 
+    # Track the columns that aren't sorted, part 1
+    set unsorted_list $int_sequence_list
+
+
     # columns_hide_index_list
     if { [llength $columns_hide_index_list ] > 0 } {
         foreach col_idx $columns_hide_index_list {
-            # Checked for possible collision with sorted list indexes in log631
-##code
-
-
+            # Checked for collision with sort_order_list indexes in ns_log 631
+            set unsorted_list [lreplace $unsorted_list $col_idx $col_idx "" ]
+            incr table_cols_count -1
         }
     }
 
@@ -646,13 +649,14 @@ ad_proc -public qfo_sp_table_g2 {
     # Rebuild the table, one row at a time, 
     # Add the primary sorted column, then secondary sorted columns in order
 
-    # Track the columns that aren't sorted
-    set unsorted_list $int_sequence_list
+    # Track the columns that aren't sorted, part 2
     foreach ii $sort_order_list {
         set ii_pos [expr { abs( $ii ) } ]
         # Blank the reference instead of removing it, 
         # or the $ii reference won't work later on..
-        set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos "" ]
+        if { [lindex $ii_pos ] ne "" } {
+            set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos "" ]
+        }
     }
 
     foreach table_row_list $table_sorted_lists {
