@@ -189,15 +189,32 @@ ad_proc -public qfo_sp_table_g2 {
         set sort_type_list [lrepeat $table_cols_count "-ascii" ]
     }
 
+
+    # int_sequence_list is used as a column reference map.
+    # That is, position N in list is column number in new/wip table, and
+    # the value in position N points to a column in original tables_list.
     set int_sequence_list [list ]
     for {set i 0} { $i < $table_cols_count } { incr i } {
         lappend int_sequence_list $i
     }
 
-    set sort_order_list [list ]
-    set int_sequence_reverse_list [list ]
-    set table_sorted_lists $table_lists
+    # To remove a column from display and processing:
+    # 1. Blank the column reference from:
+    #    int_sequence_list 
 
+    #    where  int_sequence_list is a sequential list: 0 1 2 3..
+    #    so, removal of '1' becomes 0 "" 2 3..
+    #    Don't remove the reference, or later column tracking for unsorted removals will break.
+    # 2. Reduce table_cols_count by number of columns removed
+    # columns_hide_index_list
+    foreach col_idx $columns_hide_index_list {
+        # Checked for collision with sort_order_list indexes in ns_log 631
+        set int_sequence_list [lreplace $int_sequence_list $col_idx $col_idx "" ]
+        incr table_cols_count -1
+    }
+
+    set sort_order_list [list ]
+    set table_sorted_lists $table_lists
     # Sort table?
     if { $s ne "" } {
         # Sort table
@@ -257,26 +274,27 @@ ad_proc -public qfo_sp_table_g2 {
 
 
         foreach ii $sort_order_reverse_list {
-            set col2sort [lindex $sort_order_list $ii ]
-            if { [string range $col2sort 0 0 ] eq "-" } {
-                set col2sort_wo_sign [string range $col2sort 1 end ]
-                set sort_order "-decreasing"
-            } else { 
-                set col2sort_wo_sign $col2sort
-                set sort_order "-increasing"
-            }
-            set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
-
-            if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
-                # lsort errored, probably due to bad sort_type. 
-                # Fall back to -ascii sort_type, or fail..
-                set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
-                ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
+            if { $ii ne "" } {
+                set col2sort [lindex $sort_order_list $ii ]
+                if { [string range $col2sort 0 0 ] eq "-" } {
+                    set col2sort_wo_sign [string range $col2sort 1 end ]
+                    set sort_order "-decreasing"
+                } else { 
+                    set col2sort_wo_sign $col2sort
+                    set sort_order "-increasing"
+                }
+                set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
+                
+                if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
+                    # lsort errored, probably due to bad sort_type. 
+                    # Fall back to -ascii sort_type, or fail..
+                    set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
+                    ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
  -ascii for index '${col2sort_wo_sign}' due to error: '${result}'"
+                }
             }
         }
     }
-
     # ================================================
     # 3. Pagination_bar -- 
     #    calcs including list_limit and build UI
@@ -611,36 +629,6 @@ ad_proc -public qfo_sp_table_g2 {
     set sort_cols_count [llength $sort_order_list ]
 
 
-    # ================================================
-    # Display customizations
-
-    # To remove a column from display:
-    # 1. Blank the column reference from:
-    #    int_sequence_list and 
-    #    int_sequence_reverse_list (if it is used)
-
-    #    where  int_sequence_list is a sequential list: 0 1 2 3..
-    #    so, removal of '1' becomes 0 "" 2 3..
-    #    Don't remove the reference, or later column tracking for unsorted removals will break.
-    # 2. Reduce table_cols_count by number of columns removed
-
-    # Track the columns that aren't sorted, part 1
-    set unsorted_list $int_sequence_list
-
-##code move 'hide' paradigm to definition of int_sequence_list, so
-    # that column is hidden everywhere (and simplifies code)
-    # Also define how int_sequence_list is used. That is as a map.
-    # index is position in working table, which references at first the same
-    # column and later, perhaps a different column..
-
-    # columns_hide_index_list
-    if { [llength $columns_hide_index_list ] > 0 } {
-        foreach col_idx $columns_hide_index_list {
-            # Checked for collision with sort_order_list indexes in ns_log 631
-            set unsorted_list [lreplace $unsorted_list $col_idx $col_idx "" ]
-            incr table_cols_count -1
-        }
-    }
 
 
     # ================================================
@@ -654,7 +642,8 @@ ad_proc -public qfo_sp_table_g2 {
     # Rebuild the table, one row at a time, 
     # Add the primary sorted column, then secondary sorted columns in order
 
-    # Track the columns that aren't sorted, part 2
+    # Track the columns that aren't sorted
+    set unsorted_list $int_sequence_list
     foreach ii $sort_order_list {
         set ii_pos [expr { abs( $ii ) } ]
         # Blank the reference instead of removing it, 
@@ -710,6 +699,11 @@ ad_proc -public qfo_sp_table_g2 {
         }
     }
      
+
+    # ================================================
+    # Display customizations
+
+
 ##code Make sure to link these into the parameter/upvar paradigm:
     # ================================================
     # Add UI Options column to table?
