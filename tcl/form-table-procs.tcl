@@ -855,7 +855,7 @@ ad_proc -public qfo_sp_table_g2 {
     return 1
 }
 
-ad_proc -private hf_pagination_by_items {
+ad_proc -public hf_pagination_by_items {
     item_count
     items_per_page
     first_item_displayed
@@ -867,13 +867,16 @@ ad_proc -private hf_pagination_by_items {
     See hosting-farm/lib/paginiation-bar for an implementation example. 
 } {
     # based on ecds_pagination_by_items
-    if { $items_per_page > 0 && $item_count > 0 && $first_item_displayed > 0 && $first_item_displayed <= $item_count } {
+    if { $items_per_page > 0 \
+             && $item_count > 0 \
+             && $first_item_displayed > 0 \
+             && $first_item_displayed <= $item_count } {
         set bar_list [list ]
         set end_page [expr { ( $item_count + $items_per_page - 1 ) / $items_per_page } ]
 
         set current_page [expr { ( $first_item_displayed + $items_per_page - 1 ) / $items_per_page } ]
 
-        # first row of current page is { (( $current_page - 1)  * $items_per_page ) + 1 }
+        # first row of current page: {(( $current_page-1)*$items_per_page)+1}
 
         # create bar_list with no pages beyond end_page
 
@@ -935,14 +938,14 @@ ad_proc -private hf_pagination_by_items {
         lappend bar_list $end_page
         set bar_list [linsert $bar_list 0 1 ]
 
-        # clean up list
-        # now we need to sort and remove any remaining nonpositive integers and duplicates
+        # Clean up list.
+        # Sort and remove any remaining nonpositive integers and duplicates.
         set filtered_bar_list [lsort -unique -increasing -integer [lsearch -all -glob -inline $bar_list {[0-9 ]*} ] ]
-        # delete any cases of page zero
+        # Delete any cases of page zero
         set zero_index [lsearch $filtered_bar_list 0 ]
         set bar_list [lreplace $filtered_bar_list $zero_index $zero_index ]
 
-        # generate list of lists for code in ecommerce/lib
+        # Generate list of lists 
         set prev_bar_list_pair [list ]
         set current_bar_list_pair [list ]
         set next_bar_list_pair [list ]
@@ -958,7 +961,9 @@ ad_proc -private hf_pagination_by_items {
         }
         set bar_list_set [list $prev_bar_list_pair $current_bar_list_pair $next_bar_list_pair ]
     } else {
-        ns_log Warning "hf_pagination_by_items: parameter value(s) out of bounds for $item_count $items_per_page $first_item_displayed"
+        ns_log Warning "hf_pagination_by_items: value(s) out of bounds  \
+ item_count '${item_count}' items_per_page '${items_per_page}' \
+ first_item_displayed '${first_item_displayed}'"
     }
 
     return $bar_list_set
