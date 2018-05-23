@@ -15,7 +15,13 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             set sort_type_list [list "-ascii" "-integer" "-real" "-ignore" "-dictionary"]
             set table_row_count_list [list 3 9 12 70 100 120 1000]
             set sort_type_list [util::randomize_list $sort_type_list ]
+            set titles_list [list ]
+            foreach t $sort_type_list {
+                lappend titles_list [string [string range $t 1 end] totitle]
+            }
+            set seq 0
             foreach rows $table_row_count_list {
+                set char_len [expr { round(pow( $rows , .3) ) } ]
                 set table_larr(${rows}) [list ]
                 for {set r 0} {$r < $table_row_count_list } {incr r} {
                     set row_list [list ]
@@ -25,26 +31,73 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                             dictionary -
                             ignore -
                             ascii {
-                                set v [ad_generate_random_string ]
+                                # Just make long enough to most likely have
+                                # no duplicates.
+                                set v [ad_generate_random_string $char_len ]
                             }
                             integer {
-                                set v [randomRange $rows ]
+                                # Duplicate numbers can cause issues in 
+                                # testing, so avoid by using a sequence here.
+                                set v $seq
                             }
                             real {
-                                set v [random]
+                                set v [random ]
                             }
                         }
                         lappend row_list $v
                     }
                     lappend table_larr(${rows}) $row_list
                 }
+                incr seq
             }
             # tables exist. Now process and verify
             # by sorting from right most column first to trigger all features.
             set sort_type_reverse_list [list ]
+            set titles_revers_list [list ]
+            set index_list [list ]
+            set pos 4
             for {set i 4} {$i > -1} {incr i -1 } {
-                lappend sort_type_reverse_list [lindex $sort_type_list $i]
+                set type [lindex $sort_type_list $i ]
+                if { $type ne "-ignore" } {
+                    lappend sort_type_reverse_list $type
+                    lappend titles_reverse_list [lindex $titles_list $i ]
+                    lappend index_list $pos
+                    incr pos -1
+                }
             }
+            lappend sort_type_reverse_list "-ignore"
+            lappend titles_reverse_list "Ignore"
+            lappend list_index $pos
+            if { $pos ne 0 } {
+                ns_log Warning "q-forms-table-procs.tcl.72. pos '${pos}' \
+ Should be '0'. Error in code. "
+            }
+
+            # Output tables should have the 'ignore' column on right
+            # with the other columns reversed.
+            # Reverse the columns, then sort.
+            foreach rows $table_row_count_list {
+                foreach table_lists $table_larr(${rows}) {
+                    foreach row_list $table_lists {
+                        foreach i $index_list {
+                            set cell [lindex $row_list $i]
+                            lappend new_row_list $cell
+                        }
+                        lappend $new_table_list $new_row_list
+                    }
+                    # index 4 is ignore, so start with 3:
+                    for {set i 3} {$i > -1} {incr i -1} {
+                        set type [lindex $sort_type_reverse_list $i]
+                        set new_table_list [lsort $type -index $i $new_table_list]
+                    }
+                    set new_table_larr(${rows}) $new_table_list
+                }
+            }
+
+            # Generate output using qfo_sp_table_g2
+
+
+            # Compare outputs to $new_table_larr(${rows}) cell by cell
 
 
         }
