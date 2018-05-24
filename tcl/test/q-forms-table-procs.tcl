@@ -80,56 +80,44 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 incr seq
             }
 
-
-
             # Now essentially duplicate the function of the test proc, 
             # so that results can be checked those of test proc.
 
             # Sorting from right most column first to trigger all features.
             set sort_type_reverse_list [list ]
-            set titles_revers_list [list ]
+            set titles_reverse_list [list ]
             set index_list [list ]
-            set pos 4
             for {set i 4} {$i > -1} {incr i -1 } {
                 set type [lindex $sort_type_list $i ]
                 if { $type ne "-ignore" } {
-                    lappend sort_type_reverse_list $type
                     lappend titles_reverse_list [lindex $titles_list $i ]
-                    lappend index_list $pos
-                    lappend row_rev_bias_list [lindex $row_bias_list $i ]
-                    lappend row_rev_col_num_list [lindex $row_rev_col_num_list $i]
-                    incr pos -1
+                    lappend row_rev_col_num_list [lindex $row_col_num_list $i]
                 } else {
                     set ignore_col_num [lindex $row_bias_list $i ]
                 }
 
             }
-            lappend sort_type_reverse_list "-ignore"
             lappend titles_reverse_list "Ignore"
-            lappend list_index $pos
-            # No need to add a row_rev_bias_list entry.. becuase it is ignored
             lappend row_rev_col_num_list $ignore_col_num
 
-            if { $pos ne 0 } {
-                ns_log Warning "q-forms-table-procs.tcl.72. pos '${pos}' \
- Should be '0'. Error in code. "
-            }
-
-            # Reverse the columns, then sort.
+            # build and sort in reverse order.
 
             foreach rows $table_row_count_list {
-                foreach table_lists $table_larr(${rows}) {
+                foreach table_lists $table_larr(${rows}) 
+                set new_table_lists [list ]{
                     foreach row_list $table_lists {
-                        foreach i $index_list {
-                            set cell [lindex $row_list $i]
+                        foreach c $row_rev_col_num_list {
+                            set cell [lindex $row_list $c]
                             lappend new_row_list $cell
                         }
-                        lappend $new_table_list $new_row_list
+                        lappend $new_table_lists $new_row_list
                     }
-                    # index 4 is ignore, so start with 3:
-                    for {set i 3} {$i > -1} {incr i -1} {
-                        set type [lindex $sort_type_reverse_list $i]
-                        set new_table_list [lsort $type -index $i $bias $new_table_list ]
+                    # index 4 is ignore, so start with 3.. hmm No.
+                    # For consistency, use row_rev_col_num_list
+                    for {set c 3} {$c > -1 } {incr c -1 } {
+                        set type [lindex $sort_type_list $c ]
+                        set bias [lindex $row_bias_list $c ]
+                        set new_table_list [lsort $type -index $c $bias $new_table_list ]
                     }
                     set new_table_larr(${rows}) $new_table_list
                 }
