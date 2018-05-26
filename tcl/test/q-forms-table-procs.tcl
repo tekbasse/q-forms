@@ -10,7 +10,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
         -test_code {
             #         -rollback \
             ns_log Notice "qf_form_table_checks.12: Begin test"
-            aa_log "Build tables to be sorted."
+            aa_log "Building tables to be sorted."
             # Should have at least one of each sort type.
             set sort_type_list [list "-ascii" "-integer" "-real" "-ignore" "-dictionary"]
             set table_row_count_list [list 3 9 12 70 100 120 1000]
@@ -82,7 +82,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
 
             # Now essentially duplicate the function of the test proc, 
             # so that results can be checked those of test proc.
-
+            aa_log "Independently processing tables according to proc to be tested."
             # Sorting from right most column first to trigger all features.
             set sort_type_reverse_list [list ]
             set titles_reverse_list [list ]
@@ -168,24 +168,35 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             set s [join $s_list "a"]
             
                 
-                
+            aa_log "Processing tables using qfo_sp_table_g2."
             foreach rows $table_row_count_list {
-                foreach table_lists $table_larr(${rows}) {
-                    set sp_table_larr(${rows}) $table_lists
-                    set sp_titles_larr(${rows}) $titles_list
-                    qfo_sp_table_g2 -table_list_of_lists_varname $sp_table_larr(${rows}) \
-                        -p_varname p \
-                        -s_varname s \
-                        -titles_list_varname sp_titles_larr(${rows}) \
-                        -sort_type_list $sort_type_list
-
-                    
-                }
+                set sp_table_larr(${rows}) $table_lists
+                set sp_titles_larr(${rows}) $titles_list
+                qfo_sp_table_g2 -table_list_of_lists_varname $sp_table_larr(${rows}) \
+                    -p_varname p \
+                    -s_varname s \
+                    -titles_list_varname sp_titles_larr(${rows}) \
+                    -sort_type_list $sort_type_list
+                
+                
             }
 
+            aa_log "Verifying results are consistent.."
             ##code
             # Compare outputs to $new_table_larr(${rows}) cell by cell
-
+            foreach rows $table_row_count_list {
+                for {set r 0} {$r < $rows} {incr r} {
+                    set new_row_list [lindex $new_table_larr(${rows}) $r ]
+                    set new_row_list_len [len $row_list ]
+                    set sp_list [lindex $sp_table_larr(${rows}) $r]
+                    set sp_list_len [len $sp_list ]
+                    for {set c 0} {$c < 5} {incr c} {
+                        set new_cell [lindex $new_row_list $c ]
+                        set sp_cell [lindex $sp_row_list $c ]
+                        aa_equal "Table of '${rows}', cell R${r}C${c}" $sp_cell $new_cell
+                    }
+                }
+            }
 
         }
     # example code
