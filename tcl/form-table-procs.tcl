@@ -37,22 +37,61 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
 } {
-    Creates a user customizable sorted list from a list of lists by
-    creating a one row header with html. <br>
-    Outputs are:
-    <br><br><pre>
-    nav_prev_links_html_varname        These three variables hold components
-    nav_current_pos_html_varname       of a nav bar.
-    nav_next_links_html_varname
-
-    table_list_of_lists_varname        This table gets sorted and re-ordered.
-    titles_html_list_varname  This heading row includes html 
-                                       for form-based UI for p and s parameters
-
-    titles_list_varname          This heading row has columns
-                                       re-organized same as table_list_of_lists
-    </pre>
+    Creates a user customizable sorted table by
+    creating a one row header into html and a table into html, 
+    and complementary navigation links.
     <br><br>
+    The table and titles are exposed at various stages of the process,
+    so that customizations may be made without having to
+    re-work the core functionality. 
+    (The api could include new proces of this one split into its stages 
+     for optimization if customization proves to be a common, practical need.)
+    <strong>Highlighted parameters</strong> indicate which parameters
+    provide features this proc is specificially optimized for.
+    <br><br>
+    Outputs are:
+    <br><br>
+    <ul><li>These three variables hold components of a nav bar:
+    <ul><li><strong>nav_prev_links_html_varname</strong></li>
+    <li><strong>nav_current_pos_html_varname</strong></li>
+    <li><strong>nav_next_links_html_varname</strong></li>
+    </ul></li>
+    <li>
+    <code>table_list_of_lists_varname</code> is unchanged. 
+    It gets sorted into <code>table_sorted_lists_varname</code>.
+    Then the columns are re-ordered based on sort significance,
+    with the primary sort column first and set to
+    <code>table_sorted_reordered_lists_varname</code>.
+    For tables, the progression of processing is:
+    <ol><li>
+    <code>table_lists_varname</code> (input, unchanged)
+    </li><li>
+    <code>table_sorted_lists_varname</code>
+    </li><li>
+    <code>table_sorted_reordered_lists_varname</code>
+    </li><li>
+    <strong><code>table_html_varname</code></strong>
+    </li></ol>
+    <br>
+    For titles, the progression is:
+    <ol><li>
+    <code>titles_list_varname</code> (input, unchanged)
+    </li><li>
+    <code>titles_html_list_varname</code>  
+    This heading row includes html for form-based UI for p and s parameters
+    </li><li>
+    <code>titles_reordered_list_varname</code> 
+    This is the titles list re-ordered according to sort order significance, 
+    with primary sort order in first column. 
+    Columns are re-organized same as <code>table_sorted_reordered_lists_varname</code>.
+    </li><li>
+    <code>titles_reordered_html_list_varname</code>
+    This is <code>titles_html_list_varname</code> with columns re-ordered 
+    according to sort order significance.
+    This is added to <code>table_html_varname</code>, so that
+    no title-based output is specifically an optimized feature, and therefore 
+    highlighted. However, this would be the closest result.
+</li></ul>
 
     <br><br>
     To sort by timestamp, 
@@ -62,19 +101,25 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     Required parameters:
     <br><br>
-    <code>items_per_page</code> - number of rows (items) per page
-    <br><br>
     <code>table_list_of_lists_varname</code> 
     - Variable holding a table defined as a list of lists, 
     where each list is a row containing values of columns from first to last.
     <br><br>
     <code>titles_list_varname</code> 
     - Variable name containing a list of titles of the columns in 
-    <br><br>
     <code>table_list_of_lists</code>, in cooresponding order. 
     That is first in list is title of first column in table.
     <br><br>
-    Optional parameters:
+    An <code>s_varname</code> or <code>p_varname</code> that identifies
+    at least one sorted column.
+    This is not a proc based requirement, but the proc's pagination navigation
+    is fairly useless unless there is some default order provided
+    usually via a one column sort supplied by <code>s_varname</code>.
+    See optional parameters section for details on using <code>s_varname</code>.
+    <br><br>
+    Optional parameters:<br>
+    <br><br>
+    <code>items_per_page</code> - number of rows (items) per page
     <br><br>
     <code>item_count</code> - number of rows (items) in the table.
     <br><br>
@@ -98,12 +143,15 @@ ad_proc -public qfo_sp_table_g2 {
     to be sorted in reverse order, 
     so that primary sort is the first in the list. 
     Secondary sort is the second in the list and on.
+    For example, to indicate that the second column should be sorted in
+    decreasing order,  set the value to: "-1", 
+    because the first column's index is the same as Tcl's list indexing of zero.
     <br><br>
     <code>p_varname</code>
     - 'p' is a change of the sort_order_list 
     to now make this index the primary sort index. See code for details.
     <br><br>
-    <code>sort_type_list</code> 
+    <code>sort_type_list</code>
     - A list of types of sort to use for each column when using 
     <code>lsort -index &lt;column&gt; -ascii &lt;list_of_lists&gt;</code> 
     to sort a table by a specific column. 
@@ -112,6 +160,8 @@ ad_proc -public qfo_sp_table_g2 {
     For example:
     \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
     Note: <strong>To indicate that a column is unsortable use "-ignore"</strong>
+    <br><br>
+    
     <br><br>
     <code>columns_hide_index_list</code> - To hide a column from display,
     add its tcl index number to this list.
