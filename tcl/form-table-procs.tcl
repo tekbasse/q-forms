@@ -105,7 +105,6 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     <code>sort_type_list</code> 
     - A list of types of sort to use for each column when using 
-    <br><br>
     <code>lsort -index &lt;column&gt; -ascii &lt;list_of_lists&gt;</code> 
     to sort a table by a specific column. 
     The default value for each column is "-ascii", per tcl's default. 
