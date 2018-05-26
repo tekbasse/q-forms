@@ -124,12 +124,66 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             }
 
             # Test tables are in new_table_larr(${rows})
-
+            
             # Generate output using qfo_sp_table_g2
+
+            # Keep the original tables.
+            # Make a copy for qfo_sp_table_g
             # Testing P as well as S features.
-            # We need to know what the original column references are
+            set p ""
+            set p_bias [lindex $sort_type_list 0]
+            switch -exact -- $p_bias {
+                -increasing {
+                    # do nothing
+                }
+                -decreasing {
+                    append p "-"
+                }
+                default {
+                    ns_log Warning "q-forms-table-procs.tcl.142: p_bias '${p_bias}' \
+ This should not happen."
+                }
+            }
+            append p [lindex $row_col_num_list 0]
+            
+            set s_list [list ]
+            for {set i 1} {$i < 4} {incr i} {
+                set s_part ""
+                set s_part_bias [lindex $sort_type_list $i]
+                switch -exact -- $s_part_bias {
+                    -increasing {
+                        # do nothing
+                    }
+                    -decreasing {
+                        append s_part "-"
+                    }
+                    default {
+                        ns_log Warning "q-forms-table-procs.tcl.158: \
+ s_part_bias '${s_part_bias}'  This should not happen."
+                    }
+                }
+                append s_part [lindex $row_col_num_list $i]
+                lappend s_list $s_part
+            }
+            set s [join $s_list "a"]
+            
+                
+                
+            foreach rows $table_row_count_list {
+                foreach table_lists $table_larr(${rows}) {
+                    set sp_table_larr(${rows}) $table_lists
+                    set sp_titles_larr(${rows}) $titles_list
+                    qfo_sp_table_g2 -table_list_of_lists_varname $sp_table_larr(${rows}) \
+                        -p_varname p \
+                        -s_varname s \
+                        -titles_list_varname sp_titles_larr(${rows}) \
+                        -sort_type_list $sort_type_list
 
+                    
+                }
+            }
 
+            ##code
             # Compare outputs to $new_table_larr(${rows}) cell by cell
 
 
