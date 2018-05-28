@@ -176,8 +176,8 @@ ad_proc -public qfo_sp_table_g2 {
     upvar 1 $table_html_varname table_html
     upvar 1 $table_lists_varname table_lists
     upvar 1 $titles_list_varname titles_list
-    upvar 1 $titles_reordered_html_list titles_reordered_html_list
-    upvar 1 $titles_reordered_list titles_reordered_list
+    upvar 1 $titles_reordered_html_list_varname titles_reordered_html_list
+    upvar 1 $titles_reordered_list_varname titles_reordered_list
         
     # adapting from:
     # hosting-farm/lib/resource-status-summary-1.tcl
@@ -188,7 +188,7 @@ ad_proc -public qfo_sp_table_g2 {
     # normalize page_num_p's value
     set page_num_p [qf_is_true $page_num_p ]
     
-    if { base_url eq "" } {
+    if { $base_url eq "" } {
         set base_url [ad_conn url ]
     }
     
@@ -388,6 +388,9 @@ ad_proc -public qfo_sp_table_g2 {
     if { $this_start_row > $item_count } {
         set this_start_row $item_count
     }
+    if { $this_start_row < 1 } {
+        set this_start_row 1
+    }
 
     set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row ]
     set prev_bar_list [list ]
@@ -453,7 +456,7 @@ ad_proc -public qfo_sp_table_g2 {
 
 
     # add start_row to sort_urls.
-    if { $this_start_row_exists_p } {
+    if { $this_start_row ne "1" } {
         set page_url_add ${amp_h}
         append page_url ${this_start_row_h}
         append page_url_add ${this_start_row}

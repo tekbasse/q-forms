@@ -176,7 +176,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             foreach rows $table_row_count_list {
                 set sp_table_larr(${rows}) $table_lists
                 set sp_titles_larr(${rows}) $titles_list
-                qfo_sp_table_g2 -table_list_of_lists_varname sp_table_larr(${rows}) \
+                qfo_sp_table_g2 -table_lists_varname sp_table_larr(${rows}) \
                     -p_varname p \
                     -s_varname s \
                     -titles_list_varname sp_titles_larr(${rows}) \
