@@ -47,11 +47,12 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             }
 
             # Populate tables with test data
-            set seq 0
+
             foreach rows $table_row_count_list {
                 set char_len [expr { round(pow( $rows , .3) ) } ]
+
                 set table_larr(${rows}) [list ]
-                for {set r 0} {$r < $table_row_count_list } {incr r} {
+                for {set r 0} {$r < $rows } {incr r} {
                     set row_list [list ]
 
                     foreach type $sort_type_list {
@@ -67,17 +68,17 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                             integer {
                                 # Duplicate numbers can cause issues in 
                                 # testing, so avoid by using a sequence here.
-                                set v $seq
+                                set v $r
                             }
                             real {
-                                set v [random ]
+                                set v [string range [random ] 0 ${char_len}+2 ]
                             }
                         }
                         lappend row_list $v
                     }
+
                     lappend table_larr(${rows}) $row_list
                 }
-                incr seq
             }
 
             # Now essentially duplicate the function of the test proc, 
@@ -104,29 +105,37 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # build and sort in reverse order.
 
             foreach rows $table_row_count_list {
-                foreach table_lists $table_larr(${rows}) {
-                    set new_table_lists [list ]
-                    foreach row_list $table_lists {
-                        foreach c $row_rev_col_num_list {
-                            set cell [lindex $row_list $c]
-                            lappend new_row_list $cell
-                        }
-                        lappend $new_table_lists $new_row_list
+                set table_lists $table_larr(${rows})
+                set new_table_lists [list ]
+
+                # process each row of table
+                foreach row_list $table_lists {
+                    set new_row_list [list ]
+                    foreach c $row_rev_col_num_list {
+                        set cell [lindex $row_list $c]
+                        lappend new_row_list $cell
                     }
-                    # index 4 is ignore, so start with 3.. hmm No.
-                    # For consistency, use row_rev_col_num_list
-                    for {set c 3} {$c > -1 } {incr c -1 } {
-                        set s [lindex $row_rev_col_num_list $c]
-                        set type [lindex $sort_type_list $s ]
-                        set bias [lindex $row_bias_list $s ]
+                    lappend new_table_lists $new_row_list
+                }
+                if { $rows < 20 } {
+                    ns_log Notice "q-forms-table-procs.tcl.121 new_table_lists '${new_table_lists}'"
+                }
+                # index 4 is ignore, so start with 3.. hmm No.
+                # For consistency, use row_rev_col_num_list
+                for {set c 3} {$c > -1 } {incr c -1 } {
+                    set s [lindex $row_rev_col_num_list $c]
+                    set type [lindex $sort_type_list $s ]
+                    set bias [lindex $row_bias_list $s ]
 #                        ns_log Notice "q-forms-table-procs.tcl.121 \
 # type '${type}' c '${c}' bias '${bias}' s '${s}' "
-                        set new_table_lists [lsort $type -index $s $bias $new_table_lists ]
+                    set new_table_lists [lsort $type -index $s $bias $new_table_lists ]
+                    if { $rows < 20 } {
+                        ns_log Notice "q-forms-table-procs.tcl.130 new_table_lists '${new_table_lists}"
                     }
-                    set new_table_larr(${rows}) $new_table_lists
-                    if { $rows < 100 } {
-                        ns_log Notice "q-forms-table-procs.128: new_table_larr(${rows}) '$new_table_larr(${rows})' new_table_lists '${new_table_lists}'"
-                    }
+                }
+                set new_table_larr(${rows}) $new_table_lists
+                if { $rows < 100 } {
+                    ns_log Notice "q-forms-table-procs.128: new_table_larr(${rows}) '$new_table_larr(${rows})' new_table_lists '${new_table_lists}'"
                 }
             }
 
@@ -177,7 +186,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 
             aa_log "Processing tables using qfo_sp_table_g2."
             foreach rows $table_row_count_list {
-                set sp_table_larr(${rows}) $table_lists
+                set sp_table_larr(${rows}) $table_arr(${rows})
                 set sp_titles_larr(${rows}) $titles_list
                 qfo_sp_table_g2 -table_lists_varname sp_table_larr(${rows}) \
                     -p_varname p \
