@@ -28,7 +28,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             set decreasing_c "-decreasing"
             set col_num 0
             foreach t $sort_type_list {
-                lappend titles_list [string [string range $t 1 end] totitle]
+                lappend titles_list [string totitle [string range $t 1 end]]
 
 
                 # if primary_sort_increasing_p, then sort increasing on even_p
@@ -87,24 +87,25 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             set sort_type_reverse_list [list ]
             set titles_reverse_list [list ]
             set index_list [list ]
+            ns_log Notice "q-forms-table-procs.tcl.90 row_col_num_list '${row_col_num_list}'"
             for {set i 4} {$i > -1} {incr i -1 } {
                 set type [lindex $sort_type_list $i ]
                 if { $type ne "-ignore" } {
                     lappend titles_reverse_list [lindex $titles_list $i ]
                     lappend row_rev_col_num_list [lindex $row_col_num_list $i]
                 } else {
-                    set ignore_col_num [lindex $row_bias_list $i ]
+                    set ignore_col_num $i
                 }
 
             }
             lappend titles_reverse_list "Ignore"
             lappend row_rev_col_num_list $ignore_col_num
-
+            ns_log Notice "q-forms-table-procs.tcl.103 row_rev_col_num_list '${row_rev_col_num_list}'"
             # build and sort in reverse order.
 
             foreach rows $table_row_count_list {
-                foreach table_lists $table_larr(${rows}) 
-                set new_table_lists [list ]{
+                foreach table_lists $table_larr(${rows}) {
+                    set new_table_lists [list ]
                     foreach row_list $table_lists {
                         foreach c $row_rev_col_num_list {
                             set cell [lindex $row_list $c]
@@ -115,9 +116,12 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                     # index 4 is ignore, so start with 3.. hmm No.
                     # For consistency, use row_rev_col_num_list
                     for {set c 3} {$c > -1 } {incr c -1 } {
-                        set type [lindex $sort_type_list $c ]
-                        set bias [lindex $row_bias_list $c ]
-                        set new_table_list [lsort $type -index $c $bias $new_table_list ]
+                        set s [lindex $row_rev_col_num_list $c]
+                        set type [lindex $sort_type_list $s ]
+                        set bias [lindex $row_bias_list $s ]
+                        ns_log Notice "q-forms-table-procs.tcl.121 \
+ type '${type}' c '${c}' bias '${bias}' s '${s}' "
+                        set new_table_list [lsort $type -index $s $bias $new_table_lists ]
                     }
                     set new_table_larr(${rows}) $new_table_list
                 }
@@ -172,7 +176,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             foreach rows $table_row_count_list {
                 set sp_table_larr(${rows}) $table_lists
                 set sp_titles_larr(${rows}) $titles_list
-                qfo_sp_table_g2 -table_list_of_lists_varname $sp_table_larr(${rows}) \
+                qfo_sp_table_g2 -table_list_of_lists_varname sp_table_larr(${rows}) \
                     -p_varname p \
                     -s_varname s \
                     -titles_list_varname sp_titles_larr(${rows}) \
@@ -181,10 +185,12 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 
             }
 
-            aa_log "Verifying results are consistent.."
+
             ##code
             # Compare outputs to $new_table_larr(${rows}) cell by cell
             foreach rows $table_row_count_list {
+                aa_log "Verify for scenario of table with '${rows}' rows."
+                aa_log "Are table results are consistent? Verify cell by cell."
                 for {set r 0} {$r < $rows} {incr r} {
                     set new_row_list [lindex $new_table_larr(${rows}) $r ]
                     set new_row_list_len [len $row_list ]
@@ -196,8 +202,14 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                         aa_equal "Table of '${rows}', cell R${r}C${c}" $sp_cell $new_cell
                     }
                 }
-            }
 
+                aa_log "Are title results consistent? Verify column by column:"
+                for {set c 0} {$c < 5} {incr c} {
+                    set new_title [lindex $titles_reverse_list $c ]
+                    set sp_title [lindex $sp_titles_larr(${rows}) $c]
+                    aa_equal "Column '${c}' " $new_title $sp_title
+                }
+            }
         }
     # example code
     # -teardown_code {

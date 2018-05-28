@@ -41,7 +41,7 @@ ad_proc -public qfo_sp_table_g2 {
     creating a one row header into html and a table into html, 
     and complementary navigation links.
     <br><br>
-    The table and titles are exposed at various stages of the process,
+    The table and titles are exposed at various steps in the process,
     so that customizations may be made without having to
     re-work the core functionality. 
     (The api could include new proces of this one split into its stages 
