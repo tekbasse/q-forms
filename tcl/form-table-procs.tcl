@@ -232,7 +232,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     set table_cols_count [llength [lindex $table_lists 0 ] ]
     set table_index_last [expr { $table_cols_count - 1 } ]
-
+    ns_log Notice "qfo_sp_table_g2.235: table_cols_count '${table_cols_count}' table_index_last '${table_index_last}' table_lists '${table_lists}'"
     # defaults and inputs
     if { $sort_type_list eq "" } {
         set sort_type_list [lrepeat $table_cols_count "-ascii" ]
@@ -258,6 +258,7 @@ ad_proc -public qfo_sp_table_g2 {
     # columns_hide_index_list
     foreach col_idx $columns_hide_index_list {
         # Checked for collision with sort_order_list indexes in ns_log 631
+        ns_log Notice "qfo_sp_table_g2.261: int_sequence_list '${int_sequence_list}' col_idx '${col_idx}' "
         set int_sequence_list [lreplace $int_sequence_list $col_idx $col_idx "" ]
         incr table_cols_count -1
     }
@@ -498,6 +499,7 @@ ad_proc -public qfo_sp_table_g2 {
         lappend column_sort_decreases_list 0
         lappend column_sorted_list 0
     }
+    ns_log Notice "qfo_sp_table_g2.502. column_sorted_list '${column_sorted_list}' column_sort_decreases_list '${column_sort_decreases_list}' table_cols_count '${table_cols_count}'"
     foreach sort_i $sort_order_list {
         if { [string range $sort_i 0 0 ] eq "-" } {
             set col_sort_i [string range $sort_i 1 end ]
