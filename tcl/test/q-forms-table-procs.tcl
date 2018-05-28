@@ -119,11 +119,14 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                         set s [lindex $row_rev_col_num_list $c]
                         set type [lindex $sort_type_list $s ]
                         set bias [lindex $row_bias_list $s ]
-                        ns_log Notice "q-forms-table-procs.tcl.121 \
- type '${type}' c '${c}' bias '${bias}' s '${s}' "
-                        set new_table_list [lsort $type -index $s $bias $new_table_lists ]
+#                        ns_log Notice "q-forms-table-procs.tcl.121 \
+# type '${type}' c '${c}' bias '${bias}' s '${s}' "
+                        set new_table_lists [lsort $type -index $s $bias $new_table_lists ]
                     }
-                    set new_table_larr(${rows}) $new_table_list
+                    set new_table_larr(${rows}) $new_table_lists
+                    if { $rows < 100 } {
+                        ns_log Notice "q-forms-table-procs.128: new_table_larr(${rows}) '$new_table_larr(${rows})' new_table_lists '${new_table_lists}'"
+                    }
                 }
             }
 
