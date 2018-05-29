@@ -339,10 +339,10 @@ ad_proc -public qfo_sp_table_g2 {
                 }
                 set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
                 
-                if {[catch { set table_sorted_lists [lsort $sort_type -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
+                if {[catch { set table_sorted_lists [lsort $sort_type $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
                     # lsort errored, probably due to bad sort_type. 
                     # Fall back to -ascii sort_type, or fail..
-                    set table_sorted_lists [lsort -dictionary $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
+                    set table_sorted_lists [lsort -ascii $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
                     ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
  -ascii for index '${col2sort_wo_sign}' due to error: '${result}'"
                 }
@@ -699,6 +699,8 @@ ad_proc -public qfo_sp_table_g2 {
     # so that the primary sort col is left, secondary is 2nd from left etc.
 
     # parameters: table_sorted_lists
+    #             sort_order_lists
+    #             sort_order_reverse_list
     set table_sorted_reordered_lists [list ]
 
     # Rebuild the table, one row at a time, 
@@ -716,11 +718,13 @@ ad_proc -public qfo_sp_table_g2 {
     }
 
     foreach table_row_list $table_sorted_lists {
-        set table_row_new [list ]
+        set table_row_new_list [list ]
 
-        foreach ii $sort_order_list {
-            set ii_pos [expr { abs( $ii ) } ]
-            lappend table_row_new [lindex $table_row_list $ii_pos ]
+        foreach ii $sort_order_reverse_list {
+            if { $ii ne "" } {
+                set ii_pos [expr { abs( $ii ) } ]
+                lappend table_row_new_list [lindex $table_row_list $ii_pos ]
+            }
         }
 
         # Now that the sorted columns are added to the row, 
@@ -728,17 +732,17 @@ ad_proc -public qfo_sp_table_g2 {
         foreach ui $unsorted_list {
             if { $ui ne "" } {
                 # Add unsorted column to row
-                lappend table_row_new [lindex $table_row_list $ui ]
+                lappend table_row_new_list [lindex $table_row_list $ui ]
             }
         }
 
         # Confirm that all columns have been accounted for.
-        set table_row_new_cols [llength $table_row_new ]
+        set table_row_new_cols [llength $table_row_new_list ]
         if { $table_row_new_cols != $table_cols_count } {
-            ns_log Notice "qfsp_listcl(203): Warning: table_row_new has ${table_row_new_cols} instead of ${table_cols_count} columns."
+            ns_log Notice "qfsp_listcl(203): Warning: table_row_new_list has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
-        lappend table_sorted_reordered_lists $table_row_new
+        lappend table_sorted_reordered_lists $table_row_new_list
     }
 
     # Repeat for the variation  title rows: 
@@ -746,10 +750,12 @@ ad_proc -public qfo_sp_table_g2 {
     set titles_reordered_list [list ]
     #  titles_html_list
     set titles_reordered_html_list [list ]
-    foreach ii $sort_order_list {
-        set ii_pos [expr { abs( $ii ) } ]
-        lappend titles_reordered_list [lindex $titles_list $ii_pos ]
-        lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
+    foreach ii $sort_order_reverse_list {
+        if { $ii ne "" } {
+            set ii_pos [expr { abs( $ii ) } ]
+            lappend titles_reordered_list [lindex $titles_list $ii_pos ]
+            lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
+        }
     }
     # Now that the sorted columns are added to the rows, 
     # add the remaining columns

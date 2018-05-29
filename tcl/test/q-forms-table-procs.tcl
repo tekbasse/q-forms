@@ -14,7 +14,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # Should have at least one of each sort type.
             set sort_type_list [list "-ascii" "-integer" "-real" "-ignore" "-dictionary"]
             set table_row_count_list [list 3 9 12 70 100 120 1000]
-            set table_row_count_list [list 3 9]
+            set table_row_count_list [list 3]
             set sort_type_list [util::randomize_list $sort_type_list ]
             set titles_list [list ]
 
