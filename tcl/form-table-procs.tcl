@@ -528,7 +528,7 @@ ad_proc -public qfo_sp_table_g2 {
                 set ignore_p 0
             }
             ascii -
-            dictonary {
+            dictionary {
                 set abbrev_asc $text_asc
                 set abbrev_desc $text_desc
                 set title_asc $title_asc_by_text
@@ -548,7 +548,7 @@ ad_proc -public qfo_sp_table_g2 {
                 set title_asc ""
                 set title_desc ""
                 set ignore_p 1
-                ns_log "qfo_sp_table_g2.441 column_type '${column_type}' unrecognized."
+                ns_log Warning "qfo_sp_table_g2.441 column_type '${column_type}' unrecognized."
             }
         }
 
@@ -583,18 +583,20 @@ ad_proc -public qfo_sp_table_g2 {
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h}
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                    append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
                     append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
-                    set sort_top ${a_href_h} ${base_url} ${q_s_h} ${s_urlcoded}
+                    set sort_top ${a_href_h} 
+                    append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_count} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
                     append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
-                    set sort_bottom ${a_href_h} ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                    set sort_bottom ${a_href_h} 
+                    append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                    append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
                     append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
@@ -609,7 +611,7 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${class_att_h} ${unsorted} ${dquote_end_h}
                 set sort_bottom ${a_href_h} 
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc}
                 append sort_bottom ${class_att_h} ${unsorted} ${dquote_end_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
@@ -625,16 +627,18 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${title_att_h} ${title_asc}
                 append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
-                set sort_bottom ${span_h} ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                set sort_bottom ${span_h} 
+                append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
                 append sort_bottom ${abbrev_desc} ${span_end_h}
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
-                set sort_top ${span_h} ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                set sort_top ${span_h} 
+                append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${span_end_h}
                 set sort_bottom ${a_href_h}
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_bottom ${amp_p_h} ${da} ${column_count} ${page_url_add}
+                append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc}
                 append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
@@ -886,11 +890,11 @@ ad_proc -public qfo_sp_table_g2 {
         incr row_count
     }
 
-    set table_row_count [llength $table2_lists ]
+    set table_row_count [llength $table_sorted_reordered_lists ]
     set row_odd_format [lindex $cell_table_sorted_lists 1 ]
     set row_even_format [lindex $cell_table_sorted_lists 2 ]
     if { $table_row_count > 3 } { 
-        # Repeat the odd/even rows for the length of the table (table2_lists)
+        # Repeat the odd/even rows for the length of the table (table_sorted_reordered_lists)
         for {set row_i 3} {$row_i < $table_row_count} { incr row_i } {
             if { [f::even_p $row_i ] } {
                 lappend cell_table_sorted_lists $row_even_format
@@ -904,7 +908,7 @@ ad_proc -public qfo_sp_table_g2 {
 
 
     # this builds the html table and assigns it to table_html
-    set table_html [qss_list_of_lists_to_html_table $table2_lists $table_tag_attributes_list $cell_table_sorted_lists ]
+    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_lists $table_tag_attributes_list $cell_table_sorted_lists ]
 
     return 1
 }

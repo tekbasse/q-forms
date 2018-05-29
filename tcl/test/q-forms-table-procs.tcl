@@ -14,6 +14,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # Should have at least one of each sort type.
             set sort_type_list [list "-ascii" "-integer" "-real" "-ignore" "-dictionary"]
             set table_row_count_list [list 3 9 12 70 100 120 1000]
+            set table_row_count_list [list 3 9]
             set sort_type_list [util::randomize_list $sort_type_list ]
             set titles_list [list ]
 
@@ -193,13 +194,17 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             
                 
             aa_log "Processing tables using qfo_sp_table_g2."
+            # titles_list is same for all cases
             foreach rows $table_row_count_list {
                 set sp_table_larr(${rows}) $table_larr(${rows})
                 set sp_titles_larr(${rows}) $titles_list
-                qfo_sp_table_g2 -table_lists_varname sp_table_larr(${rows}) \
+                qfo_sp_table_g2 \
+                    -table_lists_varname table_larr(${rows}) \
+                    -table_sorted_reordered_lists_varname sp_table_larr(${rows}) \
                     -p_varname p \
                     -s_varname s \
-                    -titles_list_varname sp_titles_larr(${rows}) \
+                    -titles_list_varname titles_list \
+                    -titles_reordered_list_varname sp_titles_larr(${rows}) \
                     -sort_type_list $sort_type_list
                 
                 
@@ -213,13 +218,13 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 aa_log "Are table results are consistent? Verify cell by cell."
                 for {set r 0} {$r < $rows} {incr r} {
                     set new_row_list [lindex $new_table_larr(${rows}) $r ]
-                    set new_row_list_len [len $row_list ]
-                    set sp_list [lindex $sp_table_larr(${rows}) $r]
-                    set sp_list_len [len $sp_list ]
+                    set new_row_list_len [llength $row_list ]
+                    set sp_row_list [lindex $sp_table_larr(${rows}) $r]
+                    set sp_row_list_len [llength $sp_row_list ]
                     for {set c 0} {$c < 5} {incr c} {
                         set new_cell [lindex $new_row_list $c ]
                         set sp_cell [lindex $sp_row_list $c ]
-                        aa_equal "Table of '${rows}', cell R${r}C${c}" $sp_cell $new_cell
+                        aa_equals "Table of '${rows}', cell R${r}C${c}" $sp_cell $new_cell
                     }
                 }
 
@@ -227,7 +232,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 for {set c 0} {$c < 5} {incr c} {
                     set new_title [lindex $titles_reverse_list $c ]
                     set sp_title [lindex $sp_titles_larr(${rows}) $c]
-                    aa_equal "Column '${c}' " $new_title $sp_title
+                    aa_equals "Column '${c}' " $new_title $sp_title
                 }
             }
         }
