@@ -87,6 +87,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # Sorting from right most column first to trigger all features.
             set sort_type_reverse_list [list ]
             set titles_reverse_list [list ]
+            set row_bias_reverse_list [list ]
             set index_list [list ]
             ns_log Notice "q-forms-table-procs.tcl.90 row_col_num_list '${row_col_num_list}'"
             for {set i 4} {$i > -1} {incr i -1 } {
@@ -94,6 +95,9 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 if { $type ne "-ignore" } {
                     lappend titles_reverse_list [lindex $titles_list $i ]
                     lappend row_rev_col_num_list [lindex $row_col_num_list $i]
+                    lappend row_bias_reverse_list [lindex $row_bias_list $i]
+                    lappend sort_type_reverse_list $type
+
                 } else {
                     set ignore_col_num $i
                 }
@@ -101,7 +105,11 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             }
             lappend titles_reverse_list "Ignore"
             lappend row_rev_col_num_list $ignore_col_num
+            lappend sort_type_reverse_list "-ignore"
+            lappend row_bias_reverse_list ""
             ns_log Notice "q-forms-table-procs.tcl.103 row_rev_col_num_list '${row_rev_col_num_list}'"
+            ns_log Notice "q-forms-table-procs.tcl.104 sort_type_list '${sort_type_list}'"
+            ns_log Notice "q-forms-table-procs.tcl.105 sort_type_reverse_list '${sort_type_reverse_list}'"
             # build and sort in reverse order.
 
             foreach rows $table_row_count_list {
@@ -118,24 +126,24 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                     lappend new_table_lists $new_row_list
                 }
                 if { $rows < 20 } {
+                    ns_log Notice "q-forms-table-porcs.tcl.120 table_lists '${table_lists}'"
                     ns_log Notice "q-forms-table-procs.tcl.121 new_table_lists '${new_table_lists}'"
                 }
                 # index 4 is ignore, so start with 3.. hmm No.
                 # For consistency, use row_rev_col_num_list
                 for {set c 3} {$c > -1 } {incr c -1 } {
-                    set s [lindex $row_rev_col_num_list $c]
-                    set type [lindex $sort_type_list $s ]
-                    set bias [lindex $row_bias_list $s ]
-#                        ns_log Notice "q-forms-table-procs.tcl.121 \
-# type '${type}' c '${c}' bias '${bias}' s '${s}' "
-                    set new_table_lists [lsort $type -index $s $bias $new_table_lists ]
+                    set type [lindex $sort_type_reverse_list $c ]
+                    set bias [lindex $row_bias_reverse_list $c ]
+                        ns_log Notice "q-forms-table-procs.tcl.134 \
+ type '${type}' c '${c}' bias '${bias}' "
+                    set new_table_lists [lsort $type -index $c $bias $new_table_lists ]
                     if { $rows < 20 } {
-                        ns_log Notice "q-forms-table-procs.tcl.130 new_table_lists '${new_table_lists}"
+                        ns_log Notice "q-forms-table-procs.tcl.138 new_table_lists '${new_table_lists}"
                     }
                 }
                 set new_table_larr(${rows}) $new_table_lists
                 if { $rows < 100 } {
-                    ns_log Notice "q-forms-table-procs.128: new_table_larr(${rows}) '$new_table_larr(${rows})' new_table_lists '${new_table_lists}'"
+                    ns_log Notice "q-forms-table-procs.143: new_table_larr(${rows}) '$new_table_larr(${rows})' new_table_lists '${new_table_lists}'"
                 }
             }
 
@@ -156,7 +164,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                     append p "-"
                 }
                 default {
-                    ns_log Warning "q-forms-table-procs.tcl.142: p_bias '${p_bias}' \
+                    ns_log Warning "q-forms-table-procs.tcl.164: p_bias '${p_bias}' \
  This should not happen."
                 }
             }
@@ -174,7 +182,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                         append s_part "-"
                     }
                     default {
-                        ns_log Warning "q-forms-table-procs.tcl.158: \
+                        ns_log Warning "q-forms-table-procs.tcl.182: \
  s_part_bias '${s_part_bias}'  This should not happen."
                     }
                 }
@@ -186,7 +194,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
                 
             aa_log "Processing tables using qfo_sp_table_g2."
             foreach rows $table_row_count_list {
-                set sp_table_larr(${rows}) $table_arr(${rows})
+                set sp_table_larr(${rows}) $table_larr(${rows})
                 set sp_titles_larr(${rows}) $titles_list
                 qfo_sp_table_g2 -table_lists_varname sp_table_larr(${rows}) \
                     -p_varname p \
