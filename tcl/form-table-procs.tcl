@@ -221,7 +221,7 @@ ad_proc -public qfo_sp_table_g2 {
     if { ![info exists p ] } {
         set p ""
     }
-
+    ns_log Notice "qfo_sp_table_g2.224: p '${p}' s '${s}'"
 
 
     # ================================================
@@ -492,18 +492,9 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
 
     set titles_html_list [list ]
-    set column_count 0
-    set primary_sort_col [lindex $sort_order_list $column_count ]
+    set column_idx 0
+    set primary_sort_col [lindex $sort_order_list $column_idx ]
 
-    # column_sort_decreases_list tells which columns are
-    # sorted in decreasing order.
-    set column_sort_decreases_list [list ]
-    set column_sorted_list [list ]
-    for {set i 0} {$i < $table_cols_count} {incr i} {
-        lappend column_sort_decreases_list 0
-        lappend column_sorted_list 0
-    }
-    ns_log Notice "qfo_sp_table_g2.502. column_sorted_list '${column_sorted_list}' column_sort_decreases_list '${column_sort_decreases_list}' table_cols_count '${table_cols_count}'"
     foreach sort_i $sort_order_list {
         if { [string range $sort_i 0 0 ] eq "-" } {
             set col_sort_i [string range $sort_i 1 end ]
@@ -512,16 +503,12 @@ ad_proc -public qfo_sp_table_g2 {
             set col_sort_i $sort_i
             set decreasing_p 0
         }
-        if { $decreasing_p } {
-            set column_sort_decreases_list [lreplace $column_sort_decreases_list $col_sort_i $col_sort_i $decreasing_p ]
-        }
-        set column_sorted_list [lreplace $column_sorted_list $col_sort_i $col_sort_i 1 ]
     }
 
     foreach title $titles_list {
         # Figure out column data type for sort button (text or nbr).
         # The column order is not changed yet.
-        set column_type [string range [lindex $sort_type_list $column_count ] 1 end ]
+        set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
         switch -exact -- $column_type {
             integer -
             real {
@@ -558,8 +545,13 @@ ad_proc -public qfo_sp_table_g2 {
 
         # Is column sort decreasing? 
         # If so, let's reverse the order of column's sort links.
-        set decreasing_p [lindex $column_sort_decreases_list $column_count ]
-        set column_sorted_p [lindex $column_sorted_list $column_count ]
+        set sort_number [lindex $sort_order_list $column_idx ]
+        set decreasing_p [string match {-*} $sort_number ]
+        if { [lindex $sort_order_list $column_idx ] ne "" } {
+            set column_sorted_p 1
+        } else {
+            set column_sorted_p 0
+        }
         set sort_link_delim ""
         # Sort button should be active if an available choice, 
         # and inactive if already chosen (primary sort case).
@@ -575,32 +567,32 @@ ad_proc -public qfo_sp_table_g2 {
         if { $primary_sort_col eq "" \
                  || $ignore_p \
                  || ( $primary_sort_col ne "" \
-                          && $column_count ne [expr { abs( $primary_sort_col ) } ] ) } {
+                          && $column_idx ne [expr { abs( $primary_sort_col ) } ] ) } {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
                     # reverse class styles
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                    append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
                     append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h}
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
+                    append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
                     append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
                     set sort_top ${a_href_h} 
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                    append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
                     append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h} 
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
+                    append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
                     append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
@@ -610,12 +602,12 @@ ad_proc -public qfo_sp_table_g2 {
                 # Just use normal horizontal alignment.
                 set sort_top ${a_href_h}
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                 append sort_top ${title_att_h} ${title_asc}
                 append sort_top ${class_att_h} ${unsorted} ${dquote_end_h}
                 set sort_bottom ${a_href_h} 
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
+                append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc}
                 append sort_bottom ${class_att_h} ${unsorted} ${dquote_end_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
@@ -627,7 +619,7 @@ ad_proc -public qfo_sp_table_g2 {
                 # no need to make the link active
                 set sort_top ${a_href_h}
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded} 
-                append sort_top ${amp_p_h} ${column_count} ${page_url_add}
+                append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                 append sort_top ${title_att_h} ${title_asc}
                 append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
@@ -642,7 +634,7 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${abbrev_asc} ${span_end_h}
                 set sort_bottom ${a_href_h}
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_bottom ${amp_p_h} ${da_h} ${column_count} ${page_url_add}
+                append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc}
                 append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
@@ -669,7 +661,7 @@ ad_proc -public qfo_sp_table_g2 {
         }
         append title_new $end_div
         lappend titles_html_list $title_new
-        incr column_count
+        incr column_idx
     }
 
     # Begin building the paginated table here. Table rows have been sorted.
@@ -772,16 +764,10 @@ ad_proc -public qfo_sp_table_g2 {
     # Display customizations
 
 
-    ##code Make sure to link these into the parameter/upvar paradigm:
     # ================================================
     # Add UI Options column to table?
-    # Not at this time. Keep here in case a variant needs the code at some point.
-    ##code The above code needs a way to designate columns to not sort
-    # static (vs sortable) columns should by their nature and UI,
-    # be on the opposite side of the sorted cases. 
-    # So, have api include a list,
-    # and convert that list to a logic array, static_col_p_arr().
-
+    # Not at this time. 
+    # Must be added in advance, or added via exposed interim process variables.
 
     # ================================================
     # 5. Format output 
@@ -802,9 +788,9 @@ ad_proc -public qfo_sp_table_g2 {
 
     # Set the default title row and column TD formats before columns sorted:
     set title_td_attrs_list [list ]
-    set column_nbr 0
+    set column_idx 0
     foreach title $titles_html_list {
-        set column_type [string range [lindex $sort_type_list $column_nbr ] 1 end ]
+        set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
         # Title row TD formats in title_td_attrs_list
         # even row TD attributes in even_row_list
         # odd row TD attributes in odd_row_list
@@ -818,7 +804,7 @@ ad_proc -public qfo_sp_table_g2 {
             lappend even_row_list [list class "smallest border1" ]
             lappend odd_row_list [list class "smallest border1" ]
         }
-        incr column_nbr
+        incr column_idx
     }
     set cell_table_lists [list $title_td_attrs_list $odd_row_list $even_row_list ]
 
@@ -829,11 +815,12 @@ ad_proc -public qfo_sp_table_g2 {
     # insert the appropriate color at each cell.
     # Use the same looping logic from when the table columns changed order
     # to avoid inconsistencies
+
     ##code  This looping should be integrated into the first loop.
 
     # Rebuild the cell format table, one row at a time, 
     # add the primary sort column, secondary sort column etc. columns in order
-    set row_count 0
+    set row_idx 0
     set cell_table_sorted_lists [list ]
     foreach td_row_list $cell_table_lists {
         set td_row_new [list ]
@@ -842,9 +829,9 @@ ad_proc -public qfo_sp_table_g2 {
         foreach ii $sort_order_list {
             set ii_pos [expr { abs( $ii ) } ]
             set cell_format_list [lindex $td_row_list $ii_pos ]
-            if { $row_count > 0 } {
+            if { $row_idx > 0 } {
                 # add the appropriate background color
-                if { [f::even_p $row_count ] } {
+                if { [f::even_p $row_idx ] } {
                     set color $color_even_scol
                 } else {
                     set color $color_odd_scol
@@ -872,9 +859,9 @@ ad_proc -public qfo_sp_table_g2 {
         foreach ui $unsorted_list {
             if { $ui ne "" } {
                 set cell_format_list [lindex $td_row_list $ui ]
-                if { $row_count > 0 } {
+                if { $row_idx > 0 } {
                     # add the appropriate background color
-                    if { [f::even_p $row_count ] } {
+                    if { [f::even_p $row_idx ] } {
                         set color $color_even_row
                     } else {
                         set color $color_odd_row
@@ -897,7 +884,7 @@ ad_proc -public qfo_sp_table_g2 {
         }
         # Append new row to new table
         lappend cell_table_sorted_lists $td_row_new
-        incr row_count
+        incr row_idx
     }
 
     set table_row_count [llength $table_sorted_reordered_lists ]
@@ -905,8 +892,8 @@ ad_proc -public qfo_sp_table_g2 {
     set row_even_format [lindex $cell_table_sorted_lists 2 ]
     if { $table_row_count > 3 } { 
         # Repeat the odd/even rows for the length of the table (table_sorted_reordered_lists)
-        for {set row_i 3} {$row_i < $table_row_count} { incr row_i } {
-            if { [f::even_p $row_i ] } {
+        for {set row_idx 3} {$row_idx < $table_row_count} { incr row_idx } {
+            if { [f::even_p $row_idx ] } {
                 lappend cell_table_sorted_lists $row_even_format
             } else {
                 lappend cell_table_sorted_lists $row_odd_format
