@@ -153,10 +153,10 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # Generate output using qfo_sp_table_g2
 
             # Keep the original tables.
-            # Make a copy for qfo_sp_table_g
+            # Make a copy for qfo_sp_table_g2
             # Testing P as well as S features.
             set p ""
-            set p_bias [lindex $sort_type_list 0]
+            set p_bias [lindex $row_bias_list 0]
             switch -exact -- $p_bias {
                 -increasing {
                     # do nothing
@@ -174,7 +174,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             set s_list [list ]
             for {set i 1} {$i < 4} {incr i} {
                 set s_part ""
-                set s_part_bias [lindex $sort_type_list $i]
+                set s_part_bias [lindex $row_bias_list $i]
                 switch -exact -- $s_part_bias {
                     -increasing {
                         # do nothing
