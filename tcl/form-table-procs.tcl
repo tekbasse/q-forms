@@ -26,8 +26,8 @@ ad_proc -public qfo_sp_table_g2 {
     {-sort_type_list ""}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
-    {-table_sorted_lists_varname "__qfsp_table_sorted_list" }
-    {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists" }
+    {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
+    {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
     {-table_tag_attributes_list "style {background-color: #cec;}"}
     {-this_start_row "1"}
     {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
@@ -91,7 +91,7 @@ ad_proc -public qfo_sp_table_g2 {
     This is added to <code>table_html_varname</code>, so that
     no title-based output is specifically an optimized feature, and therefore 
     highlighted. However, this would be the closest result.
-</li></ul>
+    </li></ul>
 
     <br><br>
     To sort by timestamp, 
@@ -175,10 +175,14 @@ ad_proc -public qfo_sp_table_g2 {
     upvar 1 $s_varname s
     upvar 1 $table_html_varname table_html
     upvar 1 $table_lists_varname table_lists
+    upvar 1 $table_sorted_lists_varname table_sorted_lists
+    upvar 1 $table_sorted_reordered_lists_varname table_sorted_reordered_lists
+    upvar 1 $titles_html_list_varname titles_html_list
     upvar 1 $titles_list_varname titles_list
     upvar 1 $titles_reordered_html_list_varname titles_reordered_html_list
     upvar 1 $titles_reordered_list_varname titles_reordered_list
-        
+    
+
     # adapting from:
     # hosting-farm/lib/resource-status-summary-1.tcl
     # This version requires the entire table to be loaded for processing.
@@ -756,13 +760,13 @@ ad_proc -public qfo_sp_table_g2 {
             lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
         }
     }
-     
+    
 
     # ================================================
     # Display customizations
 
 
-##code Make sure to link these into the parameter/upvar paradigm:
+    ##code Make sure to link these into the parameter/upvar paradigm:
     # ================================================
     # Add UI Options column to table?
     # Not at this time. Keep here in case a variant needs the code at some point.

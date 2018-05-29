@@ -198,12 +198,14 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             foreach rows $table_row_count_list {
                 set sp_table_larr(${rows}) $table_larr(${rows})
                 set sp_titles_larr(${rows}) $titles_list
+                set orig_table_larr(${rows}) $table_larr(${rows})
+                set orig_titles_larr(${rows}) $titles_list
                 qfo_sp_table_g2 \
-                    -table_lists_varname table_larr(${rows}) \
+                    -table_lists_varname orig_table_larr(${rows}) \
                     -table_sorted_reordered_lists_varname sp_table_larr(${rows}) \
                     -p_varname p \
                     -s_varname s \
-                    -titles_list_varname titles_list \
+                    -titles_list_varname orig_titles_larr(${rows}) \
                     -titles_reordered_list_varname sp_titles_larr(${rows}) \
                     -sort_type_list $sort_type_list
                 
@@ -215,24 +217,29 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # Compare outputs to $new_table_larr(${rows}) cell by cell
             foreach rows $table_row_count_list {
                 aa_log "Verify for scenario of table with '${rows}' rows."
-                aa_log "Are table results are consistent? Verify cell by cell."
-                for {set r 0} {$r < $rows} {incr r} {
-                    set new_row_list [lindex $new_table_larr(${rows}) $r ]
-                    set new_row_list_len [llength $row_list ]
-                    set sp_row_list [lindex $sp_table_larr(${rows}) $r]
-                    set sp_row_list_len [llength $sp_row_list ]
-                    for {set c 0} {$c < 5} {incr c} {
-                        set new_cell [lindex $new_row_list $c ]
-                        set sp_cell [lindex $sp_row_list $c ]
-                        aa_equals "Table of '${rows}', cell R${r}C${c}" $sp_cell $new_cell
-                    }
-                }
+                aa_equals "Original table untouched?" $orig_table_larr(${rows}) $table_larr(${rows})
+                aa_equals "Original titles untouched?" $orig_titles_larr(${rows}) $titles_list
+
 
                 aa_log "Are title results consistent? Verify column by column:"
                 for {set c 0} {$c < 5} {incr c} {
                     set new_title [lindex $titles_reverse_list $c ]
                     set sp_title [lindex $sp_titles_larr(${rows}) $c]
-                    aa_equals "Column '${c}' " $new_title $sp_title
+                    aa_equals "Column '${c}' " $sp_title $new_title
+                }
+
+                aa_log "Are table results consistent? Verify cell by cell."
+                for {set r 0} {$r < $rows} {incr r} {
+                    set new_row_list [lindex $new_table_larr(${rows}) $r ]
+                    set new_row_list_len [llength $row_list ]
+                    set sp_row_list [lindex $sp_table_larr(${rows}) $r]
+                    set sp_row_list_len [llength $sp_row_list ]
+                    aa_equals "row '${r}' length " $sp_row_list_len $new_row_list_len
+                    for {set c 0} {$c < 5} {incr c} {
+                        set new_cell [lindex $new_row_list $c ]
+                        set sp_cell [lindex $sp_row_list $c ]
+                        aa_equals "Table of '${rows}', cell R${r}C${c}" $sp_cell $new_cell
+                    }
                 }
             }
         }
