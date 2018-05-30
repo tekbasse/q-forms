@@ -185,30 +185,33 @@ ad_proc -public qfo_sp_table_g2 {
 
     # adapting from:
     # hosting-farm/lib/resource-status-summary-1.tcl
+
     # This version requires the entire table to be loaded for processing.
-    # TODO: make another version that uses pg's select limit and offset.. 
+    ##code TODO: make another version that uses pg's select limit and offset.. 
     # to scale well. Probably won't be able to use page_num_p ==0.
+
+    # General process flow:
+    # 1. Get table as table_lists
+    # 2. Sort unformatted columns by row values
+    # 3. Pagination_bar -- calcs including list_limit, build UI
+    # 4. Sort UI -- build
+    # 5. Re-order columns, primary sorted first, secondary second..
+
+    # ================================================
+    # 1. Get table as list_of_lists
+    # ================================================
+    # Don't process list_limit here.
+    
+    # Set defaults and validation
+    set a_h "a"
 
     # normalize page_num_p's value
     set page_num_p [qf_is_true $page_num_p ]
     
     if { $base_url eq "" } {
         set base_url [ad_conn url ]
-    }
-    
+    }    
     set page_html ""
-    
-    # General process flow:
-    # 1. Get table as list_of_lists
-    # 2. Sort unformatted columns by row values
-    # 3. Pagination_bar -- calcs including list_limit, build UI
-    # 4. Sort UI -- build
-    
-    # ================================================
-    # 1. Get table as list_of_lists
-    # ================================================
-    # don't process list_limit here.
-    
     if { ![qf_is_natural_number $this_start_row ] } {
         set this_start_row 1
     }
@@ -222,6 +225,7 @@ ad_proc -public qfo_sp_table_g2 {
         set p ""
     }
     ns_log Notice "qfo_sp_table_g2.224: p '${p}' s '${s}'"
+    
 
 
     # ================================================
@@ -235,8 +239,8 @@ ad_proc -public qfo_sp_table_g2 {
     # ================================================
 
     set table_cols_count [llength [lindex $table_lists 0 ] ]
-    set table_index_last [expr { $table_cols_count - 1 } ]
-    ns_log Notice "qfo_sp_table_g2.235: table_cols_count '${table_cols_count}' table_index_last '${table_index_last}' table_lists '${table_lists}'"
+    set col_idx_max [expr { $table_cols_count - 1 } ]
+    ns_log Notice "qfo_sp_table_g2.235: table_cols_count '${table_cols_count}' col_idx_max '${col_idx_max}' table_lists '${table_lists}'"
     # defaults and inputs
     if { $sort_type_list eq "" } {
         set sort_type_list [lrepeat $table_cols_count "-ascii" ]
@@ -252,14 +256,15 @@ ad_proc -public qfo_sp_table_g2 {
     }
 
     # To remove a column from display and processing:
+    # Use: columns_hide_index_list
     # 1. Blank the column reference from:
     #    int_sequence_list 
-
     #    where  int_sequence_list is a sequential list: 0 1 2 3..
-    #    so, removal of '1' becomes 0 "" 2 3..
-    #    Don't remove the reference, or later column tracking for unsorted removals will break.
+    #    So, removal of '1' becomes 0 "" 2 3..
+    #    Don't remove the reference position, 
+    #    or later column tracking for unsorted removals will break.
     # 2. Reduce table_cols_count by number of columns removed
-    # columns_hide_index_list
+
     foreach col_idx $columns_hide_index_list {
         # Checked for collision with sort_order_list indexes in ns_log 631
         ns_log Notice "qfo_sp_table_g2.261: int_sequence_list '${int_sequence_list}' col_idx '${col_idx}' "
@@ -285,8 +290,8 @@ ad_proc -public qfo_sp_table_g2 {
         regsub -all -- {[^\-0-9a ]} $s {} sort_order_scalar
         # ns_log Notice "qfsp_listcl(73): sort_order_scalar $sort_order_scalar"
         # Converting sort_order_scalar to a list
-        set sort_order_list [split $sort_order_scalar a ]
-        set sort_order_list [lrange $sort_order_list 0 $table_index_last ]
+        set sort_order_list [split $sort_order_scalar $a_h ]
+        set sort_order_list [lrange $sort_order_list 0 $col_idx_max ]
     }
 
     # Has a sort order change been requested?
@@ -307,12 +312,7 @@ ad_proc -public qfo_sp_table_g2 {
             foreach ii $sort_order_list {
                 set ii_num [expr { abs( ${ii} ) } ]
                 if { $ii_num ne $primary_sort_col_pos } {
-                    if { [lsearch -exact -integer $columns_hide_index_list $ii_num] < 0 } {
-                        lappend sort_order_new_list $ii
-                    } else {
-                        ns_log Warning "qfo_sp_table_g2.631: column ii '${ii}'\
- not sorted. Found in columns_hide_index_list '${columns_hide_index_list}'"
-                    }
+                    lappend sort_order_new_list $ii
                 }
             }
             set sort_order_list $sort_order_new_list
@@ -320,35 +320,56 @@ ad_proc -public qfo_sp_table_g2 {
     }
 
     if { ( $s ne "" ) || ( $p ne "" ) } {
+        # Screen out columns in columns_hide_index_list
+        set sort_order_new_list [list ]
+        foreach ii $sort_order_list {
+            if { [string match {-*} $ii ] } {
+                set ii_positive [string range $ii 1 end ]
+            } else {
+                set ii_positive $ii
+            }
+            if { [lsearch -exact -integer $columns_hide_index_list $ii_positive ] < 0 } {
+                lappend sort_order_new_list $ii
+            } else {
+                ns_log Warning "qfo_sp_table_g2.631: column ii '${ii}'\
+ not sorted. Found in columns_hide_index_list '${columns_hide_index_list}'"
+            }
+        }
+        set sort_order_list $sort_order_new_list
+
+
         # Create a reverse index list for index countdown, 
         # because primary sort is last, secondary sort is second to last..
         # int_sequence_list 0 1 2 3..
-        set sort_order_reverse_list [lsort -integer -decreasing [lrange $int_sequence_list 0 [expr { [llength $sort_order_list ] - 1 } ] ] ]
-        # sort_order_reverse_list ..3 2 1 0
+        set sort_seq_reverse_list [lsort -integer -decreasing [lrange $int_sequence_list 0 [expr { [llength $sort_order_list ] - 1 } ] ] ]
+        # sort_seq_reverse_list ..3 2 1 0
+        # if sort_order_list is 9 -2 5 -4 for example.
 
-
-        foreach ii $sort_order_reverse_list {
-            if { $ii ne "" } {
-                set col2sort [lindex $sort_order_list $ii ]
-                if { [string range $col2sort 0 0 ] eq "-" } {
-                    set col2sort_wo_sign [string range $col2sort 1 end ]
-                    set sort_order "-decreasing"
-                } else { 
-                    set col2sort_wo_sign $col2sort
-                    set sort_order "-increasing"
-                }
-                set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
+        # Note: sort_order_list is primary_sort_col_idx, secondary_sort_col_idx
+        # whereas sort_seq_reverse_list is a list of counting numbers in reverse order.
+        
+        foreach ii $sort_seq_reverse_list {
+            set col2sort [lindex $sort_order_list $ii ]
+            if { [string match {-*} $col2sort ] } {
+                set col2sort_wo_sign [string range $col2sort 1 end ]
+                set sort_order "-decreasing"
+            } else { 
+                set col2sort_wo_sign $col2sort
+                set sort_order "-increasing"
+            }
+            set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
                 
-                if {[catch { set table_sorted_lists [lsort $sort_type $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
-                    # lsort errored, probably due to bad sort_type. 
-                    # Fall back to -ascii sort_type, or fail..
-                    set table_sorted_lists [lsort -ascii $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
-                    ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
+            if {[catch { set table_sorted_lists [lsort $sort_type $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
+                # lsort errored, probably due to bad sort_type. 
+                # Fall back to -ascii sort_type, or fail..
+                set table_sorted_lists [lsort -ascii $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
+                ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
  -ascii for index '${col2sort_wo_sign}' due to error: '${result}'"
-                }
             }
         }
     }
+
+
     # ================================================
     # 3. Pagination_bar -- 
     #    calcs including list_limit and build UI
@@ -380,12 +401,7 @@ ad_proc -public qfo_sp_table_g2 {
     set div_end_h "</div>"
     # Add the sort links to the titles.
     # urlcode sort_order_list
-    set s_urlcoded ""
-    foreach sort_i $sort_order_list {
-        append s_urlcoded $sort_i
-        append s_urlcoded a
-    }
-    set s_urlcoded [string range $s_urlcoded 0 end-1 ]
+    set s_urlcoded [join $s_urlcoded $a_h]
     set s_url_add $amp_s_h
     append s_url_add ${s_urlcoded}
 
@@ -398,8 +414,6 @@ ad_proc -public qfo_sp_table_g2 {
     }
 
     set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row ]
-    set prev_bar_list [list ]
-    set next_bar_list [list ]
 
     set prev_bar_list [lindex $bar_list_set 0 ]
     foreach {page_num start_row} $prev_bar_list {
@@ -469,6 +483,7 @@ ad_proc -public qfo_sp_table_g2 {
         set page_url_add ""
     }
 
+
     # ================================================
     # 4. Sort UI -- build
     # ================================================
@@ -478,6 +493,7 @@ ad_proc -public qfo_sp_table_g2 {
     # for UX, chagnged "ascending order" to "A first" or "1 First", 
     # and "Descending order" to "Z first" or "9 first".
     # And, so it's coded: A:Z, Z:A, 1:9, 9:1, but customizable:
+    set titles_html_list [list ]
     set text_asc "A"
     set text_desc "Z"
     set nbr_asc "1"
@@ -491,20 +507,8 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
 
-    set titles_html_list [list ]
     set column_idx 0
     set primary_sort_col [lindex $sort_order_list $column_idx ]
-
-    foreach sort_i $sort_order_list {
-        if { [string range $sort_i 0 0 ] eq "-" } {
-            set col_sort_i [string range $sort_i 1 end ]
-            set decreasing_p 1
-        } else {
-            set col_sort_i $sort_i
-            set decreasing_p 0
-        }
-    }
-
     foreach title $titles_list {
         # Figure out column data type for sort button (text or nbr).
         # The column order is not changed yet.
@@ -546,12 +550,14 @@ ad_proc -public qfo_sp_table_g2 {
         # Is column sort decreasing? 
         # If so, let's reverse the order of column's sort links.
         set sort_number [lindex $sort_order_list $column_idx ]
-        set decreasing_p [string match {-*} $sort_number ]
-        if { [lindex $sort_order_list $column_idx ] ne "" } {
+        if { $sort_number ne "" } {
             set column_sorted_p 1
+            set decreasing_p [string match {-*} $sort_number ]
         } else {
             set column_sorted_p 0
+            set decreasing_p 0
         }
+
         set sort_link_delim ""
         # Sort button should be active if an available choice, 
         # and inactive if already chosen (primary sort case).
@@ -664,6 +670,9 @@ ad_proc -public qfo_sp_table_g2 {
         incr column_idx
     }
 
+
+
+
     # Begin building the paginated table here. Table rows have been sorted.
 
     set table_paged_sorted_lists [list ]
@@ -692,7 +701,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     # parameters: table_sorted_lists
     #             sort_order_lists
-    #             sort_order_reverse_list
+    #             sort_seq_reverse_list
     set table_sorted_reordered_lists [list ]
 
     # Rebuild the table, one row at a time, 
@@ -712,7 +721,7 @@ ad_proc -public qfo_sp_table_g2 {
     foreach table_row_list $table_sorted_lists {
         set table_row_new_list [list ]
 
-        foreach ii $sort_order_reverse_list {
+        foreach ii $sort_seq_reverse_list {
             if { $ii ne "" } {
                 set ii_pos [expr { abs( $ii ) } ]
                 lappend table_row_new_list [lindex $table_row_list $ii_pos ]
@@ -742,7 +751,7 @@ ad_proc -public qfo_sp_table_g2 {
     set titles_reordered_list [list ]
     #  titles_html_list
     set titles_reordered_html_list [list ]
-    foreach ii $sort_order_reverse_list {
+    foreach ii $sort_seq_reverse_list {
         if { $ii ne "" } {
             set ii_pos [expr { abs( $ii ) } ]
             lappend titles_reordered_list [lindex $titles_list $ii_pos ]
