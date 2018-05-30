@@ -27,6 +27,7 @@ ad_proc -public qfo_sp_table_g2 {
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
+    {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
     {-table_tag_attributes_list "style {background-color: #cec;}"}
     {-this_start_row "1"}
@@ -67,6 +68,8 @@ ad_proc -public qfo_sp_table_g2 {
     <code>table_lists_varname</code> (input, unchanged)
     </li><li>
     <code>table_sorted_lists_varname</code>
+    </li><li>
+    <code>table_sorted_paginated_lists_varname</code>
     </li><li>
     <code>table_sorted_reordered_lists_varname</code>
     </li><li>
@@ -176,6 +179,7 @@ ad_proc -public qfo_sp_table_g2 {
     upvar 1 $table_html_varname table_html
     upvar 1 $table_lists_varname table_lists
     upvar 1 $table_sorted_lists_varname table_sorted_lists
+    upvar 1 $table_sorted_paginated_lists_varname table_sorted_paginated_lists
     upvar 1 $table_sorted_reordered_lists_varname table_sorted_reordered_lists
     upvar 1 $titles_html_list_varname titles_html_list
     upvar 1 $titles_list_varname titles_list
@@ -195,7 +199,9 @@ ad_proc -public qfo_sp_table_g2 {
     # 2. Sort unformatted columns by row values
     # 3. Pagination_bar -- calcs including list_limit, build UI
     # 4. Sort UI -- build
-    # 5. Re-order columns, primary sorted first, secondary second..
+    # 5. Reduce table to page from paginate parameters
+    # 6. Re-order columns, primary sorted first, secondary second..
+    # 7. Format output with CSS and html
 
     # ================================================
     # 1. Get table as list_of_lists
@@ -233,10 +239,13 @@ ad_proc -public qfo_sp_table_g2 {
     # ================================================
     # Sort Table Columns
     # arguments
-    #     s            sort_order_list (via form post)
+    #     s            a coded sort_order_list (via form post)
     #     p            primary_sort_col_new (via form post)
     #     table_lists  table represented as a list of lists
     # ================================================
+    # Output:
+    #   sort_order_list
+
 
     set table_cols_count [llength [lindex $table_lists 0 ] ]
     set col_idx_max [expr { $table_cols_count - 1 } ]
@@ -288,7 +297,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Validate sort order, because it is user input via web
         # $s' first check and change to sort_order_scalar
         regsub -all -- {[^\-0-9a ]} $s {} sort_order_scalar
-        # ns_log Notice "qfsp_listcl(73): sort_order_scalar $sort_order_scalar"
+        # ns_log Notice "qfo_table_g2(73): sort_order_scalar $sort_order_scalar"
         # Converting sort_order_scalar to a list
         set sort_order_list [split $sort_order_scalar $a_h ]
         set sort_order_list [lrange $sort_order_list 0 $col_idx_max ]
@@ -331,23 +340,26 @@ ad_proc -public qfo_sp_table_g2 {
             if { [lsearch -exact -integer $columns_hide_index_list $ii_positive ] < 0 } {
                 lappend sort_order_new_list $ii
             } else {
-                ns_log Warning "qfo_sp_table_g2.631: column ii '${ii}'\
+                ns_log Warning "qfo_sp_table_g2.343: column ii '${ii}'\
  not sorted. Found in columns_hide_index_list '${columns_hide_index_list}'"
             }
         }
         set sort_order_list $sort_order_new_list
+        # Number of sorted columns:
+        set sort_cols_count [llength $sort_order_list ]
 
 
         # Create a reverse index list for index countdown, 
         # because primary sort is last, secondary sort is second to last..
         # int_sequence_list 0 1 2 3..
-        set sort_seq_reverse_list [lsort -integer -decreasing [lrange $int_sequence_list 0 [expr { [llength $sort_order_list ] - 1 } ] ] ]
+        set sort_seq_reverse_list [lsort -integer -decreasing [lrange $int_sequence_list 0 [expr { $sort_cols_count - 1 } ] ] ]
         # sort_seq_reverse_list ..3 2 1 0
-        # if sort_order_list is 9 -2 5 -4 for example.
-
+        # if sort_order_list is 9 -2 5 -4 for example, then 3 2 1 0.
         # Note: sort_order_list is primary_sort_col_idx, secondary_sort_col_idx
-        # whereas sort_seq_reverse_list is a list of counting numbers in reverse order.
-        
+        # whereas sort_seq_reverse_list 
+        #    is a sequence of counting numbers in reverse order.
+        ns_log Notice "qfo_sp_table_g2.361 sort_order_list '${sort_order_list}' sort_seq_reverse_list '${sort_seq_reverse_list}'"
+
         foreach ii $sort_seq_reverse_list {
             set col2sort [lindex $sort_order_list $ii ]
             if { [string match {-*} $col2sort ] } {
@@ -363,7 +375,7 @@ ad_proc -public qfo_sp_table_g2 {
                 # lsort errored, probably due to bad sort_type. 
                 # Fall back to -ascii sort_type, or fail..
                 set table_sorted_lists [lsort -ascii $sort_order -index $col2sort_wo_sign $table_sorted_lists ]
-                ns_log Notice "qfsp_listcl(121): lsort resorted to sort_type \
+                ns_log Notice "qfo_table_g2.377: lsort resorted to sort_type \
  -ascii for index '${col2sort_wo_sign}' due to error: '${result}'"
             }
         }
@@ -399,9 +411,10 @@ ad_proc -public qfo_sp_table_g2 {
     set span_h "<span "
     set colon ":"
     set div_end_h "</div>"
+
     # Add the sort links to the titles.
     # urlcode sort_order_list
-    set s_urlcoded [join $s_urlcoded $a_h]
+    set s_urlcoded [join $sort_order_list $a_h]
     set s_url_add $amp_s_h
     append s_url_add ${s_urlcoded}
 
@@ -510,7 +523,7 @@ ad_proc -public qfo_sp_table_g2 {
     set column_idx 0
     set primary_sort_col [lindex $sort_order_list $column_idx ]
     foreach title $titles_list {
-        # Figure out column data type for sort button (text or nbr).
+        # Identify column data type for sort button (text or nbr).
         # The column order is not changed yet.
         set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
         switch -exact -- $column_type {
@@ -550,7 +563,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Is column sort decreasing? 
         # If so, let's reverse the order of column's sort links.
         set sort_number [lindex $sort_order_list $column_idx ]
-        if { $sort_number ne "" } {
+        if { $sort_number ne "" && !$ignore_p } {
             set column_sorted_p 1
             set decreasing_p [string match {-*} $sort_number ]
         } else {
@@ -671,82 +684,104 @@ ad_proc -public qfo_sp_table_g2 {
     }
 
 
+    # ==================================================
+    # 5. Reduce table to page from paginated parameters
+    # ==================================================
+    # Begin building the paginated table here. 
+    # Table rows have to have been sorted previously.
 
+    # Input:
 
-    # Begin building the paginated table here. Table rows have been sorted.
+    # Output:
+    # table_sorted_paginated_lists
 
-    set table_paged_sorted_lists [list ]
+    #set table_sorted_paginated_lists [list ]
     set lindex_start [expr { $this_start_row - 1 } ]
     set lindex_last [expr { $item_count - 1 } ]
     set last_row [expr { $lindex_start + $items_per_page - 1 } ]
     if { $lindex_last < $last_row } {
         set last_row $lindex_last
     }
-    for { set row_num $lindex_start } { $row_num <= $last_row } {incr row_num} {
-        lappend table_paged_sorted_lists [lindex $table_sorted_lists $row_num ]
-    }
-    set table_sorted_lists $table_paged_sorted_lists
-
-    # Result: table_sorted_lists
-    # Number of sorted columns:
-    set sort_cols_count [llength $sort_order_list ]
+    #for { set row_num $lindex_start } { $row_num <= $last_row } {incr row_num} {
+    #    lappend table_sorted_paginated_lists [lindex $table_sorted_lists $row_num ]
+    #}
+    set table_sorted_paginated_lists [lrange $table_sorted_lists $lindex_start $last_row]
 
 
 
 
     # ================================================
-    # Change the order of columns
+    # 6.  Re-order columns, primary sorted first, secondary second..
     # ================================================
-    # so that the primary sort col is left, secondary is 2nd from left etc.
+    # Primary sort col is leftmost, secondary is 2nd from left etc.
 
-    # parameters: table_sorted_lists
-    #             sort_order_lists
-    #             sort_seq_reverse_list
+    # Input: 
+    #  table_sorted_paginated_lists
+    #  sort_order_lists
+    #  sort_seq_reverse_list
+
+    # Output:
+    #  table_sorted_reordered_lists
+    #  titles_reordered_list
+    #  titles_reordered_html_list
+
     set table_sorted_reordered_lists [list ]
 
     # Rebuild the table, one row at a time, 
     # Add the primary sorted column, then secondary sorted columns in order
 
     # Track the columns that aren't sorted
+    # int_sequence_list may have empty strings indicating hidden col reference
     set unsorted_list $int_sequence_list
     foreach ii $sort_order_list {
-        set ii_pos [expr { abs( $ii ) } ]
+        if { [string match {-*} $ii ] } {
+            set ii_pos [string range $ii 1 end]
+        } else {
+            set ii_pos $ii
+        }
         # Blank the reference instead of removing it, 
-        # or the $ii reference won't work later on..
+        # or the $ii_pos reference won't work later on..
         if { [lindex $ii_pos ] ne "" } {
             set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos "" ]
         }
     }
+    set unsorted_compressed_list [list ]
+    foreach ii $unsorted_list {
+        if { $ii ne "" } {
+            lappend unsorted_compressed_list $ii
+        }
+    }
 
-    foreach table_row_list $table_sorted_lists {
+    foreach table_row_list $table_sorted_paginated_lists {
+
         set table_row_new_list [list ]
 
-        foreach ii $sort_seq_reverse_list {
-            if { $ii ne "" } {
-                set ii_pos [expr { abs( $ii ) } ]
-                lappend table_row_new_list [lindex $table_row_list $ii_pos ]
+        # Add the sorted columns
+        foreach ii $sort_order_list {
+            if { [string match {-*} $ii ] } {
+                set ii_pos [string range $ii 1 end]
+            } else {
+                set ii_pos $ii
             }
+            lappend table_row_new_list [lindex $table_row_list $ii_pos ]
         }
 
-        # Now that the sorted columns are added to the row, 
-        # add the remaining columns
-        foreach ui $unsorted_list {
-            if { $ui ne "" } {
-                # Add unsorted column to row
-                lappend table_row_new_list [lindex $table_row_list $ui ]
-            }
+        # Add the remaining, unsorted columns
+        foreach ui $unsorted_compressed_list {
+            # Add unsorted column to row
+            lappend table_row_new_list [lindex $table_row_list $ui ]
         }
 
         # Confirm that all columns have been accounted for.
         set table_row_new_cols [llength $table_row_new_list ]
         if { $table_row_new_cols != $table_cols_count } {
-            ns_log Notice "qfsp_listcl(203): Warning: table_row_new_list has ${table_row_new_cols} instead of ${table_cols_count} columns."
+            ns_log Notice "qfo_table_g2(203): Warning: table_row_new_list has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
         lappend table_sorted_reordered_lists $table_row_new_list
     }
 
-    # Repeat for the variation  title rows: 
+    # Repeat for the variation title rows: 
     #  titles_list
     set titles_reordered_list [list ]
     #  titles_html_list
@@ -760,26 +795,24 @@ ad_proc -public qfo_sp_table_g2 {
     }
     # Now that the sorted columns are added to the rows, 
     # add the remaining columns
-    foreach ui $unsorted_list {
-        if { $ui ne "" } {
-            # Add unsorted column to row
-            lappend titles_reordered_list [lindex $titles_list $ui ]
-            lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
-        }
+    foreach ui $unsorted_compressed_list {
+        # Add unsorted column to row
+        lappend titles_reordered_list [lindex $titles_list $ui ]
+        lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
     }
     
 
     # ================================================
     # Display customizations
-
-
     # ================================================
+
     # Add UI Options column to table?
     # Not at this time. 
     # Must be added in advance, or added via exposed interim process variables.
 
     # ================================================
-    # 5. Format output 
+    # 7. Format output 
+    # ================================================
     # Add attributes to the TABLE tag
     set table_tag_attributes_list 
 
@@ -825,16 +858,12 @@ ad_proc -public qfo_sp_table_g2 {
     # Use the same looping logic from when the table columns changed order
     # to avoid inconsistencies
 
-    ##code  This looping should be integrated into the first loop.
-
     # Rebuild the cell format table, one row at a time, 
     # add the primary sort column, secondary sort column etc. columns in order
     set row_idx 0
     set cell_table_sorted_lists [list ]
     foreach td_row_list $cell_table_lists {
         set td_row_new [list ]
-        # Track the rows that aren't sorted
-        set unsorted_list $int_sequence_list
         foreach ii $sort_order_list {
             set ii_pos [expr { abs( $ii ) } ]
             set cell_format_list [lindex $td_row_list $ii_pos ]
@@ -859,14 +888,12 @@ ad_proc -public qfo_sp_table_g2 {
                 }      
             }
             lappend td_row_new $cell_format_list
-            # Blank the reference instead of removing it, 
-            # or the $ii_pos reference won't work. lsearch is slower
-            set unsorted_list [lreplace $unsorted_list $ii_pos $ii_pos "" ]
+
         }
         # Now that the sorted columns are added to the row, 
         # add the remaining columns
-        foreach ui $unsorted_list {
-            if { $ui ne "" } {
+        foreach ui $unsorted_compressed_list {
+            #if { $ui ne "" } {
                 set cell_format_list [lindex $td_row_list $ui ]
                 if { $row_idx > 0 } {
                     # add the appropriate background color
@@ -889,7 +916,7 @@ ad_proc -public qfo_sp_table_g2 {
                 }
                 # Add unsorted column to row
                 lappend td_row_new $cell_format_list
-            }
+            #}
         }
         # Append new row to new table
         lappend cell_table_sorted_lists $td_row_new
@@ -910,10 +937,8 @@ ad_proc -public qfo_sp_table_g2 {
         }
 
     }
-    # ================================================
 
-
-    # this builds the html table and assigns it to table_html
+    # Build html table
     set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_lists $table_tag_attributes_list $cell_table_sorted_lists ]
 
     return 1
