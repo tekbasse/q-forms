@@ -155,8 +155,9 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # Keep the original tables.
             # Make a copy for qfo_sp_table_g2
             # Testing P as well as S features.
+            set p_col [lindex $row_rev_col_num_list 0]
             set p ""
-            set p_bias [lindex $row_bias_list 0]
+            set p_bias [lindex $row_bias_list $p_col]
             switch -exact -- $p_bias {
                 -increasing {
                     # do nothing
@@ -169,12 +170,12 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
  This should not happen."
                 }
             }
-            append p [lindex $row_col_num_list 0]
+            append p $p_col
             
             set s_list [list ]
             for {set i 1} {$i < 4} {incr i} {
                 set s_part ""
-                set s_part_bias [lindex $row_bias_list $i]
+                set s_part_bias [lindex $row_bias_reverse_list $i]
                 switch -exact -- $s_part_bias {
                     -increasing {
                         # do nothing
@@ -187,7 +188,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
  s_part_bias '${s_part_bias}'  This should not happen."
                     }
                 }
-                append s_part [lindex $row_col_num_list $i]
+                append s_part [lindex $row_rev_col_num_list $i]
                 lappend s_list $s_part
             }
             set s [join $s_list "a"]
