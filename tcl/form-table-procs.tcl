@@ -838,7 +838,7 @@ ad_proc -public qfo_sp_table_g2 {
     # Set the default title row and column TD formats before columns sorted:
     set title_td_attrs_list [list ]
     set column_idx 0
-    foreach title $titles_html_list {
+    foreach title $titles_reordered_html_list {
         set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
         # Title row TD formats in title_td_attrs_list
         # even row TD attributes in even_row_list
