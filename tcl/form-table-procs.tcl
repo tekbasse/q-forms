@@ -230,7 +230,7 @@ ad_proc -public qfo_sp_table_g2 {
     if { ![info exists p ] } {
         set p ""
     }
-    ns_log Notice "qfo_sp_table_g2.224: p '${p}' s '${s}'"
+    #ns_log Notice "qfo_sp_table_g2.224: p '${p}' s '${s}'"
     
 
 
@@ -249,7 +249,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     set table_cols_count [llength [lindex $table_lists 0 ] ]
     set col_idx_max [expr { $table_cols_count - 1 } ]
-    ns_log Notice "qfo_sp_table_g2.235: table_cols_count '${table_cols_count}' col_idx_max '${col_idx_max}' table_lists '${table_lists}'"
+    #ns_log Notice "qfo_sp_table_g2.235: table_cols_count '${table_cols_count}' col_idx_max '${col_idx_max}' table_lists '${table_lists}'"
     # defaults and inputs
     if { $sort_type_list eq "" } {
         set sort_type_list [lrepeat $table_cols_count "-ascii" ]
@@ -276,7 +276,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     foreach col_idx $columns_hide_index_list {
         # Checked for collision with sort_order_list indexes in ns_log 631
-        ns_log Notice "qfo_sp_table_g2.261: int_sequence_list '${int_sequence_list}' col_idx '${col_idx}' "
+        #ns_log Notice "qfo_sp_table_g2.261: int_sequence_list '${int_sequence_list}' col_idx '${col_idx}' "
         set int_sequence_list [lreplace $int_sequence_list $col_idx $col_idx "" ]
         incr table_cols_count -1
     }
@@ -297,7 +297,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Validate sort order, because it is user input via web
         # $s' first check and change to sort_order_scalar
         regsub -all -- {[^\-0-9a ]} $s {} sort_order_scalar
-        # ns_log Notice "qfo_table_g2(73): sort_order_scalar $sort_order_scalar"
+        # #ns_log Notice "qfo_table_g2(73): sort_order_scalar $sort_order_scalar"
         # Converting sort_order_scalar to a list
         set sort_order_list [split $sort_order_scalar $a_h ]
         set sort_order_list [lrange $sort_order_list 0 $col_idx_max ]
@@ -358,10 +358,11 @@ ad_proc -public qfo_sp_table_g2 {
         # Note: sort_order_list is primary_sort_col_idx, secondary_sort_col_idx
         # whereas sort_seq_reverse_list 
         #    is a sequence of counting numbers in reverse order.
-        ns_log Notice "qfo_sp_table_g2.361 sort_order_list '${sort_order_list}' sort_seq_reverse_list '${sort_seq_reverse_list}'"
-
+        #ns_log Notice "qfo_sp_table_g2.361 sort_order_list '${sort_order_list}' sort_seq_reverse_list '${sort_seq_reverse_list}'"
+        set sort_reverse_order_list [list ]
         foreach ii $sort_seq_reverse_list {
             set col2sort [lindex $sort_order_list $ii ]
+            lappend sort_reverse_order_list $col2sort
             if { [string match {-*} $col2sort ] } {
                 set col2sort_wo_sign [string range $col2sort 1 end ]
                 set sort_order "-decreasing"
@@ -708,8 +709,6 @@ ad_proc -public qfo_sp_table_g2 {
     set table_sorted_paginated_lists [lrange $table_sorted_lists $lindex_start $last_row]
 
 
-
-
     # ================================================
     # 6.  Re-order columns, primary sorted first, secondary second..
     # ================================================
@@ -725,10 +724,6 @@ ad_proc -public qfo_sp_table_g2 {
     #  titles_reordered_list
     #  titles_reordered_html_list
 
-    set table_sorted_reordered_lists [list ]
-
-    # Rebuild the table, one row at a time, 
-    # Add the primary sorted column, then secondary sorted columns in order
 
     # Track the columns that aren't sorted
     # int_sequence_list may have empty strings indicating hidden col reference
@@ -751,8 +746,40 @@ ad_proc -public qfo_sp_table_g2 {
             lappend unsorted_compressed_list $ii
         }
     }
-    ns_log Notice "qfo_table_g2.754 unsorted_list '${unsorted_list}'"
-    ns_log Notice "qfo_table_g2.755 unsorted_compressed_list '${unsorted_compressed_list}'"
+    #ns_log Notice "qfo_table_g2.754 unsorted_list '${unsorted_list}'"
+    #ns_log Notice "qfo_table_g2.755 unsorted_compressed_list '${unsorted_compressed_list}'"
+
+
+    #  titles_list
+    set titles_reordered_list [list ]
+    #  titles_html_list
+    set titles_reordered_html_list [list ]
+    
+    foreach ii $sort_order_list {
+        set ii_pos [expr { abs( $ii ) } ]
+        lappend titles_reordered_list [lindex $titles_list $ii_pos ]
+        lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
+    }
+
+    # Now that the sorted columns are added to the rows, 
+    # add the remaining columns
+    foreach ui $unsorted_compressed_list {
+        # Add unsorted column to row
+        lappend titles_reordered_list [lindex $titles_list $ui ]
+        lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
+    }
+    #ns_log Notice "qfo_table_g2.803 titles_reordered_list '${titles_reordered_list}'"
+    #ns_log Notice "qfo_table_g2.804 sort_order_list '${sort_order_list}'"
+    #ns_log Notice "qfo_table_g2.805 sort_reverse_order_list '${sort_reverse_order_list}'"
+
+    # Repeat for the table rows: 
+
+    set table_sorted_reordered_lists [list ]
+
+    # Rebuild the table, one row at a time, 
+    # Add the primary sorted column, then secondary sorted columns in order
+
+
     foreach table_row_list $table_sorted_paginated_lists {
 
         set table_row_new_list [list ]
@@ -781,30 +808,6 @@ ad_proc -public qfo_sp_table_g2 {
         # Append new row to new table
         lappend table_sorted_reordered_lists $table_row_new_list
     }
-
-    # Repeat for the variation title rows: 
-    #  titles_list
-    set titles_reordered_list [list ]
-    #  titles_html_list
-    set titles_reordered_html_list [list ]
-    set sort_reverse_order_list [list ]
-    foreach ii $sort_seq_reverse_list {
-        set ii2 [lindex $sort_order_list $ii]
-        set ii_pos [expr { abs( $ii2 ) } ]
-        lappend sort_reverse_order_list $ii2
-        lappend titles_reordered_list [lindex $titles_list $ii_pos ]
-        lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
-    }
-    # Now that the sorted columns are added to the rows, 
-    # add the remaining columns
-    foreach ui $unsorted_compressed_list {
-        # Add unsorted column to row
-        lappend titles_reordered_list [lindex $titles_list $ui ]
-        lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
-    }
-    ns_log Notice "qfo_table_g2.803 titles_reordered_list '${titles_reordered_list}'"
-    ns_log Notice "qfo_table_g2.804 sort_order_list '${sort_order_list}'"
-    ns_log Notice "qfo_table_g2.805 sort_reverse_order_list '${sort_reverse_order_list}'"
 
     # ================================================
     # Display customizations
