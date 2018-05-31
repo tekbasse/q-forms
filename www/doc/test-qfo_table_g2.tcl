@@ -23,11 +23,40 @@ set form_posted_p [qf_get_inputs_as_array input_array]
 
 # Build example table
 # Should have at least one of each sort type.
-set sort_type_list [list "-ascii" "-integer" "-real" "-ignore" "-dictionary"]
 
-set sort_type_list [util::randomize_list $sort_type_list ]
+# This here just creates a table that has a little visual consistency
+# between page renderings, to better demonstrate UI with 
+# a consistent type of data
+set sort_type_list [list ]
+set seed [expr { int(fmod( int([clock seconds] / 600) , 6 )) } ]
+switch -- $seed {
+    0 {
+        set sort_type_list [list "-ascii" "-integer" "-real"]
+    }
+    1 {
+        set sort_type_list [list "-ascii" "-real" "-integer"]
+    }
+    2 {
+        set sort_type_list [list "-integer" "-ascii" "-real"]
+    }
+    3 {
+        set sort_type_list [list "-integer" "-real" "-ascii"]
+    }
+    4 {
+        set sort_type_list [list "-real" "-ascii" "-integer"]
+    }
+    5 {
+        set sort_type_list [list "-real" "-real" "-integer"]
+    }
+}
+ns_log Notice "seed '${seed}' sort_type_list '${sort_type_list}'"
+lappend sort_type_list "-ignore" "-dictionary"
+
+
 set titles_list [list ]
-
+foreach t $sort_type_list {
+    lappend titles_list [string totitle [string range $t 1 end]]
+}
 
 # Output tables should have the 'ignore' column on right
 # with the other columns reversed.
@@ -92,7 +121,7 @@ qfo_sp_table_g2 \
     -this_start_row $input_array(this_start_row)
 
 
-set content ""
+set content "<table"
 append content [join $titles_html_list]
 append content "<br><br><br>"
 append content $table_html

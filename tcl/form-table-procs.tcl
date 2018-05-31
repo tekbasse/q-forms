@@ -868,7 +868,7 @@ ad_proc -public qfo_sp_table_g2 {
     # Rebuild the cell format table, one row at a time, 
     # add the primary sort column, secondary sort column etc. columns in order
     set row_idx 0
-    set cell_table_sorted_lists [list ]
+    set cell_table_reordered_lists [list ]
     foreach td_row_list $cell_table_lists {
         set td_row_new [list ]
         foreach ii $sort_order_list {
@@ -888,7 +888,7 @@ ad_proc -public qfo_sp_table_g2 {
                     incr class_pos
                     set attr_value [lindex $cell_format_list $class_pos ]
                     set new_attr_value $attr_value
-                    append new_attr_value " $color"
+                    append new_attr_value $sp $color
                     set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
                 } else {
                     lappend cell_format_list class $color
@@ -899,6 +899,7 @@ ad_proc -public qfo_sp_table_g2 {
         }
         # Now that the sorted columns are added to the row, 
         # add the remaining columns
+        set class_c "class"
         foreach ui $unsorted_compressed_list {
             #if { $ui ne "" } {
                 set cell_format_list [lindex $td_row_list $ui ]
@@ -909,16 +910,16 @@ ad_proc -public qfo_sp_table_g2 {
                     } else {
                         set color $color_odd_row
                     }
-                    set class_pos [lsearch -exact $cell_format_list "class" ]
+                    set class_pos [lsearch -exact $cell_format_list $class_c ]
                     if { $class_pos > -1 } {
                         # combine the class values instead of appending more attributes
                         incr class_pos
                         set attr_value [lindex $cell_format_list $class_pos ]
                         set new_attr_value $attr_value
-                        append new_attr_value " $color"
+                        append new_attr_value $sp $color
                         set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
                     } else {
-                        lappend cell_format_list class $color
+                        lappend cell_format_list $class_c $color
                     }
                 }
                 # Add unsorted column to row
@@ -926,27 +927,27 @@ ad_proc -public qfo_sp_table_g2 {
             #}
         }
         # Append new row to new table
-        lappend cell_table_sorted_lists $td_row_new
+        lappend cell_table_reordered_lists $td_row_new
         incr row_idx
     }
 
     set table_row_count [llength $table_sorted_reordered_lists ]
-    set row_odd_format [lindex $cell_table_sorted_lists 1 ]
-    set row_even_format [lindex $cell_table_sorted_lists 2 ]
+    set row_odd_format [lindex $cell_table_reordered_lists 1 ]
+    set row_even_format [lindex $cell_table_reordered_lists 2 ]
     if { $table_row_count > 3 } { 
         # Repeat the odd/even rows for the length of the table (table_sorted_reordered_lists)
         for {set row_idx 3} {$row_idx < $table_row_count} { incr row_idx } {
             if { [f::even_p $row_idx ] } {
-                lappend cell_table_sorted_lists $row_even_format
+                lappend cell_table_reordered_lists $row_even_format
             } else {
-                lappend cell_table_sorted_lists $row_odd_format
+                lappend cell_table_reordered_lists $row_odd_format
             }
         }
-
     }
 
     # Build html table
-    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_lists $table_tag_attributes_list $cell_table_sorted_lists ]
+    set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
+    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attributes_list $cell_table_reordered_lists ]
 
     return 1
 }
