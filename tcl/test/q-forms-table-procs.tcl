@@ -94,8 +94,10 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             for {set i 4} {$i > -1} {incr i -1 } {
                 set type [lindex $sort_type_list $i ]
                 if { $type ne "-ignore" } {
-                    lappend titles_reverse_list [lindex $titles_list $i ]
-                    lappend row_rev_col_num_list [lindex $row_col_num_list $i]
+                    set reverse_col [lindex $row_col_num_list $i]
+                    lappend row_rev_col_num_list $reverse_col
+                    lappend titles_reverse_list [lindex $titles_list $reverse_col ]
+
                     lappend row_bias_reverse_list [lindex $row_bias_list $i]
                     lappend sort_type_reverse_list $type
 
@@ -198,7 +200,7 @@ aa_register_case -cats {api smoke} qf_form_table_checks {
             # titles_list is same for all cases
             foreach rows $table_row_count_list {
                 set sp_table_larr(${rows}) $table_larr(${rows})
-                set sp_titles_larr(${rows}) $titles_list
+                set sp_titles_larr(${rows}) $titles_reverse_list
                 set orig_table_larr(${rows}) $table_larr(${rows})
                 set orig_titles_larr(${rows}) $titles_list
                 qfo_sp_table_g2 \

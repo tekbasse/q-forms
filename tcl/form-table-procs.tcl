@@ -751,7 +751,8 @@ ad_proc -public qfo_sp_table_g2 {
             lappend unsorted_compressed_list $ii
         }
     }
-
+    ns_log Notice "qfo_table_g2.754 unsorted_list '${unsorted_list}'"
+    ns_log Notice "qfo_table_g2.755 unsorted_compressed_list '${unsorted_compressed_list}'"
     foreach table_row_list $table_sorted_paginated_lists {
 
         set table_row_new_list [list ]
@@ -775,7 +776,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Confirm that all columns have been accounted for.
         set table_row_new_cols [llength $table_row_new_list ]
         if { $table_row_new_cols != $table_cols_count } {
-            ns_log Notice "qfo_table_g2(203): Warning: table_row_new_list has ${table_row_new_cols} instead of ${table_cols_count} columns."
+            ns_log Notice "qfo_table_g2.778: Warning: table_row_new_list has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
         lappend table_sorted_reordered_lists $table_row_new_list
@@ -786,12 +787,13 @@ ad_proc -public qfo_sp_table_g2 {
     set titles_reordered_list [list ]
     #  titles_html_list
     set titles_reordered_html_list [list ]
+    set sort_reverse_order_list [list ]
     foreach ii $sort_seq_reverse_list {
-        if { $ii ne "" } {
-            set ii_pos [expr { abs( $ii ) } ]
-            lappend titles_reordered_list [lindex $titles_list $ii_pos ]
-            lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
-        }
+        set ii2 [lindex $sort_order_list $ii]
+        set ii_pos [expr { abs( $ii2 ) } ]
+        lappend sort_reverse_order_list $ii2
+        lappend titles_reordered_list [lindex $titles_list $ii_pos ]
+        lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
     }
     # Now that the sorted columns are added to the rows, 
     # add the remaining columns
@@ -800,7 +802,9 @@ ad_proc -public qfo_sp_table_g2 {
         lappend titles_reordered_list [lindex $titles_list $ui ]
         lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
     }
-    
+    ns_log Notice "qfo_table_g2.803 titles_reordered_list '${titles_reordered_list}'"
+    ns_log Notice "qfo_table_g2.804 sort_order_list '${sort_order_list}'"
+    ns_log Notice "qfo_table_g2.805 sort_reverse_order_list '${sort_reverse_order_list}'"
 
     # ================================================
     # Display customizations
