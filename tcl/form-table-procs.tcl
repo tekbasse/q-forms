@@ -52,8 +52,8 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
     {-tr_even_attribute_list {class,even}}
     {-tr_odd_attribute_list {class,odd,style,opacity:0.9;}}
-    {-unsorted_first_html_tags_open {<span style="font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;">}}
-    {-unsorted_last_html_tags_close {</span>}}
+    {-unsorted_first_html_open {<span style="font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;">}}
+    {-unsorted_last_html_close {</span>}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -139,6 +139,11 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     Optional parameters:<br>
     <br><br>
+    <code>columns_justify_list</code> To force a column's data to justify
+    to the left, right, center, or (fill) justify,
+    create a list with lowercase elements beginning with l,r,c, f or j.
+    The first index in a tcl list is '0' for column 0, second index is '1'..
+    <br><br>
     <code>items_per_page</code> - number of rows (items) per page
     <br><br>
     <code>item_count</code> - number of rows (items) in the table.
@@ -207,6 +212,22 @@ ad_proc -public qfo_sp_table_g2 {
     The first index in a tcl list is '0', second index is '1'..
     <br><br>
     <code>columns_justify_list</code> If present, a list of letters where position in list cooresponds to table columns, and where each element indicates a left, center, right, or fill justify. Only the first letter of each element is examined. The default is to right justify numbers, and left justify everything else.
+    <br><br>
+        *_html_close *_html_open passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
+    <ul><li>
+    <code>sorted_first_html_open</code> Html preceding 'first sort' change link for a title that has been sorted.
+    </li><li>
+    <code>sorted_first_html_close</code> Html following 'first sort' change link for a title that has been sorted.
+    </li><li>
+    <code>sorted_last_html_open</code> Html preceding 'last sort' change link for a title that has been sorted.
+    </li><li>
+    <code>sorted_last_html_close</code> Html following 'last sort' change link for a title that has been sorted.
+    </li><li>
+    <code>unsorted_az_html_open</code> Html preceding 'first sort' change link for a title that has not been sorted.
+    </li><li>
+    <code>unsorted_az_html_close</code> Html following 'last sort' change link for a title that has not been sorted.
+</li></ul>
+    Note: Unsorted are wrapped by same html for first and last sort links.  Sorted links are wrapped individually.
 } {
     upvar 1 $nav_current_pos_html_varname nav_current_pos_html
     upvar 1 $nav_next_links_html_varname nav_next_links_html
