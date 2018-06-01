@@ -9,10 +9,13 @@ ad_library {
     @email: tekbasse@yahoo.com
 }
 
+# Define namespace for utility procs
+namespace eval ::qfo {}
 
 ad_proc -public qfo_sp_table_g2 {
     {-base_url ""}
     {-columns_hide_index_list ""}
+    {-columns_justify_list ""}
     {-item_count ""}
     {-items_per_page "12" }
     {-list_length_limit ""}
@@ -29,10 +32,18 @@ ad_proc -public qfo_sp_table_g2 {
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
-    {-table_tag_attributes_list "style {background-color: #cec;}"}
+    {-table_tag_attributes_list "class,list-table,cellpadding,3,cellspacing,1"}
+    {-td_center_attribute_list ""}
+    {-td_even_attribute_list ""}
+    {-td_fill_attribute_list ""}
+    {-td_left_attribute_list ""}
+    {-td_odd_attribute_list {style,opacity:0.9;}}
+    {-td_right_attribute_list ""}
+    {-td_sorted_attributes_list ""}
+    {-td_unsorted_attributes_list {style,opacity:0.9;}}
+    {-th_sorted_attributes_html {style,width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}
+    {-th_unsorted_attributes_html {style,width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;}}
     {-this_start_row "1"}
-    {-title_sorted_div_html "<div style=\"width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;\">"}
-    {-title_unsorted_div_html "<div style=\"width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;\">"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
@@ -164,12 +175,32 @@ ad_proc -public qfo_sp_table_g2 {
     \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
     Note: <strong>To indicate that a column is unsortable use "-ignore"</strong>
     <br><br>
-    
+    <br><br>
+    <br><br>
+    *_attributes_list attributes may be passed as a list or string. If a comma or tab character are detected, a string will be split by comma or tab delimiter. Specically, this feature is for the following parameters:<br>
+    <ul><li>
+    <code>td_even_attribute_list</code> Applies to even numbered rows
+    </li><li>
+    <code>td_odd_attribute_list</code> Applies to odd numbered rows
+    </li><li>
+    <code>td_left_attribute_list</code> To left justify text in TD tags
+    </li><li>
+    <code>td_right_attribute_list</code> To right justified text in TD tags
+    </li><li>
+    <code>td_center_attribute_list</code> To center justify text in TD tags
+    </li><li>
+    <code>td_fill_attribute_list</code> To fill justify text in TD tags
+    </li><li>
+    <code>td_sorted_attribute_list</code> Applies to sorted column TD tags
+    </li><li>
+    <code>td_unsorted_attribute_list</code> Applies to unsorted column TD tags
+    </li></ul>
     <br><br>
     <code>columns_hide_index_list</code> - To hide a column from display,
     add its tcl index number to this list.
     The first index in a tcl list is '0', second index is '1'..
-
+    <br><br>
+    <code>columns_justify_list</code> If present, a list of letters where position in list cooresponds to table columns, and where each element indicates a left, center, right, or fill justify. Only the first letter of each element is examined. The default is to right justify numbers, and left justify everything else.
 } {
     upvar 1 $nav_current_pos_html_varname nav_current_pos_html
     upvar 1 $nav_next_links_html_varname nav_next_links_html
@@ -582,7 +613,7 @@ ad_proc -public qfo_sp_table_g2 {
 
         # For now, just inactivate the left most sort link 
         # that was most recently pressed (if it has been).
-        set title_new $title
+        set title_new ""
 
         if { $primary_sort_col eq "" \
                  || $ignore_p \
@@ -662,12 +693,12 @@ ad_proc -public qfo_sp_table_g2 {
         }
         set end_div ""
         if { $column_sorted_p && !$ignore_p } {
-            append title_new $title_sorted_div_html
+            append title_new $title_sorted_div_html $title
             if { $title_sorted_div_html ne "" } {
                 set end_div ${div_end_h}
             }
         } else {
-            append title_new $title_unsorted_div_html
+            append title_new $title_unsorted_div_html $title
             if { $title_unsorted_div_html ne "" } {
                 set end_div ${div_end_h}
             }
@@ -1066,3 +1097,56 @@ ad_proc -public hf_pagination_by_items {
     return $bar_list_set
 }
 
+ad_proc -public ::qfo::css_blend {
+    css_properties
+} {
+    Blends css styles. For example "background: #000; background: #fff; align: right;" becomes "background: #fff; align: right;"
+    <br><br>
+    This is useful when sets of css are used for multiple parameters,
+    and there may be some overlap of properties.
+} {
+    set colon_c ":"
+    set semicolon_c ";"
+    set css_properties_list [split $css_properties $semicolon_c]
+    foreach property $css_properties_list {
+        set colon_first_idx [string first $colon_c $property]
+        if { $colon_first_idx > -1 } {
+            set pname [string range $property 0 ${colon_first_idx}-1 ]
+            set pvalue [string range $property ${colon_first_idx}+1 end ]
+            set property_arr(${pname}) $pvalue
+        }
+    }
+    set css_properties_new ""
+    foreach {n v} [array get property_arr] {
+        append css_properties_new ${n} ${colon_c} ${v} ${semicolon_c}
+    }
+    return $css_properties_new
+}
+
+ad_proc -public ::qfo::ml_tag_attribute_blend {
+    tag_attributes
+    {delimiter " "}
+} {
+    Blends tag attributes, so that for example, if there are two
+    class attrbutes, their values are combined.
+    <code>tag_attributes</code> may be either text or a name value list.
+    If a comma or tab character "\t" is detected, the text is split into a list.
+    No precedence is given to order of attributes.
+    A space is the default delimiter for combined values.
+    @return name_value_list
+} {
+    if { [string match {*,*} $tag_attributes ] \
+             || [string match {*\t*} $tag_attributes ] } {
+        set tag_attrs_list [split $tag_attributes ",\t"]
+    } else {
+        set tag_attrs_list $tag_attributes
+    }
+    foreach {n v} {
+        lappend attributes_arr(${n}) ${v}
+    }
+    set attributes_list [list ]
+    foreach {n v} [array get attributes_arr] {
+        lappend attributes_list ${n} [join ${v} ]
+    }
+    return $attributes_list
+}
