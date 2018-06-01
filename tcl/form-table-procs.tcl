@@ -27,18 +27,20 @@ ad_proc -public qfo_sp_table_g2 {
     {-s_varname "__qfsp_s"}
     {-separator "&nbsp;"}
     {-sort_type_list ""}
+    {-sorted_first_html_close {</span>}}
+    {-sorted_first_html_open {<span style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;">}}
+    {-sorted_last_html_close {</span>}}
+    {-sorted_last_html_open {<span style="font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;">}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
     {-table_tag_attributes_list "class,list-table,cellpadding,3,cellspacing,1"}
-    {-td_center_attribute_list ""}
-    {-td_even_attribute_list ""}
-    {-td_fill_attribute_list ""}
-    {-td_left_attribute_list ""}
-    {-td_odd_attribute_list {style,opacity:0.9;}}
-    {-td_right_attribute_list ""}
+    {-td_center_attribute_list {class,list-table,style,text-align: center;}}
+    {-td_fill_attribute_list {class,list-table,style,text-align: justify;}}
+    {-td_left_attribute_list {class,list-table,style,text-align: left;}}
+    {-td_right_attribute_list {class,list-table,style,text-align: right;}}
     {-td_sorted_attributes_list ""}
     {-td_unsorted_attributes_list {style,opacity:0.9;}}
     {-th_sorted_attributes_html {style,width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}
@@ -48,6 +50,10 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
+    {-tr_even_attribute_list {class,even}}
+    {-tr_odd_attribute_list {class,odd,style,opacity:0.9;}}
+    {-unsorted_first_html_tags_open {<span style="font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;">}}
+    {-unsorted_last_html_tags_close {</span>}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
