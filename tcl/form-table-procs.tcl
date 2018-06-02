@@ -456,6 +456,7 @@ ad_proc -public qfo_sp_table_g2 {
     set qm_h "?"
     set q_s_h "?s="
     set sp " "
+    set quote_h "\""
     set class_att_h "\" class=\""
     set title_att_h "\" title=\""
     set this_start_row_h "this_start_row="
@@ -576,11 +577,36 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc "#acs-templating.descending_order#"
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
-    
-    set sorted_first_attributes [::qfo::ml_tag_attribute_blend $sorted_first_attriubute_list ]
-    set sorted_last_attributes [::qfo::ml_tag_attribute_blend $sorted_last_attribute_list ]
-    set unsorted_first_attributes [::qfo::ml_tag_attribute_blend $unsorted_first_attribute_list ]
 
+    if { [string match { *} $sorted_first_attribute_list ] } {
+        set sorted_first_attributes ""
+    } else {
+        set sorted_first_attributes ${sp}
+    }
+    foreach {n v} [::qfo::ml_tag_attribute_blend $sorted_first_attriubute_list ] {
+        append sorted_first_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
+    }
+
+
+    if { [string match { *} $sorted_last_attribute_list ] } {
+        set sorted_last_attributes ""
+    } else {
+        set sorted_last_attributes ${sp}
+    }
+    foreach {n v} [::qfo::ml_tag_attribute_blend $sorted_last_attribute_list ] {
+        append sorted_last_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
+    }
+
+    if { [string match { *} $unsorted_first_attribute_list ] } {
+        set unsorted_first_attributes ""
+    } else {
+        set unsorted_first_attributes ${sp}
+    }
+    foreach {n v} [::qfo::ml_tag_attribute_blend $unsorted_first_attribute_list ] {
+        append unsorted_first_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
+##code There may be a qf_proc for above loops.
+
+    
     set column_idx 0
     set primary_sort_col [lindex $sort_order_list $column_idx ]
     foreach title $titles_list {
@@ -665,20 +691,23 @@ ad_proc -public qfo_sp_table_g2 {
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
-                    append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                    # append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                    append sort_bottom ${sorted_first_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
                     set sort_top ${a_href_h} 
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
-                    append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                    # append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                    append sort_top ${sorted_first_attributes} ${gt_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h} 
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
-                    append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
+                    #  append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
+                    append sort_bottom ${sorted_last_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 }
             } else {
@@ -1167,7 +1196,7 @@ ad_proc -public ::qfo::ml_tag_attribute_blend {
     {delimiter " "}
 } {
     Blends tag attributes, so that for example, if there are two
-    class attrbutes, their values are combined.
+    class attributes, their values are combined.
     <code>tag_attributes</code> may be either text or a name value list.
     If a comma or tab character "\t" is detected, the text is split into a list.
     No precedence is given to order of attributes.
