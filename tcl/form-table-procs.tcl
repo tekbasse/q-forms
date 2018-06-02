@@ -27,24 +27,20 @@ ad_proc -public qfo_sp_table_g2 {
     {-s_varname "__qfsp_s"}
     {-separator "&nbsp;"}
     {-sort_type_list ""}
-    ##code rename following _close/_open paradigm to single sorted_first_tag_att_value
-    # tag is either anchor tag or span tag (for inactive anchor).
-    {-sorted_first_html_close {</span>}}
-    {-sorted_first_html_open {<span style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;">}}
-    {-sorted_last_html_close {</span>}}
-    {-sorted_last_html_open {<span style="font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;">}}
+    {-sorted_first_attribute_list {style,font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;}}
+    {-sorted_last_attribute_list {style,font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
-    {-table_tag_attributes_list "class,list-table,cellpadding,3,cellspacing,1"}
+    {-table_tag_attribute_list "class,list-table,cellpadding,3,cellspacing,1"}
     {-td_center_attribute_list {class,list-table,style,text-align: center;}}
     {-td_fill_attribute_list {class,list-table,style,text-align: justify;}}
     {-td_left_attribute_list {class,list-table,style,text-align: left;}}
     {-td_right_attribute_list {class,list-table,style,text-align: right;}}
-    {-td_sorted_attributes_list ""}
-    {-td_unsorted_attributes_list {style,opacity:0.9;}}
+    {-td_sorted_attribute_list ""}
+    {-td_unsorted_attribute_list {style,opacity:0.9;}}
     {-th_sorted_attributes_html {style,width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}
     {-th_unsorted_attributes_html {style,width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;}}
     {-this_start_row "1"}
@@ -54,8 +50,7 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
     {-tr_even_attribute_list {class,even}}
     {-tr_odd_attribute_list {class,odd,style,opacity:0.9;}}
-    {-unsorted_first_html_open {<span style="font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;">}}
-    {-unsorted_last_html_close {</span>}}
+    {-unsorted_first_attribute_list {style,font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -190,7 +185,7 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     <br><br>
     <br><br>
-    *_attributes_list attributes may be passed as a list or string. If a comma or tab character are detected, a string will be split by comma or tab delimiter. Specically, this feature is for the following parameters:<br>
+    *_attribute_list attributes may be passed as a list or string. If a comma or tab character are detected, a string will be split by comma or tab delimiter. Specically, this feature is for the following parameters:<br>
     <ul><li>
     <code>td_even_attribute_list</code> Applies to even numbered rows
     </li><li>
@@ -217,15 +212,15 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
         *_html_close *_html_open passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
     <ul><li>
-    <code>sorted_first_html_open</code> Html preceding 'first sort' change link for a title that has been sorted.
+    <code>sorted_first_attribute_list</code> Html preceding 'first sort' change link for a title that has been sorted.
     </li><li>
     <code>sorted_first_html_close</code> Html following 'first sort' change link for a title that has been sorted.
     </li><li>
-    <code>sorted_last_html_open</code> Html preceding 'last sort' change link for a title that has been sorted.
+    <code>sorted_last_attribute_list</code> Html preceding 'last sort' change link for a title that has been sorted.
     </li><li>
     <code>sorted_last_html_close</code> Html following 'last sort' change link for a title that has been sorted.
     </li><li>
-    <code>unsorted_az_html_open</code> Html preceding 'first sort' change link for a title that has not been sorted.
+    <code>unsorted_az_attribute_list</code> Html preceding 'first sort' change link for a title that has not been sorted.
     </li><li>
     <code>unsorted_az_html_close</code> Html following 'last sort' change link for a title that has not been sorted.
 </li></ul>
@@ -457,6 +452,7 @@ ad_proc -public qfo_sp_table_g2 {
     set amp_h "&amp;"
     set eq_h "="
     set da_h "-"
+    set gt_h ">"
     set qm_h "?"
     set q_s_h "?s="
     set sp " "
@@ -469,7 +465,7 @@ ad_proc -public qfo_sp_table_g2 {
     set sortedlast "sortedlast"
     set sortedfirst "sortedfirst"
     set unsorted "unsorted"
-    set span_h "<span "
+    set span_h "<span"
     set colon ":"
     set div_end_h "</div>"
 
@@ -580,6 +576,10 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc "#acs-templating.descending_order#"
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
+    
+    set sorted_first_attributes [::qfo::ml_tag_attribute_blend $sorted_first_attriubute_list ]
+    set sorted_last_attributes [::qfo::ml_tag_attribute_blend $sorted_last_attribute_list ]
+    set unsorted_first_attributes [::qfo::ml_tag_attribute_blend $unsorted_first_attribute_list ]
 
     set column_idx 0
     set primary_sort_col [lindex $sort_order_list $column_idx ]
@@ -651,7 +651,7 @@ ad_proc -public qfo_sp_table_g2 {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
                     # reverse class styles
-                    #set sort_top ${sorted_last_html_open}
+                    #set sort_top ${sorted_last_attribute_list}
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
@@ -708,18 +708,18 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${title_att_h} ${title_asc}
                 append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
-               # set sort_bottom ${span_h} 
+                set sort_bottom ${span_h} 
                # append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
-                set sort_bottom ${sorted_first_html_open}
-               # append sort_bottom ${abbrev_desc} ${span_end_h}
-                append sort_bottom ${abbrev_desc} ${sorted_first_html_close}
+                append sort_bottom ${sorted_first_attributes} ${gt_h}
+                append sort_bottom ${abbrev_desc} ${span_end_h}
+
 
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
               #  set sort_top ${span_h} 
               #  append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
-                set sort_top ${sorted_first_html_open}
+                set sort_top ${sorted_first_attributes}
               #  append sort_top ${abbrev_asc} ${span_end_h}
                 append sort_top ${abbrev_asc} ${sorted_first_html_close}
                 set sort_bottom ${a_href_h}
@@ -891,7 +891,7 @@ ad_proc -public qfo_sp_table_g2 {
     # 7. Format output 
     # ================================================
     # Add attributes to the TABLE tag
-    set table_tag_attributes_list 
+    set table_tag_attribute_list 
 
     # Add cell formatting to TD tags
     set cell_formating_list [list ]
@@ -1017,7 +1017,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
-    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attributes_list $cell_table_reordered_lists ]
+    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_table_reordered_lists ]
 
     return 1
 }
