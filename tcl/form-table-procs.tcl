@@ -27,8 +27,10 @@ ad_proc -public qfo_sp_table_g2 {
     {-s_varname "__qfsp_s"}
     {-separator "&nbsp;"}
     {-sort_type_list ""}
+    ##code rename following _close/_open paradigm to single sorted_first_tag_att_value
+    # tag is either anchor tag or span tag (for inactive anchor).
     {-sorted_first_html_close {</span>}}
-   {-sorted_first_html_open {<span style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;">}}
+    {-sorted_first_html_open {<span style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;">}}
     {-sorted_last_html_close {</span>}}
     {-sorted_last_html_open {<span style="font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;">}}
     {-table_html_varname "__qfsp_table_html"}
@@ -649,12 +651,16 @@ ad_proc -public qfo_sp_table_g2 {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
                     # reverse class styles
+                    #set sort_top ${sorted_last_html_open}
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
-                    append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
+                   # append sort_top ${class_att_h} ${sortedlast} 
+                    append sort_top ${sortedlast}
+                    append sort_top ${dquote_end_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
+                   # append sort_top ${sorted_last_html_close}
                     set sort_bottom ${a_href_h}
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
@@ -692,6 +698,7 @@ ad_proc -public qfo_sp_table_g2 {
                 set sort_link_delim ${colon}
             }
         } elseif { !$ignore_p } {
+            # Must be primary sort column
             if { $decreasing_p } {
                 # Decreasing primary sort is chosen last, 
                 # no need to make the link active
