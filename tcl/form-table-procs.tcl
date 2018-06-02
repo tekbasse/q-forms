@@ -28,7 +28,7 @@ ad_proc -public qfo_sp_table_g2 {
     {-separator "&nbsp;"}
     {-sort_type_list ""}
     {-sorted_first_html_close {</span>}}
-    {-sorted_first_html_open {<span style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;">}}
+   {-sorted_first_html_open {<span style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;">}}
     {-sorted_last_html_close {</span>}}
     {-sorted_last_html_open {<span style="font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;">}}
     {-table_html_varname "__qfsp_table_html"}
@@ -701,15 +701,20 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${title_att_h} ${title_asc}
                 append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
-                set sort_bottom ${span_h} 
-                append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
-                append sort_bottom ${abbrev_desc} ${span_end_h}
+               # set sort_bottom ${span_h} 
+               # append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                set sort_bottom ${sorted_first_html_open}
+               # append sort_bottom ${abbrev_desc} ${span_end_h}
+                append sort_bottom ${abbrev_desc} ${sorted_first_html_close}
+
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
-                set sort_top ${span_h} 
-                append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
-                append sort_top ${abbrev_asc} ${span_end_h}
+              #  set sort_top ${span_h} 
+              #  append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
+                set sort_top ${sorted_first_html_open}
+              #  append sort_top ${abbrev_asc} ${span_end_h}
+                append sort_top ${abbrev_asc} ${sorted_first_html_close}
                 set sort_bottom ${a_href_h}
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
