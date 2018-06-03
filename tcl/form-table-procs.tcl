@@ -50,7 +50,7 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
     {-tr_even_attribute_list {class,even}}
     {-tr_odd_attribute_list {class,odd,style,opacity:0.9;}}
-    {-unsorted_first_attribute_list {style,font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;}}
+    {-unsorted_attribute_list {style,font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -210,7 +210,7 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     <code>columns_justify_list</code> If present, a list of letters where position in list cooresponds to table columns, and where each element indicates a left, center, right, or fill justify. Only the first letter of each element is examined. The default is to right justify numbers, and left justify everything else.
     <br><br>
-        *_html_close *_html_open passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
+    *_html_close *_html_open passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
     <ul><li>
     <code>sorted_first_attribute_list</code> Html preceding 'first sort' change link for a title that has been sorted.
     </li><li>
@@ -223,7 +223,7 @@ ad_proc -public qfo_sp_table_g2 {
     <code>unsorted_az_attribute_list</code> Html preceding 'first sort' change link for a title that has not been sorted.
     </li><li>
     <code>unsorted_az_html_close</code> Html following 'last sort' change link for a title that has not been sorted.
-</li></ul>
+    </li></ul>
     Note: Unsorted are wrapped by same html for first and last sort links.  Sorted links are wrapped individually.
 } {
     upvar 1 $nav_current_pos_html_varname nav_current_pos_html
@@ -426,7 +426,7 @@ ad_proc -public qfo_sp_table_g2 {
                 set sort_order "-increasing"
             }
             set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
-                
+            
             if {[catch { set table_sorted_lists [lsort $sort_type $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
                 # lsort errored, probably due to bad sort_type. 
                 # Fall back to -ascii sort_type, or fail..
@@ -583,7 +583,7 @@ ad_proc -public qfo_sp_table_g2 {
     } else {
         set sorted_first_attributes ${sp}
     }
-    foreach {n v} [::qfo::ml_tag_attribute_blend $sorted_first_attriubute_list ] {
+    foreach {n v} [::qfo::ml_tag_attribute_blend $sorted_first_attribute_list ] {
         append sorted_first_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
     }
 
@@ -597,14 +597,19 @@ ad_proc -public qfo_sp_table_g2 {
         append sorted_last_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
     }
 
-    if { [string match { *} $unsorted_first_attribute_list ] } {
-        set unsorted_first_attributes ""
+    if { [string match { *} $unsorted_attribute_list ] } {
+        set unsorted_attributes ""
     } else {
-        set unsorted_first_attributes ${sp}
+        set unsorted_attributes ${sp}
     }
-    foreach {n v} [::qfo::ml_tag_attribute_blend $unsorted_first_attribute_list ] {
-        append unsorted_first_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
-##code There may be a qf_proc for above loops.
+    foreach {n v} [::qfo::ml_tag_attribute_blend $unsorted_attribute_list ] {
+        append unsorted_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
+    }
+    # Above loops could be integrated where values are used
+    # by using qf_element.  The approach taken should be faster,
+    # since it builds attributes
+    # instead of checking doctype and building html element, too.
+    # Tables could expand approaching o^2 cells
 
     
     set column_idx 0
@@ -677,21 +682,16 @@ ad_proc -public qfo_sp_table_g2 {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
                     # reverse class styles
-                    #set sort_top ${sorted_last_attribute_list}
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
-                   # append sort_top ${class_att_h} ${sortedlast} 
-                    append sort_top ${sortedlast}
-                    append sort_top ${dquote_end_h}
+                    append sort_top ${sorted_last_attributes} ${gt_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
-                   # append sort_top ${sorted_last_html_close}
                     set sort_bottom ${a_href_h}
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
-                    # append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
                     append sort_bottom ${sorted_first_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
@@ -699,14 +699,12 @@ ad_proc -public qfo_sp_table_g2 {
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                     append sort_top ${title_att_h} ${title_asc}
-                    # append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
                     append sort_top ${sorted_first_attributes} ${gt_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h} 
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                     append sort_bottom ${title_att_h} ${title_desc}
-                    #  append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
                     append sort_bottom ${sorted_last_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 }
@@ -717,12 +715,12 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                 append sort_top ${title_att_h} ${title_asc}
-                append sort_top ${class_att_h} ${unsorted} ${dquote_end_h}
+                append sort_top ${unsorted_attributes} ${gt_h}
                 set sort_bottom ${a_href_h} 
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc}
-                append sort_bottom ${class_att_h} ${unsorted} ${dquote_end_h}
+                append sort_bottom ${unsorted_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
                 set sort_link_delim ${colon}
             }
@@ -738,7 +736,6 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
                 set sort_bottom ${span_h} 
-               # append sort_bottom ${class_att_h} ${sortedfirst} ${dquote_end_h}
                 append sort_bottom ${sorted_first_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${span_end_h}
 
@@ -746,31 +743,19 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
-              #  set sort_top ${span_h} 
-              #  append sort_top ${class_att_h} ${sortedfirst} ${dquote_end_h}
-                set sort_top ${sorted_first_attributes}
-              #  append sort_top ${abbrev_asc} ${span_end_h}
-                append sort_top ${abbrev_asc} ${sorted_first_html_close}
+                set sort_top ${span_h} 
+                append sort_top ${sorted_first_attributes} ${gt_h}
+                append sort_top ${abbrev_asc}
+                append sort_top ${span_end_h}
                 set sort_bottom ${a_href_h}
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc}
-                append sort_bottom ${class_att_h} ${sortedlast} ${dquote_end_h}
+                append sort_bottom ${sorted_last_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
             }
         }
-        set end_div ""
-        if { $column_sorted_p && !$ignore_p } {
-            append title_new $title_sorted_div_html $title
-            if { $title_sorted_div_html ne "" } {
-                set end_div ${div_end_h}
-            }
-        } else {
-            append title_new $title_unsorted_div_html $title
-            if { $title_unsorted_div_html ne "" } {
-                set end_div ${div_end_h}
-            }
-        }
+        append title_new $title
         if { !$ignore_p } {
             if { $decreasing_p } {
                 append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
@@ -778,7 +763,6 @@ ad_proc -public qfo_sp_table_g2 {
                 append title_new ${sort_top} ${sort_link_delim} ${sort_bottom}
             }
         }
-        append title_new $end_div
         lappend titles_html_list $title_new
         incr column_idx
     }
@@ -802,9 +786,6 @@ ad_proc -public qfo_sp_table_g2 {
     if { $lindex_last < $last_row } {
         set last_row $lindex_last
     }
-    #for { set row_num $lindex_start } { $row_num <= $last_row } {incr row_num} {
-    #    lappend table_sorted_paginated_lists [lindex $table_sorted_lists $row_num ]
-    #}
     set table_sorted_paginated_lists [lrange $table_sorted_lists $lindex_start $last_row]
 
 
@@ -845,9 +826,6 @@ ad_proc -public qfo_sp_table_g2 {
             lappend unsorted_compressed_list $ii
         }
     }
-    #ns_log Notice "qfo_table_g2.754 unsorted_list '${unsorted_list}'"
-    #ns_log Notice "qfo_table_g2.755 unsorted_compressed_list '${unsorted_compressed_list}'"
-
 
     #  titles_list
     set titles_reordered_list [list ]
@@ -867,9 +845,6 @@ ad_proc -public qfo_sp_table_g2 {
         lappend titles_reordered_list [lindex $titles_list $ui ]
         lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
     }
-    #ns_log Notice "qfo_table_g2.803 titles_reordered_list '${titles_reordered_list}'"
-    #ns_log Notice "qfo_table_g2.804 sort_order_list '${sort_order_list}'"
-    #ns_log Notice "qfo_table_g2.805 sort_reverse_order_list '${sort_reverse_order_list}'"
 
     # Repeat for the table rows: 
 
@@ -1000,30 +975,28 @@ ad_proc -public qfo_sp_table_g2 {
         # add the remaining columns
         set class_c "class"
         foreach ui $unsorted_compressed_list {
-            #if { $ui ne "" } {
-                set cell_format_list [lindex $td_row_list $ui ]
-                if { $row_idx > 0 } {
-                    # add the appropriate background color
-                    if { [f::even_p $row_idx ] } {
-                        set color $color_even_row
-                    } else {
-                        set color $color_odd_row
-                    }
-                    set class_pos [lsearch -exact $cell_format_list $class_c ]
-                    if { $class_pos > -1 } {
-                        # combine the class values instead of appending more attributes
-                        incr class_pos
-                        set attr_value [lindex $cell_format_list $class_pos ]
-                        set new_attr_value $attr_value
-                        append new_attr_value $sp $color
-                        set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
-                    } else {
-                        lappend cell_format_list $class_c $color
-                    }
+            set cell_format_list [lindex $td_row_list $ui ]
+            if { $row_idx > 0 } {
+                # add the appropriate background color
+                if { [f::even_p $row_idx ] } {
+                    set color $color_even_row
+                } else {
+                    set color $color_odd_row
                 }
-                # Add unsorted column to row
-                lappend td_row_new $cell_format_list
-            #}
+                set class_pos [lsearch -exact $cell_format_list $class_c ]
+                if { $class_pos > -1 } {
+                    # combine the class values instead of appending more attributes
+                    incr class_pos
+                    set attr_value [lindex $cell_format_list $class_pos ]
+                    set new_attr_value $attr_value
+                    append new_attr_value $sp $color
+                    set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
+                } else {
+                    lappend cell_format_list $class_c $color
+                }
+            }
+            # Add unsorted column to row
+            lappend td_row_new $cell_format_list
         }
         # Append new row to new table
         lappend cell_table_reordered_lists $td_row_new
@@ -1209,7 +1182,7 @@ ad_proc -public ::qfo::ml_tag_attribute_blend {
     } else {
         set tag_attrs_list $tag_attributes
     }
-    foreach {n v} {
+    foreach {n v} $tag_attrs_list {
         lappend attributes_arr(${n}) ${v}
     }
     set attributes_list [list ]
