@@ -886,36 +886,36 @@ ad_proc -public qfo_sp_table_g2 {
     set column_idx 0
     foreach title $titles_reordered_html_list {
         set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
-        lappend row_td_attrs_list ${td_attribute_list}
-
         # Title row TD formats in title_td_attrs_list
-        # even row TD attributes in even_row_list
-        # odd row TD attributes in odd_row_list
         if { $column_type eq "integer" ||$column_type eq "real" } {
-            # Value is a number, so right justify
-
+            # Value is a number, so right justify or the like
             if { $column_idx < $sort_order_list_len } {
                 lappend title_td_attrs_list ${th_sorted_attribute_list}
-                lappend row_td_attrs_list ${td_sorted_attribute_list}
+                lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                               ${td_number_attribute_list} \
+                                               ${td_sorted_attribute_list} ]
             } else {
                 lappend title_td_attrs_list ${th_unsorted_attribute_list}
-                lappend row_td_attrs_list ${td_unsorted_attribute_list}
+                lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                               ${td_number_attribute_list} \
+                                               ${td_unsorted_attribute_list} ]
             }
-            lappend row_td_attrs_list $td_number_attribute_list
         } else {
             if { $column_idx < $sort_order_list_len } {
                 lappend title_td_attrs_list ${th_sorted_attribute_list}
-                lappend row_td_attrs_list ${td_sorted_attribute_list}
+                lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                               ${td_nonnumber_attribute_list} \
+                                               ${td_sorted_attribute_list} ]
             } else {
                 lappend title_td_attrs_list ${th_unsorted_attribute_list}
-                lappend row_td_attrs_list ${td_unsorted_attribute_list} \
-                    $td_left_attribute_list
+                lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                               ${td_nonnumber_attribute_list} \
+                                               ${td_unsorted_attribute_list} ]
             }
-            lappend row_td_attrs_list ${td_nonnumber_attribute_list}
         }
         incr column_idx
     }
-    set cell_table_lists [list $title_td_attrs_list $odd_row_list $even_row_list ]
+    set cell_table_lists [list $title_td_attrs_list $row_td_attrs_list $row_td_attrs_list ]
 
     # Rebuild the even/odd rows, add column based variances
     # When column order changes, 
@@ -928,6 +928,8 @@ ad_proc -public qfo_sp_table_g2 {
     # add the primary sort column, secondary sort column etc. columns in order
     set row_idx 0
     set cell_table_reordered_lists [list ]
+    ##code redo these loops, some of this is redundant, such as sorted/unsorted
+    # and even/odd  What's left?
     foreach td_row_list $cell_table_lists {
         set td_row_new [list ]
         foreach ii $sort_order_list {
