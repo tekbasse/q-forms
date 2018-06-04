@@ -539,7 +539,7 @@ ad_proc -public qss_list_of_lists_to_html_table {
             }
             foreach {attribute value} $attribute_value_list {
                 regsub -all -- {\"} $value {\"} value
-                append table_html ${sp} ${attribute} ${eq_quote} ${value} ${eq_quote}
+                append table_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
             }
             append table_html ${gt} ${column} ${lt} ${fs} ${td_tag} ${gt}
             incr column_i
