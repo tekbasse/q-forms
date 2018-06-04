@@ -445,6 +445,9 @@ ad_proc -public qss_list_of_lists_to_html_table {
     {table_attribute_list ""}
     {td_attribute_lists ""}
     {th_rows "1"}
+    {tr_even_attribute_list ""}
+    {tr_odd_attribute_list ""}
+    {tr_header_attribute_list ""}
 } {
     Converts a tcl list_of_lists to an html table, returns table as text/html
     table_attribute_list can be a list of attribute pairs to pass to the TABLE tag: attribute1 value1 attribute2 value2..
@@ -454,30 +457,76 @@ ad_proc -public qss_list_of_lists_to_html_table {
     the list is represented {row1 {cell1} {cell2} {cell3} .. {cell x} } {row2 {cell1}...}
     Note that attribute - value pairs in td_attribute_lists can be added uniquely to each TD tag.
 } {
+    set fs "/"
+    set th "th"
+    set gt ">"
+    set lt "<"
+    set quote "\""
+    set eq_quote "=\""
+    set td "td"
+    set sp " "
+    set nl "\n"
+    set tr "tr"
+    set lttr "<tr"
+
     set table_html "<table"
     foreach {attribute value} $table_attribute_list {
         regsub -all -- {\"} $value {\"} value
-        append table_html " $attribute=\"$value\""
+        append table_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
     }
-    append table_html ">\n"
+    append table_html ${gt} ${nl}
     set row_i 0
     set column_i 0
-    #setup repeat pattern for formatting rows, if last formatting row is not blank
+    # Setup repeat pattern for formatting rows, 
+    # if last formatting row is not blank.
     set repeat_last_row_p 0
     if { [llength [lindex $td_attribute_lists end] ] > 0 } {
-        # this feature only comes into play if td_attribute_lists is not as long as table_list_of_lists
+        # This feature only comes into play
+        # if td_attribute_lists is not as long as table_list_of_lists
         set repeat_last_row_p 1
-        set repeat_row [expr { [llength $td_attribute_lists] - 1 } ]
+        set repeat_row [llength $td_attribute_lists]
+        incr repeat_row -1
     }
-    set td_tag "th"
-    set td_tag_html "<"
+
+    set td_tag ${th}
+    set td_tag_html ${lt}
     append td_tag_html $td_tag
+
+    set tr_hr_tag_html ${lttr}
+    foreach {attribute value} $tr_header_attribute_list {
+        append tr_hr_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append tr_hr_tag_html ${gt} ${nl}
+
+    set tr_even_tag_html ${lttr}
+    foreach {attribute value} $tr_even_attribute_list {
+        append tr_even_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append tr_even_tag_html ${gt} ${nl}
+
+    set tr_odd_tag_html ${lttr}
+    foreach {attribute value} $tr_odd_attribute_list {
+        append tr_odd_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append tr_odd_tag_html ${gt} ${nl}
+
+    append table_html "<thead>"
     foreach row_list $table_list_of_lists {
-        append table_html "<tr>"
+
         if { $row_i == $th_rows } {
-            set td_tag "td"
-            set td_tag_html "<"
-            append td_tag_html $td_tag
+            set td_tag ${td}
+            set td_tag_html ${lt}
+            append td_tag_html ${td_tag}
+            append table_html "</thead><tbody>"
+        }
+
+        set data_row_nbr [expr { ${row_i} - ${th_rows} + 1 } ]
+        if { $data_row_nbr < 1 } {
+            append table_html ${tr_hr_tag_html}
+        } elseif { [qf_is_even $data_row_nbr ] } {
+            append table_html ${tr_even_tag_html}
+        } else {
+            append table_html ${tr_odd_tag_html}
         }
 
         foreach column $row_list {
@@ -490,16 +539,16 @@ ad_proc -public qss_list_of_lists_to_html_table {
             }
             foreach {attribute value} $attribute_value_list {
                 regsub -all -- {\"} $value {\"} value
-                append table_html " $attribute=\"$value\""
+                append table_html ${sp} ${attribute} ${eq_quote} ${value} ${eq_quote}
             }
-            append table_html ">${column}</${td_tag}>"
+            append table_html ${gt} ${column} ${lt} ${fs} ${td_tag} ${gt}
             incr column_i
         }
-        append table_html "</tr>\n"
+        append table_html ${lt} ${fs} ${tr} ${gt} ${nl}
         incr row_i
         set column_i 0
     }
-    append table_html "</table>\n"
+    append table_html "</tbody></table>\n"
     return $table_html
 }
 
