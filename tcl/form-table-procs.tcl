@@ -27,18 +27,18 @@ ad_proc -public qfo_sp_table_g2 {
     {-s_varname "__qfsp_s"}
     {-separator "&nbsp;"}
     {-sort_type_list ""}
-    {-sorted_first_attributes {style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;"}}
-    {-sorted_last_attributes {style="font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;"}}
+    {-sorted_first_attributes {style="font-family: monospace; font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;"}}
+    {-sorted_last_attributes {style="font-family: monospace; font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;"}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
     {-table_tag_attribute_list {{class} {list-table} {cellpadding} {3} {cellspacing} {1}}}
-    {-td_center_attribute_list {{class} {list-table,style,text-align: center;}}}
-    {-td_fill_attribute_list {{class} {list-table,style,text-align: justify;}}}
-    {-td_left_attribute_list {{class} {list-table,style,text-align: left;}}}
-    {-td_right_attribute_list {{class} {list-table,style,text-align: right;}}}
+    {-td_center_attribute_list {{class} {list-tabl} {style} {text-align: center;}}}
+    {-td_fill_attribute_list {{class} {list-table} {style} {text-align: justify;}}}
+    {-td_left_attribute_list {{class} {list-table} {style} {text-align: left;}}}
+    {-td_right_attribute_list {{class} {list-table} {style} {text-align: right;}}}
     {-td_sorted_attribute_list {}}
     {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
     {-th_sorted_attributes_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
@@ -49,14 +49,15 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
     {-tr_even_attributes_list {{class} {even}}}
-    {-tr_odd_attributes_list {{class} {odd} {style} {opacity:0.9;}}}
-    {-unsorted_attributes {style="font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;"}}
+    {-tr_odd_attributes_list {{class} {odd}}}
+    {-tr_header_attributes_list {{class} {list-table}}}
+    {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;opacity:0.9;"}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
     and complementary navigation links.
     <br><br>
-    The table and titles are exposed at various steps in the process,
+    The table and titles are exposed at various steps in the process, 
     so that customizations may be made without having to
     re-work the core functionality. 
     (The api could include new proces of this one split into its stages 
@@ -998,7 +999,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
-    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_table_reordered_lists ]
+    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_table_reordered_lists "1" $tr_even_attributes_list $tr_odd_attributes_list $tr_header_attributes_list ]
 
     return 1
 }
