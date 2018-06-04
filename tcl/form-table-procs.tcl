@@ -27,30 +27,30 @@ ad_proc -public qfo_sp_table_g2 {
     {-s_varname "__qfsp_s"}
     {-separator "&nbsp;"}
     {-sort_type_list ""}
-    {-sorted_first_attribute_list {style,font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;}}
-    {-sorted_last_attribute_list {style,font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;}}
+    {-sorted_first_attributes {style="font-family: monospace, font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;"}}
+    {-sorted_last_attributes {style="font-family: monospace, font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;"}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
-    {-table_tag_attribute_list "class,list-table,cellpadding,3,cellspacing,1"}
-    {-td_center_attribute_list {class,list-table,style,text-align: center;}}
-    {-td_fill_attribute_list {class,list-table,style,text-align: justify;}}
-    {-td_left_attribute_list {class,list-table,style,text-align: left;}}
-    {-td_right_attribute_list {class,list-table,style,text-align: right;}}
-    {-td_sorted_attribute_list ""}
-    {-td_unsorted_attribute_list {style,opacity:0.9;}}
-    {-th_sorted_attributes_html {style,width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}
-    {-th_unsorted_attributes_html {style,width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;}}
+    {-table_tag_attribute_list {{class} {list-table} {cellpadding} {3} {cellspacing} {1}}}
+    {-td_center_attribute_list {{class} {list-table,style,text-align: center;}}}
+    {-td_fill_attribute_list {{class} {list-table,style,text-align: justify;}}}
+    {-td_left_attribute_list {{class} {list-table,style,text-align: left;}}}
+    {-td_right_attribute_list {{class} {list-table,style,text-align: right;}}}
+    {-td_sorted_attribute_list {}}
+    {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
+    {-th_sorted_attributes_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
+    {-th_unsorted_attributes_list {{style} {width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;}}}
     {-this_start_row "1"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
-    {-tr_even_attribute_list {class,even}}
-    {-tr_odd_attribute_list {class,odd,style,opacity:0.9;}}
-    {-unsorted_attribute_list {style,font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;}}
+    {-tr_even_attributes_list {{class} {even}}}
+    {-tr_odd_attributes_list {{class} {odd} {style} {opacity:0.9;}}}
+    {-unsorted_attributes {style="font-family: monospace, font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;"}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -185,23 +185,23 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     <br><br>
     <br><br>
-    *_attribute_list attributes may be passed as a list or string. If a comma or tab character are detected, a string will be split by comma or tab delimiter. Specically, this feature is for the following parameters:<br>
+    *_attributes attributes may be passed as a list or string. If a comma or tab character are detected, a string will be split by comma or tab delimiter. Specically, this feature is for the following parameters:<br>
     <ul><li>
-    <code>td_even_attribute_list</code> Applies to even numbered rows
+    <code>tr_even_attributes</code> Applies to even numbered rows
     </li><li>
-    <code>td_odd_attribute_list</code> Applies to odd numbered rows
+    <code>tr_odd_attributes</code> Applies to odd numbered rows
     </li><li>
-    <code>td_left_attribute_list</code> To left justify text in TD tags
+    <code>td_left_attributes</code> To left justify text in TD tags
     </li><li>
-    <code>td_right_attribute_list</code> To right justified text in TD tags
+    <code>td_right_attributes</code> To right justified text in TD tags
     </li><li>
-    <code>td_center_attribute_list</code> To center justify text in TD tags
+    <code>td_center_attributes</code> To center justify text in TD tags
     </li><li>
-    <code>td_fill_attribute_list</code> To fill justify text in TD tags
+    <code>td_fill_attributes</code> To fill justify text in TD tags
     </li><li>
-    <code>td_sorted_attribute_list</code> Applies to sorted column TD tags
+    <code>td_sorted_attributes</code> Applies to sorted column TD tags
     </li><li>
-    <code>td_unsorted_attribute_list</code> Applies to unsorted column TD tags
+    <code>td_unsorted_attributes</code> Applies to unsorted column TD tags
     </li></ul>
     <br><br>
     <code>columns_hide_index_list</code> - To hide a column from display,
@@ -210,19 +210,13 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     <code>columns_justify_list</code> If present, a list of letters where position in list cooresponds to table columns, and where each element indicates a left, center, right, or fill justify. Only the first letter of each element is examined. The default is to right justify numbers, and left justify everything else.
     <br><br>
-    *_html_close *_html_open passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
+    Passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
     <ul><li>
-    <code>sorted_first_attribute_list</code> Html preceding 'first sort' change link for a title that has been sorted.
+    <code>sorted_first_attributes</code> Html preceding 'first sort' change link for a title that has been sorted.
     </li><li>
-    <code>sorted_first_html_close</code> Html following 'first sort' change link for a title that has been sorted.
+    <code>sorted_last_attributes</code> Html preceding 'last sort' change link for a title that has been sorted.
     </li><li>
-    <code>sorted_last_attribute_list</code> Html preceding 'last sort' change link for a title that has been sorted.
-    </li><li>
-    <code>sorted_last_html_close</code> Html following 'last sort' change link for a title that has been sorted.
-    </li><li>
-    <code>unsorted_az_attribute_list</code> Html preceding 'first sort' change link for a title that has not been sorted.
-    </li><li>
-    <code>unsorted_az_html_close</code> Html following 'last sort' change link for a title that has not been sorted.
+    <code>unsorted_attributes</code> Html preceding 'first sort' change link for a title that has not been sorted.
     </li></ul>
     Note: Unsorted are wrapped by same html for first and last sort links.  Sorted links are wrapped individually.
 } {
@@ -578,40 +572,25 @@ ad_proc -public qfo_sp_table_g2 {
     set title_desc_by_nbr "'${nbr_desc}' #acs-kernel.common_first#"
     set title_desc_by_text "'${text_desc}' #acs-kernel.common_first#"
 
-    if { [string match { *} $sorted_first_attribute_list ] } {
-        set sorted_first_attributes ""
+    if { [string match { *} $sorted_first_attributes ] } {
+        set sp_sorted_first_attributes $sorted_first_attributes
     } else {
-        set sorted_first_attributes ${sp}
+        set sp_sorted_first_attributes ${sp}
+        append sp_sorted_first_attributes ${sorted_first_attributes}
     }
-    foreach {n v} [::qfo::ml_tag_attribute_blend $sorted_first_attribute_list ] {
-        append sorted_first_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
-    }
-
-
-    if { [string match { *} $sorted_last_attribute_list ] } {
-        set sorted_last_attributes ""
+    if { [string match { *} $sorted_last_attributes ] } {
+        set sp_sorted_last_attributes $sorted_last_attributes
     } else {
-        set sorted_last_attributes ${sp}
+        set sp_sorted_last_attributes ${sp}
+        append sp_sorted_last_attributes ${sorted_last_attributes}
     }
-    foreach {n v} [::qfo::ml_tag_attribute_blend $sorted_last_attribute_list ] {
-        append sorted_last_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
-    }
-
-    if { [string match { *} $unsorted_attribute_list ] } {
-        set unsorted_attributes ""
+    if { [string match { *} $unsorted_attributes ] } {
+        set sp_unsorted_attributes $unsorted_attributes
     } else {
-        set unsorted_attributes ${sp}
+        set sp_unsorted_attributes ${sp}
+        append sp_unsorted_attributes ${unsorted_attributes}
     }
-    foreach {n v} [::qfo::ml_tag_attribute_blend $unsorted_attribute_list ] {
-        append unsorted_attributes ${n} ${eq_h} ${quote_h} ${v} ${quote_h}
-    }
-    # Above loops could be integrated where values are used
-    # by using qf_element.  The approach taken should be faster,
-    # since it builds attributes
-    # instead of checking doctype and building html element, too.
-    # Tables could expand approaching o^2 cells
 
-    
     set column_idx 0
     set primary_sort_col [lindex $sort_order_list $column_idx ]
     foreach title $titles_list {
@@ -685,27 +664,27 @@ ad_proc -public qfo_sp_table_g2 {
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                    append sort_top ${title_att_h} ${title_asc}
-                    append sort_top ${sorted_last_attributes} ${gt_h}
+                    append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                    append sort_top ${sp_sorted_last_attributes} ${gt_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h}
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                    append sort_bottom ${title_att_h} ${title_desc}
-                    append sort_bottom ${sorted_first_attributes} ${gt_h}
+                    append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                    append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
                     set sort_top ${a_href_h} 
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                    append sort_top ${title_att_h} ${title_asc}
-                    append sort_top ${sorted_first_attributes} ${gt_h}
+                    append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                    append sort_top ${sp_sorted_first_attributes} ${gt_h}
                     append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_bottom ${a_href_h} 
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                    append sort_bottom ${title_att_h} ${title_desc}
-                    append sort_bottom ${sorted_last_attributes} ${gt_h}
+                    append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                    append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 }
             } else {
@@ -714,13 +693,13 @@ ad_proc -public qfo_sp_table_g2 {
                 set sort_top ${a_href_h}
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                append sort_top ${title_att_h} ${title_asc}
-                append sort_top ${unsorted_attributes} ${gt_h}
+                append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                append sort_top ${sp_unsorted_attributes} ${gt_h}
                 set sort_bottom ${a_href_h} 
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                append sort_bottom ${title_att_h} ${title_desc}
-                append sort_bottom ${unsorted_attributes} ${gt_h}
+                append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                append sort_bottom ${sp_unsorted_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
                 set sort_link_delim ${colon}
             }
@@ -732,11 +711,11 @@ ad_proc -public qfo_sp_table_g2 {
                 set sort_top ${a_href_h}
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded} 
                 append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                append sort_top ${title_att_h} ${title_asc}
+                append sort_top ${title_att_h} ${title_asc} ${quote_h}
                 append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
                 set sort_bottom ${span_h} 
-                append sort_bottom ${sorted_first_attributes} ${gt_h}
+                append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${span_end_h}
 
 
@@ -744,14 +723,14 @@ ad_proc -public qfo_sp_table_g2 {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
                 set sort_top ${span_h} 
-                append sort_top ${sorted_first_attributes} ${gt_h}
+                append sort_top ${sp_sorted_first_attributes} ${gt_h}
                 append sort_top ${abbrev_asc}
                 append sort_top ${span_end_h}
                 set sort_bottom ${a_href_h}
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                append sort_bottom ${title_att_h} ${title_desc}
-                append sort_bottom ${sorted_last_attributes} ${gt_h}
+                append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
             }
         }
@@ -1164,30 +1143,22 @@ ad_proc -public ::qfo::css_blend {
     return $css_properties_new
 }
 
-ad_proc -public ::qfo::ml_tag_attribute_blend {
-    tag_attributes
-    {delimiter " "}
+ad_proc -public ::qfo::names_blend {
+    name_value_list
+    {delimiter ""}
 } {
-    Blends tag attributes, so that for example, if there are two
-    class attributes, their values are combined.
-    <code>tag_attributes</code> may be either text or a name value list.
-    If a comma or tab character "\t" is detected, the text is split into a list.
+    Blends names, so that for example, if there are two
+    names 'class', their values are combined.
     No precedence is given to order of attributes.
     A space is the default delimiter for combined values.
     @return name_value_list
 } {
-    if { [string match {*,*} $tag_attributes ] \
-             || [string match {*\t*} $tag_attributes ] } {
-        set tag_attrs_list [split $tag_attributes ",\t"]
-    } else {
-        set tag_attrs_list $tag_attributes
-    }
     foreach {n v} $tag_attrs_list {
         lappend attributes_arr(${n}) ${v}
     }
     set attributes_list [list ]
     foreach {n v} [array get attributes_arr] {
-        lappend attributes_list ${n} [join ${v} ]
+        lappend attributes_list ${n} [join ${v} ${delimiter}]
     }
     return $attributes_list
 }
