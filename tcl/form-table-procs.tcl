@@ -35,10 +35,9 @@ ad_proc -public qfo_sp_table_g2 {
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
     {-table_tag_attribute_list {{class} {list-table} {cellpadding} {3} {cellspacing} {1}}}
-    {-td_center_attribute_list {{class} {list-tabl} {style} {text-align: center;}}}
-    {-td_fill_attribute_list {{class} {list-table} {style} {text-align: justify;}}}
-    {-td_left_attribute_list {{class} {list-table} {style} {text-align: left;}}}
-    {-td_right_attribute_list {{class} {list-table} {style} {text-align: right;}}}
+    {-td_number_attribute_list {{style} {text-align: left;}}}
+    {-td_nonnumber_attribute_list {{style} {text-align: right;}}}
+    {-td_attribute_list {{class} {list-table}}}
     {-td_sorted_attribute_list {}}
     {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
     {-th_sorted_attributes_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
@@ -49,8 +48,8 @@ ad_proc -public qfo_sp_table_g2 {
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
     {-tr_even_attributes_list {{class} {even}}}
+    {-tr_header_attributes_list {{class} {list-header}}}
     {-tr_odd_attributes_list {{class} {odd}}}
-    {-tr_header_attributes_list {{class} {list-table}}}
     {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;opacity:0.9;"}}
 } {
     Creates a user customizable sorted table by
@@ -880,42 +879,48 @@ ad_proc -public qfo_sp_table_g2 {
     # Add cell formatting to TD tags
     set cell_formating_list [list ]
 
-    # Let's try to get fancy, have the rows alternate color after the first row, 
-    # and have the sorted columns slightly lighter in color to highlight them
-    # base alternating row colors:
-    set color_even_row "evenrow"
-    set color_odd_row "oddrow"
-    # sorted column colors
-    set color_even_scol "evenlight"
-    set color_odd_scol "oddlight"
 
     # Set the default title row and column TD formats before columns sorted:
     set title_td_attrs_list [list ]
+    set sort_order_list_len [llength $sort_order_list ]
     set column_idx 0
     foreach title $titles_reordered_html_list {
         set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
+        lappend row_td_attrs_list ${td_attribute_list}
+
         # Title row TD formats in title_td_attrs_list
         # even row TD attributes in even_row_list
         # odd row TD attributes in odd_row_list
         if { $column_type eq "integer" ||$column_type eq "real" } {
-            lappend title_td_attrs_list [list class "rightj border1" ]
             # Value is a number, so right justify
-            lappend even_row_list [list class "rightj smallest border1" ]
-            lappend odd_row_list [list class "rightj smallest border1" ]
+
+            if { $column_idx < $sort_order_list_len } {
+                lappend title_td_attrs_list ${th_sorted_attribute_list}
+                lappend row_td_attrs_list ${td_sorted_attribute_list}
+            } else {
+                lappend title_td_attrs_list ${th_unsorted_attribute_list}
+                lappend row_td_attrs_list ${td_unsorted_attribute_list}
+            }
+            lappend row_td_attrs_list $td_number_attribute_list
         } else {
-            lappend title_td_attrs_list [list class "border1" ]
-            lappend even_row_list [list class "smallest border1" ]
-            lappend odd_row_list [list class "smallest border1" ]
+            if { $column_idx < $sort_order_list_len } {
+                lappend title_td_attrs_list ${th_sorted_attribute_list}
+                lappend row_td_attrs_list ${td_sorted_attribute_list}
+            } else {
+                lappend title_td_attrs_list ${th_unsorted_attribute_list}
+                lappend row_td_attrs_list ${td_unsorted_attribute_list} \
+                    $td_left_attribute_list
+            }
+            lappend row_td_attrs_list ${td_nonnumber_attribute_list}
         }
         incr column_idx
     }
     set cell_table_lists [list $title_td_attrs_list $odd_row_list $even_row_list ]
 
-    # Rebuild the even/odd rows adding the colors
+    # Rebuild the even/odd rows, add column based variances
     # When column order changes, 
     # then formatting of the TD tags may change, too.
     # So, re-order the formatting columns, 
-    # insert the appropriate color at each cell.
     # Use the same looping logic from when the table columns changed order
     # to avoid inconsistencies
 
@@ -929,24 +934,9 @@ ad_proc -public qfo_sp_table_g2 {
             set ii_pos [expr { abs( $ii ) } ]
             set cell_format_list [lindex $td_row_list $ii_pos ]
             if { $row_idx > 0 } {
-                # add the appropriate background color
-                if { [f::even_p $row_idx ] } {
-                    set color $color_even_scol
-                } else {
-                    set color $color_odd_scol
-                }
-                set class_pos [lsearch -exact $cell_format_list "class" ]
-                if { $class_pos > -1 } {
-                    # Combine the class values 
-                    # instead of appending more attributes
-                    incr class_pos
-                    set attr_value [lindex $cell_format_list $class_pos ]
-                    set new_attr_value $attr_value
-                    append new_attr_value $sp $color
-                    set cell_format_list [lreplace $cell_format_list $class_pos $class_pos $new_attr_value ]
-                } else {
-                    lappend cell_format_list class $color
-                }      
+                # add appropriate attributes based on sorted 
+                set cell_format_list [concat $cell_format_list $td_sorted_attribute_list ]
+                set cell_format_list [qfo::names_blend $cell_format_list]
             }
             lappend td_row_new $cell_format_list
 
@@ -957,7 +947,7 @@ ad_proc -public qfo_sp_table_g2 {
         foreach ui $unsorted_compressed_list {
             set cell_format_list [lindex $td_row_list $ui ]
             if { $row_idx > 0 } {
-                # add the appropriate background color
+                # add  appropriate attributes for unsorted cells
                 if { [f::even_p $row_idx ] } {
                     set color $color_even_row
                 } else {
