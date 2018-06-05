@@ -121,7 +121,6 @@ qfo_sp_table_g2 \
     -this_start_row $input_array(this_start_row)
 
 
-set content "<table"
-append content [join $titles_html_list]
-append content "<br><br><br>"
+set content ""
+
 append content $table_html
