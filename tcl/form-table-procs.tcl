@@ -40,17 +40,17 @@ ad_proc -public qfo_sp_table_g2 {
     {-td_attribute_list {{class} {list-table}}}
     {-td_sorted_attribute_list {}}
     {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
-    {-th_sorted_attributes_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
-    {-th_unsorted_attributes_list {{style} {width: 1.6em; text-align: center; border: 1px solid #999; background-color: #eef; line-height: 90%;}}}
+    {-th_sorted_attribute_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
+    {-th_unsorted_attribute_list {{style} {width: 1.6em; text-align: center; border: 1px solid #999; line-height: 90%;}}}
     {-this_start_row "1"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
-    {-tr_even_attributes_list {{class} {even}}}
-    {-tr_header_attributes_list {{class} {list-header}}}
-    {-tr_odd_attributes_list {{class} {odd}}}
-    {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: normal; background-color: #eef; line-height: 1em; padding: 0; margin: 0;opacity:0.9;"}}
+    {-tr_even_attribute_list {{class} {even}}}
+    {-tr_header_attribute_list {{class} {list-header}}}
+    {-tr_odd_attribute_list {{class} {odd}}}
+    {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; background-color: #eef; line-height: 1em; padding: 0; margin: 0;opacity:0.9;"}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -439,30 +439,30 @@ ad_proc -public qfo_sp_table_g2 {
     # if $s exists, add it to to pagination urls.
 
     # constants
-    set page_num_prefix "#acs-templating.Page# "
-    set a_href_h "<a href=\""
-    set amp_s_h "&amp;s="
-    set amp_p_h "&amp;p="
-    set amp_h "&amp;"
-    set eq_h "="
-    set da_h "-"
-    set gt_h ">"
-    set qm_h "?"
-    set q_s_h "?s="
-    set sp " "
-    set quote_h "\""
-    set class_att_h "\" class=\""
-    set title_att_h "\" title=\""
-    set this_start_row_h "this_start_row="
-    set dquote_end_h "\">"
     set a_end_h "</a>"
-    set span_end_h "</span>"
-    set sortedlast "sortedlast"
-    set sortedfirst "sortedfirst"
-    set unsorted "unsorted"
-    set span_h "<span"
+    set a_href_h "<a href=\""
+    set amp_h "&amp;"
+    set amp_p_h "&amp;p="
+    set amp_s_h "&amp;s="
+    set class_att_h "\" class=\""
     set colon ":"
+    set da_h "-"
     set div_end_h "</div>"
+    set dquote_end_h "\">"
+    set eq_h "="
+    set gt_h ">"
+    set page_num_prefix "#acs-templating.Page# "
+    set q_s_h "?s="
+    set qm_h "?"
+    set quote_h "\""
+    set sortedfirst "sortedfirst"
+    set sortedlast "sortedlast"
+    set sp " "
+    set span_end_h "</span>"
+    set span_h "<span"
+    set this_start_row_h "this_start_row="
+    set title_att_h "\" title=\""
+    set unsorted "unsorted"
 
     # Add the sort links to the titles.
     # urlcode sort_order_list
@@ -690,17 +690,22 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Not sorted, so don't align sort order vertically.. 
                 # Just use normal horizontal alignment.
-                set sort_top ${a_href_h}
+                #set sort_top ${a_href_h}
+                set sort_top ${span_h}
+                append sort_top ${sp_unsorted_attributes} ${gt_h}
+                append sort_top ${a_href_h}
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                 append sort_top ${title_att_h} ${title_asc} ${quote_h}
-                append sort_top ${sp_unsorted_attributes} ${gt_h}
+                append sort_top ${gt_h}
+                append sort_top ${abbrev_asc} ${a_end_h}
                 set sort_bottom ${a_href_h} 
                 append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
                 append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
                 append sort_bottom ${sp_unsorted_attributes} ${gt_h}
                 append sort_bottom ${abbrev_desc} ${a_end_h}
+                append sort_bottom ${span_end_h}
                 set sort_link_delim ${colon}
             }
         } elseif { !$ignore_p } {
@@ -955,7 +960,7 @@ ad_proc -public qfo_sp_table_g2 {
 
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
-    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_format_reordered_lists "1" $tr_even_attributes_list $tr_odd_attributes_list $tr_header_attributes_list ]
+    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_format_reordered_lists "1" $tr_even_attribute_list $tr_odd_attribute_list $tr_header_attribute_list ]
 
     return 1
 }
@@ -1110,7 +1115,7 @@ ad_proc -public ::qfo::names_blend {
     A space is the default delimiter for combined values.
     @return name_value_list
 } {
-    foreach {n v} $tag_attrs_list {
+    foreach {n v} $name_value_list {
         lappend attributes_arr(${n}) ${v}
     }
     set attributes_list [list ]
