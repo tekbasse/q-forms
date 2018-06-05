@@ -27,8 +27,8 @@ ad_proc -public qfo_sp_table_g2 {
     {-s_varname "__qfsp_s"}
     {-separator "&nbsp;"}
     {-sort_type_list ""}
-    {-sorted_first_attributes {style="font-family: monospace; font-size: 60%; font-style: normal; vertical-align: super; background-color: #eef;"}}
-    {-sorted_last_attributes {style="font-family: monospace; font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em; background-color: #eef;"}}
+    {-sorted_first_attributes {style="font-family: monospace; font-size: 60%; font-style: normal; vertical-align: super;"}}
+    {-sorted_last_attributes {style="font-family: monospace; font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em;"}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
@@ -50,7 +50,7 @@ ad_proc -public qfo_sp_table_g2 {
     {-tr_even_attribute_list {{class} {even}}}
     {-tr_header_attribute_list {{class} {list-header}}}
     {-tr_odd_attribute_list {{class} {odd}}}
-    {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; background-color: #eef; line-height: 1em; padding: 0; margin: 0;opacity:0.9;"}}
+    {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;"}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
