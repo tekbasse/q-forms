@@ -690,7 +690,6 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Not sorted, so don't align sort order vertically.. 
                 # Just use normal horizontal alignment.
-                #set sort_top ${a_href_h}
                 set sort_top ${span_h}
                 append sort_top ${sp_unsorted_attributes} ${gt_h}
                 append sort_top ${a_href_h}
@@ -717,7 +716,7 @@ ad_proc -public qfo_sp_table_g2 {
                 append sort_top ${base_url} ${q_s_h} ${s_urlcoded} 
                 append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
                 append sort_top ${title_att_h} ${title_asc} ${quote_h}
-                append sort_top ${class_att_h} ${sortedlast} ${dquote_end_h}
+                append sort_top ${sp_sorted_last_attributes} ${gt_h}
                 append sort_top ${abbrev_asc} ${a_end_h}
                 set sort_bottom ${span_h} 
                 append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
