@@ -635,6 +635,7 @@ ad_proc -public qfo_sp_table_g2 {
             }
         }
 
+##code Suspicious.. use of column_idx.. should not be referencing sort_order_list that way??
         # Is column sort decreasing? 
         # If so, let's reverse the order of column's sort links.
         set sort_number [lindex $sort_order_list $column_idx ]
@@ -832,9 +833,9 @@ ad_proc -public qfo_sp_table_g2 {
         # Add unsorted column to row
         lappend titles_reordered_list [lindex $titles_list $ui ]
         lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
-        lappend col_idx_reordered_list $ii_pos
+        lappend col_idx_reordered_list $ui
     }
-
+    ns_log Notice "qfo_table_g2.838. sort_order_list '${sort_order_list}' unsorted_compressed_list ${unsorted_compressed_list}' col_idx_reordered_list '${col_idx_reordered_list}'"
     # Repeat for the table rows: 
 
     set table_sorted_reordered_lists [list ]
