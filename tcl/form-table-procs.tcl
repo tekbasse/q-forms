@@ -600,6 +600,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Identify column data type for sort button (text or nbr).
         # The column order is not changed yet.
         set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
+        ns_log Notice "qf_table_g2.603: title '${title}' column_type '${column_type}'"
         switch -exact -- $column_type {
             integer -
             real {
@@ -816,10 +817,11 @@ ad_proc -public qfo_sp_table_g2 {
     #  titles_list
     set titles_reordered_list [list ]
     #  titles_html_list
-    set titles_reordered_html_list [list ]
-    
+    set titles_reordered_html_list [list ]    
+    set reordered_idx_list [list ]
     foreach ii $sort_order_list {
         set ii_pos [expr { abs( $ii ) } ]
+        lappend col_idx_reordered_list $ii_pos
         lappend titles_reordered_list [lindex $titles_list $ii_pos ]
         lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
     }
@@ -830,6 +832,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Add unsorted column to row
         lappend titles_reordered_list [lindex $titles_list $ui ]
         lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
+        lappend col_idx_reordered_list $ii_pos
     }
 
     # Repeat for the table rows: 
@@ -845,25 +848,8 @@ ad_proc -public qfo_sp_table_g2 {
         set table_row_new_list [list ]
 
         # Add the sorted columns
-        foreach ii $sort_order_list {
-            if { [string match {-*} $ii ] } {
-                set ii_pos [string range $ii 1 end]
-            } else {
-                set ii_pos $ii
-            }
+        foreach ii_pos $col_idx_reordered_list {
             lappend table_row_new_list [lindex $table_row_list $ii_pos ]
-        }
-
-        # Add the remaining, unsorted columns
-        foreach ui $unsorted_compressed_list {
-            # Add unsorted column to row
-            lappend table_row_new_list [lindex $table_row_list $ui ]
-        }
-
-        # Confirm that all columns have been accounted for.
-        set table_row_new_cols [llength $table_row_new_list ]
-        if { $table_row_new_cols != $table_cols_count } {
-            ns_log Notice "qfo_table_g2.778: Warning: table_row_new_list has ${table_row_new_cols} instead of ${table_cols_count} columns."
         }
         # Append new row to new table
         lappend table_sorted_reordered_lists $table_row_new_list
@@ -891,10 +877,13 @@ ad_proc -public qfo_sp_table_g2 {
     set title_td_attrs_list [list ]
     set row_td_attrs_list [list ]
     ns_log Notice "qfo_table_g2.893 sort_type_list '${sort_type_list}'"
+    # Don't use col_idx_reordered_list here, because
+    # sort_order_list and unsorted_compressed_list elements
+    # have different attribute sets
     foreach ii $sort_order_list {
         set ii_pos [expr { abs( $ii ) } ]
         set column_type [string range [lindex $sort_type_list $ii_pos ] 1 end ]
-                ns_log Notice "qfo_table_g2.896. column_type '${column_type}' sort_order_list '${sort_order_list}'"
+        ns_log Notice "qfo_table_g2.896. column_type '${column_type}' sort_order_list '${sort_order_list}'"
         if { $column_type eq $integer_c || $column_type eq $real_c } {
             lappend title_td_attrs_list ${th_sorted_attribute_list}
             lappend row_td_attrs_list [concat ${td_attribute_list} \
@@ -907,9 +896,9 @@ ad_proc -public qfo_sp_table_g2 {
                                            ${td_sorted_attribute_list} ]
         }
     }
-    foreach ui $unsorted_compressed_list {
-        set column_type [string range [lindex $sort_type_list $ui ] 1 end ]
-                ns_log Notice "qfo_table_g2.911. column_type '${column_type}' column_idx '${column_idx}' sort_order_list '${sort_order_list}'"
+    foreach ii_pos $unsorted_compressed_list {
+        set column_type [string range [lindex $sort_type_list $ii_pos ] 1 end ]
+        ns_log Notice "qfo_table_g2.896. column_type '${column_type}' unsorted_compressed_list '${unsorted_compressed_list}'"
         if { $column_type eq $integer_c || $column_type eq $real_c } {
             lappend title_td_attrs_list ${th_unsorted_attribute_list}
             lappend row_td_attrs_list [concat ${td_attribute_list} \
@@ -924,7 +913,9 @@ ad_proc -public qfo_sp_table_g2 {
     }
     ns_log Notice "qf_table_g2.924: title_td_attrs_list '${title_td_attrs_list}'"
 
-    set cell_format_lists [list $title_td_attrs_list $row_td_attrs_list $row_td_attrs_list ]
+    set cell_format_reordered_lists [list $title_td_attrs_list \
+                                         $row_td_attrs_list \
+                                         $row_td_attrs_list ]
 
     # Rebuild the even/odd rows, add column based variances
     # When column order changes, 
@@ -932,34 +923,6 @@ ad_proc -public qfo_sp_table_g2 {
     # So, re-order the formatting columns, 
     # Use the same looping logic from when the table columns changed order
     # to avoid inconsistencies
-
-    # Rebuild the cell format table, one row at a time, 
-    # add the primary sort column, secondary sort column etc. columns in order
-    set row_idx 0
-    set cell_format_reordered_lists [list ]
-    ##code redo these loops, some of this is redundant, such as sorted/unsorted
-    # and even/odd  What's left?
-    foreach td_row_list $cell_format_lists {
-        set td_row_new [list ]
-        foreach ii $sort_order_list {
-            set ii_pos [expr { abs( $ii ) } ]
-            set cell_format_list [lindex $td_row_list $ii_pos ]
-             set cell_format_list [qfo::names_blend $cell_format_old_list]
-            #ns_log Notice "qf_table_g2.947: ii '${ii}' cell_format_old_list '${cell_format_old_list}' cell_format_list '${cell_format_list}'"
-            lappend td_row_new $cell_format_list
-        }
-        # Now that the sorted columns are added to the row, 
-        # add the remaining columns
-        foreach ui $unsorted_compressed_list {
-            set cell_format_list [lindex $td_row_list $ui ]
-            set cell_format_list [qfo::names_blend $cell_format_list]
-            # Add unsorted column to row
-            lappend td_row_new $cell_format_list
-        }
-        # Append new row to new table
-        lappend cell_format_reordered_lists $td_row_new
-        incr row_idx
-    }
 
     set table_row_count [llength $table_sorted_reordered_lists ]
 
