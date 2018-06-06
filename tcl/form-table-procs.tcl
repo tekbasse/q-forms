@@ -477,10 +477,11 @@ ad_proc -public qfo_sp_table_g2 {
     if { $this_start_row < 1 } {
         set this_start_row 1
     }
-
     set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row ]
 
+    # Previous nav links
     set prev_bar_list [lindex $bar_list_set 0 ]
+    set nav_bar_prev_list [list ]
     foreach {page_num start_row} $prev_bar_list {
         if { $page_num_p } {
             set page_ref $page_num
@@ -496,10 +497,11 @@ ad_proc -public qfo_sp_table_g2 {
         set this_start_row_link ${a_href_h}
         append this_start_row_link ${base_url} $qm_h $this_start_row_h ${start_row}
         append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
-        lappend prev_bar_list $this_start_row_link
+        lappend nav_bar_prev_list $this_start_row_link
     } 
-    set nav_prev_links_html [join $prev_bar_list $separator ]
+    set nav_prev_links_html [join $nav_bar_prev_list $separator ]
 
+    # Current nav 
     set current_bar_list [lindex $bar_list_set 1 ]
     set page_num [lindex $current_bar_list 0 ]
     set start_row [lindex $current_bar_list 1 ]
@@ -514,10 +516,11 @@ ad_proc -public qfo_sp_table_g2 {
             append page_ref ${page_num}
         }
     }
-
     set nav_current_pos_html $page_ref
 
+    # Next nav links
     set next_bar_list [lindex $bar_list_set 2 ]
+    set nav_bar_next_list [list ]
     foreach {page_num start_row} $next_bar_list {
         if { $s eq "" } {
             set page_ref $page_num
@@ -534,9 +537,9 @@ ad_proc -public qfo_sp_table_g2 {
         append next_bar_link ${a_href_h}
         append next_bar_link ${base_url} ${qm_h} ${this_start_row_h} ${start_row}
         append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
-        lappend next_bar_list $next_bar_link
+        lappend nav_bar_next_list $next_bar_link
     }
-    set nav_next_links_html [join $next_bar_list $separator ]
+    set nav_next_links_html [join $nav_bar_next_list $separator ]
 
 
     # add start_row to sort_urls.
