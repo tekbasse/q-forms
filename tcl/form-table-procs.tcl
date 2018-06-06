@@ -886,42 +886,44 @@ ad_proc -public qfo_sp_table_g2 {
     # Add cell formatting to TD tags
     set cell_formating_list [list ]
 
-
-    # Set the default title row and column TD formats before columns sorted:
+    set integer_c "integer"
+    set real_c "real"
     set title_td_attrs_list [list ]
-    set sort_order_list_len [llength $sort_order_list ]
-    set column_idx 0
-    foreach title $titles_reordered_html_list {
-        set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
-        # Title row TD formats in title_td_attrs_list
-        if { $column_type eq "integer" ||$column_type eq "real" } {
-            # Value is a number, so right justify or the like
-            if { $column_idx < $sort_order_list_len } {
-                lappend title_td_attrs_list ${th_sorted_attribute_list}
-                lappend row_td_attrs_list [concat ${td_attribute_list} \
-                                               ${td_number_attribute_list} \
-                                               ${td_sorted_attribute_list} ]
-            } else {
-                lappend title_td_attrs_list ${th_unsorted_attribute_list}
-                lappend row_td_attrs_list [concat ${td_attribute_list} \
-                                               ${td_number_attribute_list} \
-                                               ${td_unsorted_attribute_list} ]
-            }
+    set row_td_attrs_list [list ]
+    ns_log Notice "qfo_table_g2.893 sort_type_list '${sort_type_list}'"
+    foreach ii $sort_order_list {
+        set ii_pos [expr { abs( $ii ) } ]
+        set column_type [string range [lindex $sort_type_list $ii_pos ] 1 end ]
+                ns_log Notice "qfo_table_g2.896. column_type '${column_type}' sort_order_list '${sort_order_list}'"
+        if { $column_type eq $integer_c || $column_type eq $real_c } {
+            lappend title_td_attrs_list ${th_sorted_attribute_list}
+            lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                           ${td_number_attribute_list} \
+                                           ${td_sorted_attribute_list} ]
         } else {
-            if { $column_idx < $sort_order_list_len } {
-                lappend title_td_attrs_list ${th_sorted_attribute_list}
-                lappend row_td_attrs_list [concat ${td_attribute_list} \
-                                               ${td_nonnumber_attribute_list} \
-                                               ${td_sorted_attribute_list} ]
-            } else {
-                lappend title_td_attrs_list ${th_unsorted_attribute_list}
-                lappend row_td_attrs_list [concat ${td_attribute_list} \
-                                               ${td_nonnumber_attribute_list} \
-                                               ${td_unsorted_attribute_list} ]
-            }
+            lappend title_td_attrs_list ${th_sorted_attribute_list}
+            lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                           ${td_nonnumber_attribute_list} \
+                                           ${td_sorted_attribute_list} ]
         }
-        incr column_idx
     }
+    foreach ui $unsorted_compressed_list {
+        set column_type [string range [lindex $sort_type_list $ui ] 1 end ]
+                ns_log Notice "qfo_table_g2.911. column_type '${column_type}' column_idx '${column_idx}' sort_order_list '${sort_order_list}'"
+        if { $column_type eq $integer_c || $column_type eq $real_c } {
+            lappend title_td_attrs_list ${th_unsorted_attribute_list}
+            lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                           ${td_number_attribute_list} \
+                                           ${td_unsorted_attribute_list} ]
+        } else {
+            lappend title_td_attrs_list ${th_unsorted_attribute_list}
+            lappend row_td_attrs_list [concat ${td_attribute_list} \
+                                           ${td_nonnumber_attribute_list} \
+                                           ${td_unsorted_attribute_list} ]
+        }
+    }
+    ns_log Notice "qf_table_g2.924: title_td_attrs_list '${title_td_attrs_list}'"
+
     set cell_format_lists [list $title_td_attrs_list $row_td_attrs_list $row_td_attrs_list ]
 
     # Rebuild the even/odd rows, add column based variances
@@ -942,7 +944,8 @@ ad_proc -public qfo_sp_table_g2 {
         foreach ii $sort_order_list {
             set ii_pos [expr { abs( $ii ) } ]
             set cell_format_list [lindex $td_row_list $ii_pos ]
-            set cell_format_list [qfo::names_blend $cell_format_list]
+             set cell_format_list [qfo::names_blend $cell_format_old_list]
+            #ns_log Notice "qf_table_g2.947: ii '${ii}' cell_format_old_list '${cell_format_old_list}' cell_format_list '${cell_format_list}'"
             lappend td_row_new $cell_format_list
         }
         # Now that the sorted columns are added to the row, 
