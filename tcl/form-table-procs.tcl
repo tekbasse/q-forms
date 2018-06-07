@@ -279,8 +279,6 @@ ad_proc -public qfo_sp_table_g2 {
     if { ![info exists p ] } {
         set p ""
     }
-    #ns_log Notice "qfo_sp_table_g2.224: p '${p}' s '${s}'"
-    
 
 
     # ================================================
@@ -298,7 +296,6 @@ ad_proc -public qfo_sp_table_g2 {
 
     set table_cols_count [llength [lindex $table_lists 0 ] ]
     set col_idx_max [expr { $table_cols_count - 1 } ]
-    #ns_log Notice "qfo_sp_table_g2.235: table_cols_count '${table_cols_count}' col_idx_max '${col_idx_max}' table_lists '${table_lists}'"
     # defaults and inputs
     if { $sort_type_list eq "" } {
         set sort_type_list [lrepeat $table_cols_count "-ascii" ]
@@ -325,7 +322,6 @@ ad_proc -public qfo_sp_table_g2 {
 
     foreach col_idx $columns_hide_index_list {
         # Checked for collision with sort_order_list indexes in ns_log 631
-        #ns_log Notice "qfo_sp_table_g2.261: int_sequence_list '${int_sequence_list}' col_idx '${col_idx}' "
         set int_sequence_list [lreplace $int_sequence_list $col_idx $col_idx "" ]
         incr table_cols_count -1
     }
@@ -346,7 +342,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Validate sort order, because it is user input via web
         # $s' first check and change to sort_order_scalar
         regsub -all -- {[^\-0-9a ]} $s {} sort_order_scalar
-        # #ns_log Notice "qfo_table_g2(73): sort_order_scalar $sort_order_scalar"
+
         # Converting sort_order_scalar to a list
         set sort_order_list [split $sort_order_scalar $a_h ]
         set sort_order_list [lrange $sort_order_list 0 $col_idx_max ]
@@ -414,7 +410,6 @@ ad_proc -public qfo_sp_table_g2 {
             set sort_order_arr(${i}) ""
         }
 
-        #ns_log Notice "qfo_sp_table_g2.361 sort_order_list '${sort_order_list}' sort_seq_reverse_list '${sort_seq_reverse_list}'"
         set sort_reverse_order_list [list ]
         set da_decreasing_c "-decreasing"
         set da_increasing_c "-increasing"
@@ -429,6 +424,8 @@ ad_proc -public qfo_sp_table_g2 {
                 set sort_order $da_increasing_c
             }
             set sort_order_arr(${col2sort_wo_sign}) $sort_order
+            # Map the negative and positive number cases, to positive numbers to speed later loops.
+            set sort_col_pos_map_arr(${col2sort}) $col2sort_wo_sign
             set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
             
             if {[catch { set table_sorted_lists [lsort $sort_type $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
@@ -441,7 +438,6 @@ ad_proc -public qfo_sp_table_g2 {
         }
     }
 
-    ns_log Notice "qfo_table_g2.444: array get sort_order_arr '[array get sort_order_arr]'"
     # ================================================
     # 3. Pagination_bar -- 
     #    calcs including list_limit and build UI
@@ -610,7 +606,7 @@ ad_proc -public qfo_sp_table_g2 {
         # Identify column data type for sort button (text or nbr).
         # The column order is not changed yet.
         set column_type [string range [lindex $sort_type_list $column_idx ] 1 end ]
-        ns_log Notice "qf_table_g2.603: title '${title}' column_type '${column_type}'"
+
         switch -exact -- $column_type {
             integer -
             real {
@@ -674,14 +670,14 @@ ad_proc -public qfo_sp_table_g2 {
         # To indicate inactive choice, inactivate the left most sort link 
         # that was most recently pressed (if it has been).
         set title_new ""
-        ns_log Notice "qfo_table_g2.676 column_idx '${column_idx}' primary_sort_col '${primary_sort_col}' "
+
         if { $primary_sort_col eq "" \
                  || $ignore_p \
                  || ( $primary_sort_col ne "" \
                           && $column_idx ne [expr { abs( $primary_sort_col ) } ] ) } {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
-                    ns_log Notice "qfo_table_g2.683. title '${title}' column sorted, decreasing"
+
                     # reverse class styles
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
@@ -696,7 +692,7 @@ ad_proc -public qfo_sp_table_g2 {
                     append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
-                    ns_log Notice "qfo_table_g2.698. title '${title}' column sorted, increasing"
+
                     set sort_top ${a_href_h} 
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
@@ -713,7 +709,7 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Not sorted, so don't align sort order vertically.. 
                 # Just use normal horizontal alignment.
-                ns_log Notice "qfo_table_g2.715. title '${title}' not sorted --including ignored."
+
                 set sort_top ${span_h}
                 append sort_top ${sp_unsorted_attributes} ${gt_h}
                 append sort_top ${a_href_h}
@@ -734,7 +730,7 @@ ad_proc -public qfo_sp_table_g2 {
         } elseif { !$ignore_p } {
             # Must be primary sort column
             if { $decreasing_p } {
-                ns_log Notice "qfo_table_g2.736. title '${title}' primary sort col. decreasing."
+
                 # Decreasing primary sort is chosen last, 
                 # no need to make the link active
                 set sort_top ${a_href_h}
@@ -751,7 +747,7 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
-                ns_log Notice "qfo_table_g2.753. title '${title}' primary sort col. increasing."
+
                 set sort_top ${span_h} 
                 append sort_top ${sp_sorted_first_attributes} ${gt_h}
                 append sort_top ${abbrev_asc}
@@ -818,11 +814,8 @@ ad_proc -public qfo_sp_table_g2 {
     # int_sequence_list may have empty strings indicating hidden col reference
     set unsorted_list $int_sequence_list
     foreach ii $sort_order_list {
-        if { [string match {-*} $ii ] } {
-            set ii_pos [string range $ii 1 end]
-        } else {
-            set ii_pos $ii
-        }
+        set ii_pos $sort_col_pos_map_arr(${ii})
+
         # Blank the reference instead of removing it, 
         # or the $ii_pos reference won't work later on..
         if { [lindex $ii_pos ] ne "" } {
@@ -842,7 +835,7 @@ ad_proc -public qfo_sp_table_g2 {
     set titles_reordered_html_list [list ]    
     set reordered_idx_list [list ]
     foreach ii $sort_order_list {
-        set ii_pos [expr { abs( $ii ) } ]
+        set ii_pos $sort_col_pos_map_arr(${ii})
         lappend col_idx_reordered_list $ii_pos
         lappend titles_reordered_list [lindex $titles_list $ii_pos ]
         lappend titles_reordered_html_list [lindex $titles_html_list $ii_pos ]
@@ -856,7 +849,7 @@ ad_proc -public qfo_sp_table_g2 {
         lappend titles_reordered_html_list [lindex $titles_html_list $ui ]
         lappend col_idx_reordered_list $ui
     }
-    ns_log Notice "qfo_table_g2.838. sort_order_list '${sort_order_list}' unsorted_compressed_list ${unsorted_compressed_list}' col_idx_reordered_list '${col_idx_reordered_list}'"
+
     # Repeat for the table rows: 
 
     set table_sorted_reordered_lists [list ]
@@ -898,14 +891,14 @@ ad_proc -public qfo_sp_table_g2 {
     set real_c "real"
     set title_td_attrs_list [list ]
     set row_td_attrs_list [list ]
-    ns_log Notice "qfo_table_g2.893 sort_type_list '${sort_type_list}'"
+
     # Don't use col_idx_reordered_list here, because
     # sort_order_list and unsorted_compressed_list elements
     # have different attribute sets
     foreach ii $sort_order_list {
-        set ii_pos [expr { abs( $ii ) } ]
+        set ii_pos $sort_col_pos_map_arr(${ii})
         set column_type [string range [lindex $sort_type_list $ii_pos ] 1 end ]
-        ns_log Notice "qfo_table_g2.896. column_type '${column_type}' sort_order_list '${sort_order_list}'"
+
         if { $column_type eq $integer_c || $column_type eq $real_c } {
             lappend title_td_attrs_list ${th_sorted_attribute_list}
             lappend row_td_attrs_list [concat ${td_attribute_list} \
@@ -920,7 +913,7 @@ ad_proc -public qfo_sp_table_g2 {
     }
     foreach ii_pos $unsorted_compressed_list {
         set column_type [string range [lindex $sort_type_list $ii_pos ] 1 end ]
-        ns_log Notice "qfo_table_g2.896. column_type '${column_type}' unsorted_compressed_list '${unsorted_compressed_list}'"
+
         if { $column_type eq $integer_c || $column_type eq $real_c } {
             lappend title_td_attrs_list ${th_unsorted_attribute_list}
             lappend row_td_attrs_list [concat ${td_attribute_list} \
@@ -933,7 +926,7 @@ ad_proc -public qfo_sp_table_g2 {
                                            ${td_unsorted_attribute_list} ]
         }
     }
-    ns_log Notice "qf_table_g2.924: title_td_attrs_list '${title_td_attrs_list}'"
+
 
     set cell_format_reordered_lists [list $title_td_attrs_list \
                                          $row_td_attrs_list \
