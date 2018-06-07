@@ -240,8 +240,8 @@ ad_proc -public qfo_sp_table_g2 {
     # hosting-farm/lib/resource-status-summary-1.tcl
 
     # This version requires the entire table to be loaded for processing.
-    ##code TODO: make another version that uses pg's select limit and offset.. 
-    # to scale well. Probably won't be able to use page_num_p ==0.
+    # TODO: make another version that uses pg's select limit and offset.. 
+    # to scale for larger datasets.
 
     # General process flow:
     # 1. Get table as table_lists
@@ -407,18 +407,28 @@ ad_proc -public qfo_sp_table_g2 {
         # Note: sort_order_list is primary_sort_col_idx, secondary_sort_col_idx
         # whereas sort_seq_reverse_list 
         #    is a sequence of counting numbers in reverse order.
+
+        # The following loop has a secondary purpose to populate
+        # array sort_type_arr(column_index) for later use.
+        for {set i 0} { $i < $table_cols_count } {incr i} {
+            set sort_order_arr(${i}) ""
+        }
+
         #ns_log Notice "qfo_sp_table_g2.361 sort_order_list '${sort_order_list}' sort_seq_reverse_list '${sort_seq_reverse_list}'"
         set sort_reverse_order_list [list ]
+        set da_decreasing_c "-decreasing"
+        set da_increasing_c "-increasing"
         foreach ii $sort_seq_reverse_list {
             set col2sort [lindex $sort_order_list $ii ]
             lappend sort_reverse_order_list $col2sort
             if { [string match {-*} $col2sort ] } {
                 set col2sort_wo_sign [string range $col2sort 1 end ]
-                set sort_order "-decreasing"
+                set sort_order $da_decreasing_c
             } else { 
                 set col2sort_wo_sign $col2sort
-                set sort_order "-increasing"
+                set sort_order $da_increasing_c
             }
+            set sort_order_arr(${col2sort_wo_sign}) $sort_order
             set sort_type [lindex $sort_type_list $col2sort_wo_sign ]
             
             if {[catch { set table_sorted_lists [lsort $sort_type $sort_order -index $col2sort_wo_sign $table_sorted_lists ] } result ] } {
@@ -431,7 +441,7 @@ ad_proc -public qfo_sp_table_g2 {
         }
     }
 
-
+    ns_log Notice "qfo_table_g2.444: array get sort_order_arr '[array get sort_order_arr]'"
     # ================================================
     # 3. Pagination_bar -- 
     #    calcs including list_limit and build UI
@@ -635,16 +645,22 @@ ad_proc -public qfo_sp_table_g2 {
             }
         }
 
-##code Suspicious.. use of column_idx.. should not be referencing sort_order_list that way??
-        # Is column sort decreasing? 
+        # Is column sort decreasing?
         # If so, let's reverse the order of column's sort links.
-        set sort_number [lindex $sort_order_list $column_idx ]
-        if { $sort_number ne "" && !$ignore_p } {
-            set column_sorted_p 1
-            set decreasing_p [string match {-*} $sort_number ]
-        } else {
-            set column_sorted_p 0
-            set decreasing_p 0
+
+        switch -exact -- $sort_order_arr(${column_idx}) {
+            -increasing {
+                set decreasing_p 0
+                set column_sorted_p 1
+            }
+            -decreasing {
+                set decreasing_p 1
+                set column_sorted_p 1
+            }
+            default {
+                set decreasing_p 0
+                set column_sorted_p 0
+            }
         }
 
         set sort_link_delim ""
@@ -655,16 +671,17 @@ ad_proc -public qfo_sp_table_g2 {
         # Sorted columnns should be aligned vertically,
         # to reflect column value orientation.
 
-        # For now, just inactivate the left most sort link 
+        # To indicate inactive choice, inactivate the left most sort link 
         # that was most recently pressed (if it has been).
         set title_new ""
-
+        ns_log Notice "qfo_table_g2.676 column_idx '${column_idx}' primary_sort_col '${primary_sort_col}' "
         if { $primary_sort_col eq "" \
                  || $ignore_p \
                  || ( $primary_sort_col ne "" \
                           && $column_idx ne [expr { abs( $primary_sort_col ) } ] ) } {
             if { $column_sorted_p } {
                 if { $decreasing_p } {
+                    ns_log Notice "qfo_table_g2.683. title '${title}' column sorted, decreasing"
                     # reverse class styles
                     set sort_top ${a_href_h}
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
@@ -679,6 +696,7 @@ ad_proc -public qfo_sp_table_g2 {
                     append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                     append sort_bottom ${abbrev_desc} ${a_end_h}
                 } else {
+                    ns_log Notice "qfo_table_g2.698. title '${title}' column sorted, increasing"
                     set sort_top ${a_href_h} 
                     append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
@@ -695,6 +713,7 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Not sorted, so don't align sort order vertically.. 
                 # Just use normal horizontal alignment.
+                ns_log Notice "qfo_table_g2.715. title '${title}' not sorted --including ignored."
                 set sort_top ${span_h}
                 append sort_top ${sp_unsorted_attributes} ${gt_h}
                 append sort_top ${a_href_h}
@@ -715,6 +734,7 @@ ad_proc -public qfo_sp_table_g2 {
         } elseif { !$ignore_p } {
             # Must be primary sort column
             if { $decreasing_p } {
+                ns_log Notice "qfo_table_g2.736. title '${title}' primary sort col. decreasing."
                 # Decreasing primary sort is chosen last, 
                 # no need to make the link active
                 set sort_top ${a_href_h}
@@ -731,6 +751,7 @@ ad_proc -public qfo_sp_table_g2 {
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
+                ns_log Notice "qfo_table_g2.753. title '${title}' primary sort col. increasing."
                 set sort_top ${span_h} 
                 append sort_top ${sp_sorted_first_attributes} ${gt_h}
                 append sort_top ${abbrev_asc}
