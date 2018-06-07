@@ -12,7 +12,11 @@ if { !$admin_p } {
     ad_script_abort
 }
 set page_url [ad_conn url]
-
+if { [string match "*b" $page_url ] } {
+    set page_num_p 1
+} else {
+    set page_num_p 0
+}
 
 set input_array(s) "0"
 set input_array(p) ""
@@ -46,7 +50,7 @@ switch -- $seed {
         set sort_type_list [list "-real" "-ascii" "-integer"]
     }
     5 {
-        set sort_type_list [list "-real" "-real" "-integer"]
+        set sort_type_list [list "-real" "-integer" "-ascii"]
     }
 }
 ns_log Notice "seed '${seed}' sort_type_list '${sort_type_list}'"
@@ -118,7 +122,8 @@ qfo_sp_table_g2 \
     -titles_list_varname titles_list \
     -titles_html_list_varname titles_html_list \
     -sort_type_list $sort_type_list \
-    -this_start_row $input_array(this_start_row)
+    -this_start_row $input_array(this_start_row) \
+    -page_num_p $page_num_p
 
 
 set content ""
