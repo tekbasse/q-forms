@@ -511,7 +511,7 @@ ad_proc -public qfo_sp_table_g2 {
     set current_bar_list [lindex $bar_list_set 1 ]
     set page_num [lindex $current_bar_list 0 ]
     set start_row [lindex $current_bar_list 1 ]
-    if { $s eq "" } {
+    if { $page_num_p } {
         set page_ref $page_num
     } else {
         set item_index [expr { ( $start_row - 1 ) } ]
@@ -528,7 +528,7 @@ ad_proc -public qfo_sp_table_g2 {
     set next_bar_list [lindex $bar_list_set 2 ]
     set nav_bar_next_list [list ]
     foreach {page_num start_row} $next_bar_list {
-        if { $s eq "" } {
+        if { $page_num_p } {
             set page_ref $page_num
         } else {
             set item_index [expr { ( $page_num - 1 ) * $items_per_page  } ]
