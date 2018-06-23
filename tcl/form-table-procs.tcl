@@ -279,7 +279,11 @@ ad_proc -public qfo_sp_table_g2 {
     if { ![info exists p ] } {
         set p ""
     }
-
+    if { $item_count eq 0 } {
+        set titles_html_list ""
+        set table_html "#acs-subsite.none#"
+        return 0
+    }
 
     # ================================================
     # 2. Sort unformatted columns by row values
@@ -958,8 +962,10 @@ ad_proc -public hf_pagination_by_items {
     The second contains page_number and start_row for the current page.
     Third is the same value pair for pages after the current page.  
     See hosting-farm/lib/paginiation-bar for an implementation example. 
+    Returns 0 for each of the three, if there are no items.
 } {
     # based on ecds_pagination_by_items
+    set bar_list_set [list 0 0 0]
     if { $items_per_page > 0 \
              && $item_count > 0 \
              && $first_item_displayed > 0 \
