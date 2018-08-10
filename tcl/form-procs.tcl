@@ -2496,3 +2496,59 @@ If list consists of 'class test', then continuing the hr example, attributes are
     return $element
 }
 
+ad_proc -public qf_one_button_form {
+    args
+} {
+    Accepts name value pairs as attributes of FORM and INPUT type SUBMIT form.
+    Returns html of a form with one button.
+    The first name,value, and label are assigned to the button.
+    Subsequent name/value pairs are assigned to INPUT tags of type 'hidden'.
+    Names other than ones attributable to qf_form are ignored.
+    This proc doesn't provide style, class, or id to qf_form.
+} {
+    # add upvars from qf_form, in case multiple qf_forms invoked
+    upvar 1 __form_ids_list __form_ids_list
+    upvar 1 __form_arr __form_arr
+    upvar 1 __form_ids_open_list __form_ids_open_list
+    upvar 1 __qf_remember_attributes __qf_remember_attributes
+    upvar 1 __qf_arr __qf_arr
+    upvar 1 __qf_hc_arr __qf_hc_arr
+    # following three upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
+
+    set form_list [list action form_id method hash_check ]
+    set button_list [list name value class style id label ]
+    set hidden_list [list name value ]
+    foreach name $names_list {
+	set name_larr(${name}) [list ]
+    }
+    foreach {n v} $args {
+	set nlc [string tolower $n]
+	lappend name_larr(${nlc)} $v
+    }
+    # Reverse button/form order, because style expected to go with button
+    set button_atts_list [list type submit ]
+    foreach name $names_list {
+	lappend form_atts_list $name [lindex name_larr(${name}) 0]
+	set name_larr(${name}) [lrange $name_larr(${name}) end]
+    }
+    set form_atts_list [list ]
+    foreach name $names_list {
+	lappend form_atts_list $name [lindex name_larr(${name}) 0]
+	set name_larr(${name}) [lrange $name_larr(${name}) end]
+    }
+    
+    set form_id [qf_form $form_atts_list ]
+    qf_input $button_atts_list
+    set i 0
+    foreach name $name_larr(${name}) {
+	qf_input type hidden name $name value [lindex $name_larr(value) $i]
+	incr i
+    }
+    qf_close form_id $form_id
+    set form_html [qf_read form_id $form_id ]
+    return $form_html
+
+}
