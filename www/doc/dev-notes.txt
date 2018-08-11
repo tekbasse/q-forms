@@ -1,9 +1,15 @@
+To be done:
 Customization is enabled of a package if package:
 1. has a parameter enableFormGenP
 2. enableFormGenP is set to '1' 
 3. q-tables is installed (enabled)
 @see qfo_qtable_label_package_id
 
+
+To present forms in a vertical list as one might expect on a small device,
+include in CSS:
+.label { display: block ; }
+Otherwise, control is assumed at the application level.
 
 
 -----
