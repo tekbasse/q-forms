@@ -79,4 +79,17 @@ Integrates with acs-templating features.
 Integrates with q-tables for customizing forms, mainly adding ability to add extra fields and store info in a q-tables table. To activate feature, package implementing q-forms qfo_* procs requires a package parameter "enableQFormGenP" with value set to "1".
 </li></ul>
 
+<h3>Instructions</h3>
+<p>After installing package using standard OpenACS installation procedures,
+Change the forms.css reference in the main site's acs-subsite parameter
+<strong>ThemeCSS</strong> to point to '/resources/q-forms/forms.css' instead of '/resources/acs-templating/forms.css', or apply these two CSS rules to your site's theme:
+<pre>
+label {	
+    display: block;
+    }
+input {
+    margin: .5em;
+    }
+</pre>
+
 <p><a href="dev-notes.txt">Development notes</a></p>
