@@ -406,6 +406,9 @@ ad_proc -public qfo_2g {
     <code>hash_check</code>, and <br>
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
     <code>write_p</code> if write_p is 0, presents form as a list of uneditable information.
+    For example, setting to "\n<style>\nlabel { display: block ; }\n</style>\n"
+    causes form elements to be displayed in a vertical, linear fashion
+    as one would expect on a small device screen.
     <br><br>
     Note: fieldset tag is not implemented in this paradigm.
     <br><br>
@@ -1192,7 +1195,7 @@ ad_proc -public qfo_2g {
 
         # build form using qf_* api
         set form_m ""
-
+	
         set form_id [qf_form form_id $form_id hash_check $hash_check]
 
         # Use qfi_fields_sorted_list to generate 
@@ -1379,11 +1382,11 @@ ad_proc -public qfo_2g {
 		incr tabindex
 	    }
 	    qf_close form_id $form_id
-	    set form_m [qf_read form_id $form_id]
+	    append form_m [qf_read form_id $form_id]
 	} else {
 	    # Display form data only
 	    
-	    set form_m "<ul id="
+	    append form_m "<ul id="
 	    append form_m "\"" $form_id "\">\n"
 	    foreach f_hash $qfi_fields_sorted_list {
 		set atts_list $fatts_arr(${f_hash},form_tag_attrs)
@@ -1448,12 +1451,15 @@ ad_proc -public qfo_2g {
 		    }
 		    append form_m ">" $attv_arr(label) "</span>"
 		} else {
-		    append form_m $attv_arr(label)
+		    if { [info exists attv_arr(label) ] } {
+			append form_m $attv_arr(label)
+		    } 
 		}
 		append form_m "<br><ul>\n"
 		# choice/choices
 		# Just show the values selected
-		if { $fatts_arr(${f_hash},multiple_names_p) } {
+		ns_log Notice "qfo_2g.1458: f_hash '${f_hash}'"
+		if { $fatts_arr(${f_hash},multiple_names_p) eq 1 } {
 		    #qf_choices
 		    foreach row_list $attv_arr(value) {
 			foreach {n v} $row_list {
@@ -1475,28 +1481,30 @@ ad_proc -public qfo_2g {
 		    }		
 		} else {
 		    #qf_choice
-		    set rows_max [llength $attv_arr(value) ]
-		    set i 0
-		    set i_max 500
-		    while { $i < $rows_max && $i < $i_max } {
-			set row_list [lindex $attv_arr(value) $i]
-			foreach {n v} $row_list {
-			    set nlc [string tolower $n]
-			    set choices_arr(${nlc}) $v
-			}
-			if { [info exists choices_arr(selected)] } {
-			    if { $choices_arr(selected) } {
-				append form_m "<li>"
-				if { [info exists choices_arr(label) ] } {
-				    append form_m $choices_arr(label)
-				} elseif { [info exists choices_arr(value) ] } {
-				    append form_m $choices_arr(value)
-				}
-				append form_m "</li>"
+		    if { [info exists attv_arr(value) ] } {
+			set rows_max [llength $attv_arr(value) ]
+			set i 0
+			set i_max 500
+			while { $i < $rows_max && $i < $i_max } {
+			    set row_list [lindex $attv_arr(value) $i]
+			    foreach {n v} $row_list {
+				set nlc [string tolower $n]
+				set choices_arr(${nlc}) $v
 			    }
+			    if { [info exists choices_arr(selected)] } {
+				if { $choices_arr(selected) } {
+				    append form_m "<li>"
+				    if { [info exists choices_arr(label) ] } {
+					append form_m $choices_arr(label)
+				    } elseif { [info exists choices_arr(value) ] } {
+					append form_m $choices_arr(value)
+				    }
+				    append form_m "</li>"
+				}
+			    }
+			    array unset choices_arr
+			    incr i
 			}
-			array unset choices_arr
-			incr i
 		    }
 		}
 		lappend form_m "</ul>"
