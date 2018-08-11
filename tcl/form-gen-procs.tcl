@@ -1346,7 +1346,7 @@ ad_proc -public qfo_2g {
 
 		if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
-		    switch -- $fatts_arr(${f_hash},form_tag_type) {
+		    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
 			input {
 			    ##ns_log Notice "qfo_2g.1001: qf_input \
 				   ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
@@ -1388,6 +1388,7 @@ ad_proc -public qfo_2g {
 	    
 	    append form_m "<ul id="
 	    append form_m "\"" $form_id "\">\n"
+	    
 	    foreach f_hash $qfi_fields_sorted_list {
 		set atts_list $fatts_arr(${f_hash},form_tag_attrs)
 		foreach {n v} $atts_list {
@@ -1398,12 +1399,20 @@ ad_proc -public qfo_2g {
 		
 		if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
-		    switch -- $fatts_arr(${f_hash},form_tag_type) {
+		    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
 			textarea -
 			input {
 			    append form_m "<li>"
 			    set class_p [info exists attv_arr(class)]
 			    set style_p [info exists attv_arr(style)]
+			    set value_p [info exists attv_arr(value)]
+			    set name_p [info exists attv_arr(name)]
+			    set label_p [info exists attv_arr(label)]
+			    if { $label_p } {
+				set label $attv_arr(label)
+			    } else {
+				set label ""
+			    }
 			    if { $class_p || $style_p } {
 				append form_m "<span"
 				if { $class_p } {
@@ -1412,81 +1421,54 @@ ad_proc -public qfo_2g {
 				if { $style_p } {
 				    append form_m " style=\"" $attv_arr(style) "\""
 				}
-				append form_m ">" $attv_arr(label) "</span>"
+				append form_m ">" $label "</span>"
 			    } else {
-				append form_m $attv_arr(label)
+				append form_m $label
 			    }
-			    if { [info exists attv_arr(value) ] } {
+			    if { $value_p } {
 				append form_m "<br>" $attv_arr(value) "</li>\n"
 			    } else {
 				append form_m "<br></li>\n"
 				ns_log Notice "qfo_2g.1420. No value for attv_(value) array get attv_arr '[array get attv_arr]'"
 			    }
 			}
-
-		    }
-		    default {
-			# this is not a form_tag_type
-			# tag attribute 'type' determines if this
-			# is checkbox, radio, select, or select/multiple
-			# This should not happen, because
-			# fatts_arr(${f_hash},is_datatyped_p) is false for 
-			# these cases.
-			ns_log Warning "qfo_2g.1410: Unexpected form element: \
+			default {
+			    # this is not a form_tag_type
+			    # tag attribute 'type' determines if this
+			    # is checkbox, radio, select, or select/multiple
+			    # This should not happen, because
+			    # fatts_arr(${f_hash},is_datatyped_p) is false for 
+			    # these cases.
+			    ns_log Warning "qfo_2g.1410: Unexpected form element: \
  f_hash '${f_hash}' ignored. \
  fatts_arr(${f_hash},form_tag_type) '$fatts_arr(${f_hash},form_tag_type)'"
-		    }
-		}
-	    } else {
-		append form_m "<li>"
-		set class_p [info exists attv_arr(class)]
-		set style_p [info exists attv_arr(style)]
-		if { $class_p || $style_p } {
-		    append form_m "<span"
-		    if { $class_p } {
-			append form_m " class=\"" $attv_arr(class) "\""
-		    }
-		    if { $style_p } {
-			append form_m " style=\"" $attv_arr(style) "\""
-		    }
-		    append form_m ">" $attv_arr(label) "</span>"
-		} else {
-		    if { [info exists attv_arr(label) ] } {
-			append form_m $attv_arr(label)
-		    } 
-		}
-		append form_m "<br><ul>\n"
-		# choice/choices
-		# Just show the values selected
-		ns_log Notice "qfo_2g.1458: f_hash '${f_hash}'"
-		if { $fatts_arr(${f_hash},multiple_names_p) eq 1 } {
-		    #qf_choices
-		    foreach row_list $attv_arr(value) {
-			foreach {n v} $row_list {
-			    set nlc [string tolower $n]
-			    set choices_arr(${nlc}) $v
 			}
-			if { [info exists choices_arr(selected)] } {
-			    if { $choices_arr(selected) } {
-				append form_m "<li>"
-				if { [info exists choices_arr(label) ] } {
-				    append form_m $choices_arr(label)
-				} elseif { [info exists choices_arr(value) ] } {
-				    append form_m $choices_arr(value)
-				}
-				append form_m "</li>"
-			    }
-			}
-			array unset choices_arr
-		    }		
+		    }
 		} else {
-		    #qf_choice
-		    if { [info exists attv_arr(value) ] } {
-			set rows_max [llength $attv_arr(value) ]
-			set i 0
-			set i_max 500
-			while { $i < $rows_max && $i < $i_max } {
-			    set row_list [lindex $attv_arr(value) $i]
+		    append form_m "<li>"
+		    set class_p [info exists attv_arr(class)]
+		    set style_p [info exists attv_arr(style)]
+		    if { $class_p || $style_p } {
+			append form_m "<span"
+			if { $class_p } {
+			    append form_m " class=\"" $attv_arr(class) "\""
+			}
+			if { $style_p } {
+			    append form_m " style=\"" $attv_arr(style) "\""
+			}
+			append form_m ">" $attv_arr(label) "</span>"
+		    } else {
+			if { [info exists attv_arr(label) ] } {
+			    append form_m $attv_arr(label)
+			} 
+		    }
+		    append form_m "<br><ul>\n"
+		    # choice/choices
+		    # Just show the values selected
+		    ns_log Notice "qfo_2g.1458: f_hash '${f_hash}'"
+		    if { $fatts_arr(${f_hash},multiple_names_p) eq 1 } {
+			#qf_choices
+			foreach row_list $attv_arr(value) {
 			    foreach {n v} $row_list {
 				set nlc [string tolower $n]
 				set choices_arr(${nlc}) $v
@@ -1503,21 +1485,45 @@ ad_proc -public qfo_2g {
 				}
 			    }
 			    array unset choices_arr
-			    incr i
+			}		
+		    } else {
+			#qf_choice
+			if { [info exists attv_arr(value) ] } {
+			    set rows_max [llength $attv_arr(value) ]
+			    set i 0
+			    set i_max 500
+			    while { $i < $rows_max && $i < $i_max } {
+				set row_list [lindex $attv_arr(value) $i]
+				foreach {n v} $row_list {
+				    set nlc [string tolower $n]
+				    set choices_arr(${nlc}) $v
+				}
+				if { [info exists choices_arr(selected)] } {
+				    if { $choices_arr(selected) } {
+					append form_m "<li>"
+					if { [info exists choices_arr(label) ] } {
+					    append form_m $choices_arr(label)
+					} elseif { [info exists choices_arr(value) ] } {
+					    append form_m $choices_arr(value)
+					}
+					append form_m "</li>"
+				    }
+				}
+				array unset choices_arr
+				incr i
+			    }
 			}
 		    }
+		    lappend form_m "</ul>"
+		    append form_m "</li>\n"
+		    array unset attn_arr
+		    array unset attv_arr
 		}
-		lappend form_m "</ul>"
+		
+		# next field
 	    }
-	    append form_m "</li>\n"
-	    array unset attn_arr
-	    array unset attv_arr
-
-	    # next field
 	}
-	
-    }
-    
+    }    
     return $validated_p
 }
 
