@@ -2496,7 +2496,7 @@ If list consists of 'class test', then continuing the hr example, attributes are
     return $element
 }
 
-ad_proc -public qf_one_button_form {
+ad_proc -public qf_button_form {
     args
 } {
     Accepts name value pairs as attributes of FORM and INPUT type SUBMIT form.
@@ -2521,34 +2521,54 @@ ad_proc -public qf_one_button_form {
     set form_list [list action form_id method hash_check ]
     set button_list [list name value class style id label ]
     set hidden_list [list name value ]
+    # set defaults
+    set names_list [concat $form_list $button_list $hidden_list ]
     foreach name $names_list {
 	set name_larr(${name}) [list ]
     }
     foreach {n v} $args {
 	set nlc [string tolower $n]
-	lappend name_larr(${nlc)} $v
+	lappend name_larr(${nlc}) $v
     }
-    # Reverse button/form order, because style expected to go with button
-    set button_atts_list [list type submit ]
-    foreach name $names_list {
-	lappend form_atts_list $name [lindex name_larr(${name}) 0]
-	set name_larr(${name}) [lrange $name_larr(${name}) end]
-    }
-    set form_atts_list [list ]
-    foreach name $names_list {
-	lappend form_atts_list $name [lindex name_larr(${name}) 0]
-	set name_larr(${name}) [lrange $name_larr(${name}) end]
-    }
+
     
-    set form_id [qf_form $form_atts_list ]
+    # Reverse button/form order, because style class expected to go with button
+    set button_atts_list [list type submit ]
+    foreach name $button_list {
+	set value [lindex $name_larr(${name}) 0]
+	if { $value eq "" && $name ne "value" } {
+	    # skip
+	} else {
+	    lappend button_atts_list $name $value
+	}
+	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
+    }
+
+    set form_atts_list [list ]
+    foreach name $form_list {
+	set value [lindex $name_larr(${name}) 0]
+	if { $value eq "" && $name ne "value" } {
+	    # skip
+	} else {
+	    lappend form_atts_list $name $value
+	}
+	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
+    }
+
+    set form_id [qf_form $form_atts_list]
+
     qf_input $button_atts_list
+
     set i 0
-    foreach name $name_larr(${name}) {
-	qf_input type hidden name $name value [lindex $name_larr(value) $i]
+    foreach name $name_larr(name) {
+	if { $name ne "" } {
+	    qf_input type hidden name $name value [lindex $name_larr(value) $i]
+	}
 	incr i
     }
     qf_close form_id $form_id
+    
     set form_html [qf_read form_id $form_id ]
     return $form_html
-
+    
 }
