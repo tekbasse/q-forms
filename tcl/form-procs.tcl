@@ -2274,7 +2274,7 @@ ad_proc -private qf_html5_tag_attributes {
             lappend attr_list accesskey
         }
         textarea {
-            lappend attr_list rows cols disabled readonly tabindex accesskey
+            lappend attr_list name rows cols disabled readonly tabindex accesskey maxlength autofocus dirname form placeholder required wrap
         }
         select {
             lappend attr_list name size multiple disabled tabindex id class lang title style disabled tabindex
