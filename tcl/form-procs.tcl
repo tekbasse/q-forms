@@ -2540,6 +2540,8 @@ ad_proc -public qf_button_form {
 	    # skip
 	} else {
 	    lappend button_atts_list $name $value
+	    if { $name eq "id" } {
+		set button_id $value
 	}
 	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
     }
@@ -2548,12 +2550,17 @@ ad_proc -public qf_button_form {
     foreach name $form_list {
 	set value [lindex $name_larr(${name}) 0]
 	if { $value eq "" && $name ne "value" } {
-	    # skip
+	    # mostly skip
+	    if { $name eq "id" } {
+		append button_id "-form"
+		lappend form_atts_list $name $button_id
+	    }
 	} else {
 	    lappend form_atts_list $name $value
 	}
 	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
     }
+    
 
     set form_id [qf_form $form_atts_list]
 
