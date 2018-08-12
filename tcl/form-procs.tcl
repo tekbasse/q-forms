@@ -2518,7 +2518,7 @@ ad_proc -public qf_button_form {
     upvar 1 __qf_forwardslash_p __qf_forwardslash_p
     upvar 1 __qf_doctype __qf_doctype
 
-    set form_list [list action form_id method hash_check ]
+    set form_list [list action id method hash_check ]
     set button_list [list name value class style id label ]
     set hidden_list [list name value ]
     # set defaults
