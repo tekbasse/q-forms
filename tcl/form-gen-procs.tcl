@@ -850,7 +850,7 @@ ad_proc -public qfo_2g {
                     set fatts_arr(${f_hash},is_datatyped_p) 1
                 }
                 default {
-                    ns_log Notice "qfo_2g.635: field '${f_hash}' \
+                    ns_log Notice "qfo_2g.853: field '${f_hash}' \
  attribute 'type' '${type}' for 'input' tag not recognized. \
  Setting 'type' to '${default_type}'"
                     # type set to defaut_type
@@ -977,7 +977,7 @@ ad_proc -public qfo_2g {
                         if { [qf_is_integer $hfv_arr(tabindex) ] } {
                             set val [expr { $hfv_arr(tabindex) + $tabindex_adj } ]
                         } else {
-                            ns_log Warning "qfo_2g.748: tabindex not integer \
+                            ns_log Warning "qfo_2g.980: tabindex not integer \
  for  tabindex attribute of field '${f_hash}'. Value is '${val}'"
                         }
                     }
@@ -1108,9 +1108,9 @@ ad_proc -public qfo_2g {
                             lappend invalid_field_val_list $f_hash
                         }
                     } else {
-			ns_log Notice "qfo_2g.1098. array get fatts_arr f_hash,* '[array get fatts_arr ${f_hash},*]'"
-                        if { [lsearch -exact $ignore_list $fatts_arr(${f_hash},tag_type) ] == -1 } {
-                            ns_log Notice "qfo_2g.870: field '${f_hash}' \
+			ns_log Notice "qfo_2g.1111. array get fatts_arr f_hash,* '[array get fatts_arr ${f_hash},*]'"
+                        if { ![info exists fatts_arr(${f_hash},tag_type) ] || [lsearch -exact $ignore_list $fatts_arr(${f_hash},tag_type) ] == -1 } {
+                            ns_log Notice "qfo_2g.1113: field '${f_hash}' \
  no validation proc. found"
                         }
                     }
@@ -1133,7 +1133,7 @@ ad_proc -public qfo_2g {
                             if { [lsearch -exact $fchoices_larr(${name}) $m ] < 0 } {
                                 # name exists, value not found
                                 set m_valid_p 0
-                                ns_log Notice "qfo_2g.886: name '${name}' \
+                                ns_log Notice "qfo_2g.1136: name '${name}' \
  has not valid value '$qfv_arr(${name})'"
                             }
                             set valid_p [expr { $valid_p && $m_valid_p } ]
@@ -1480,7 +1480,7 @@ ad_proc -public qfo_2g {
 		    append form_m "<br><ul>\n"
 		    # choice/choices
 		    # Just show the values selected
-		    ns_log Notice "qfo_2g.1458: f_hash '${f_hash}'"
+		    ns_log Notice "qfo_2g.1483: f_hash '${f_hash}'"
 		    if { $fatts_arr(${f_hash},multiple_names_p) eq 1 } {
 			#qf_choices
 			foreach row_list $attv_arr(value) {
@@ -1687,17 +1687,17 @@ ad_proc -private qf_validate_input {
                         }
                     }
                     if { !$allowed_p } {
-                        ns_log Warning "qf_validate_input.1153: Broken UI. \
+                        ns_log Warning "qf_validate_input.1690: Broken UI. \
  Unknown validation proc '${proc_name}' proc_params_list '${proc_params_list}'"
 
 
                     } else {
-                        ns_log Notice "qf_validate_input.1158: processing safe_eval '${proc_params_list}'"
+                        ns_log Notice "qf_validate_input.1695: processing safe_eval '${proc_params_list}'"
                         set valid_p [safe_eval $proc_params_list]
                     }
                 }
                 if { !$allowed_p } {
-                    ns_log Warning "qf_validate_input.1230: Broken UI. \
+                    ns_log Warning "qf_validate_input.1700: Broken UI. \
  proc_name '${proc_name}' form_tag_type '${form_tag_type}' \
  form_tag_attrs '${form_tag_attrs}'"
                 }
