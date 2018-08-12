@@ -710,7 +710,7 @@ ad_proc -public qf_textarea {
                 lappend attributes_list $attribute
             }
         } else {
-            ns_log Error "qf_textarea.568: '${attribute}' is not a valid attribute."
+            ns_log Error "qf_textarea.568: '${attribute}' is not a valid attribute for doctype '${__qf_doctype}'."
             ad_script_abort
         }
     }
@@ -2542,7 +2542,9 @@ ad_proc -public qf_button_form {
 	    lappend button_atts_list $name $value
 	    if { $name eq "id" } {
 		set button_id $value
+	    }
 	}
+	
 	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
     }
 
