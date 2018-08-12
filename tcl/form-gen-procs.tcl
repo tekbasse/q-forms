@@ -476,7 +476,9 @@ ad_proc -public qfo_2g {
     #           ns_log Notice "qfo_2g.290: array get qdt_types_arr(${datatype},form_tag_attrs) '[array get qdt_types_arr(${datatype},form_tag_attrs) ]' array get qdt_types_arr(${datatype},form_tag_type) '[array get qdt_types_arr(${datatype},form_tag_type) ]'"
     #    ns_log Notice "qfo_2g.292: array get qdt_types_arr text_word '[array get qdt_types_arr "text_word*"]'"
     ##ns_log Notice "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
-    if { $qtable_enabled_p } {
+    if { $qtable_enabled_p && 0 } {
+	# Not supported for this version
+	
         # Apply customizations from table defined in q-tables
         ##code This part has not been tested, as it is
         # pseudo code for a feature to add after 
@@ -683,7 +685,7 @@ ad_proc -public qfo_2g {
     # $f_hash is field_index not field name.
     foreach f_hash $qfi_fields_list {
 
-
+	ns_log Notice "qfo_2g.686  f_hash: '${f_hash}'"
         # This loop fills fatts_arr(${f_hash},${datatype_element}),
         # where datatype elements are:
         # label xml_format default_proc tcl_format_str tcl_type tcl_clock_format_str abbrev_proc valida_proc input_hint max_length css_abbrev empty_allowed_p html_style text_format_proc css_span form_tag_attrs css_div form_tag_type filter_proc
@@ -708,28 +710,32 @@ ad_proc -public qfo_2g {
         # should not rely on a datatype value,
         # which is a proc-based artificial requirement,
         # but instead rely on value of tag_type.
-        # If there is no tag_type, the default is 'text'
-        # which requires a datatype that defaults to 'text'.
+
+        # If there is no tag_type and no form_tag_type, the default is 'text'
+        # which then requires a datatype that defaults to 'text'.
         # The value is used to branch at various points in code,
         # so add an index with a logical value to speed up
         # parsing at these logical branches:  is_datatyped_p
 
 
-        # get freshed, highest priority field html tag attributes
+	
+
+        # get fresh, highest priority field html tag attributes
         set field_nvl $fields_arr(${f_hash})
         foreach {n v} $field_nvl {
             set nlc [string tolower $n]
             set hfv_arr(${nlc}) $v
             set hfn_arr(${nlc}) $n
         }
-
+	ns_log Notice "qfo_g2.725 array get hfv_arr '[array get hfv_arr]'"
 
         set tag_type ""
+	set datatype ""
         if { [info exists hfv_arr(datatype) ] } {
             # This field is partly defined by datatype
             set datatype $hfv_arr(datatype)
 
-	    #            ns_log Notice "qfo_2g.490: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
+	    ns_log Notice "qfo_2g.733: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
 
             set dt_idx $datatype
             append dt_idx $comma_c $form_tag_type_c
@@ -742,7 +748,7 @@ ad_proc -public qfo_2g {
                 set hfv_arr(${nlc}) $v
                 set hfn_arr(${nlc}) $n
             }
-	    #            ns_log Notice "qfo_2g.500. array get hfv_arr '[array get hfv_arr]'"
+	    ns_log Notice "qfo_2g.746. array get hfv_arr '[array get hfv_arr]' datatype '${datatype}' tag_type '${tag_type}'"
         } 
 
         # tag attributes provided from field definition
@@ -758,13 +764,20 @@ ad_proc -public qfo_2g {
             set hfv_arr(${nlc}) $v
             set hfn_arr(${nlc}) $n
         }
-	#        ns_log Notice "qfo_2g.510. array get hfv_arr '[array get hfv_arr]'"
+	ns_log Notice "qfo_2g.762. array get hfv_arr '[array get hfv_arr]'"
 
-        
-        # "tag_type" in inde refers to attribute's 'type' not $tag_type
-        if { [info exists hfv_arr(type) ] } {
+        # Warning: Variable nomenclature near collision:
+        # "datatype,tag_type"  refers to attribute 'type's value,
+	# such as types of INPUT tags, 'hidden', 'text', etc.
+	#
+	# Var $tag_type refers to qdt_data_types.form_tag_type
+	
+        if { [info exists hfv_arr(type) ] && $hfv_arr(type) ne "" } {
             set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
         }
+	if { $tag_type eq "" && $datatype ne "" } {
+	    set tag_type $fatts_arr(${f_hash},form_tag_type)
+	}
         if { $tag_type eq "" } {
             # Let's try to guess tag_type
             if { [info exists hfv_arr(rows) ] \
@@ -774,7 +787,7 @@ ad_proc -public qfo_2g {
                 set tag_type $default_tag_type
             }
         }
-        
+        ns_log Notice "qfo_2g.785 datatype '${datatype}' tag_type '${tag_type}'"
         set multiple_names_p ""
         if { ( [string match -nocase "*input*" $tag_type ] \
                    || $tag_type eq "" ) \
@@ -949,7 +962,7 @@ ad_proc -public qfo_2g {
                 foreach e $remaining_datatype_elements_list {
                     # Set field data defaults according to datatype
                     set fatts_arr(${f_hash},${e}) $qdt_types_arr(${datatype},${e})
-                    ##ns_log Notice "qfo_2g.733 set fatts_arr(${f_hash},${e}) \
+                    ##ns_log Notice "qfo_2g.734 set fatts_arr(${f_hash},${e}) \
                         ## '$qdt_types_arr(${datatype},${e})' (qdt_types_arr(${datatype},${e}))"
                 }
             }
@@ -982,7 +995,7 @@ ad_proc -public qfo_2g {
         }
         ##ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
         ##ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
-
+	
         array unset hfv_arr
         array unset hfn_arr
     }
@@ -1068,12 +1081,13 @@ ad_proc -public qfo_2g {
     set nonexisting_field_val_list [list ]
     set row_list [list ]
     if { $form_submitted_p } {
-
+	
         # validate inputs
 
         foreach f_hash $qfi_fields_list {
 
-            # validate. 
+            # validate.
+	    ns_log Notice "qfo_2g.1077: f_hash '${f_hash}', datatype '${datatype}'"
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 # Do not set a name to exist here,
                 # because then it might validate and provide
@@ -1094,6 +1108,7 @@ ad_proc -public qfo_2g {
                             lappend invalid_field_val_list $f_hash
                         }
                     } else {
+			ns_log Notice "qfo_2g.1098. array get fatts_arr f_hash,* '[array get fatts_arr ${f_hash},*]'"
                         if { [lsearch -exact $ignore_list $fatts_arr(${f_hash},tag_type) ] == -1 } {
                             ns_log Notice "qfo_2g.870: field '${f_hash}' \
  no validation proc. found"
@@ -1136,7 +1151,7 @@ ad_proc -public qfo_2g {
 	    # nonexisting_field_val_list '${nonexisting_field_val_list}'"
     } else {
         # form not submitted
-
+	
         # Populate form values with defaults if not provided otherwise
         foreach f_hash $qfi_fields_list {
             if { ![info exists fatts_arr(${f_hash},value) ] } {
@@ -1192,7 +1207,7 @@ ad_proc -public qfo_2g {
             set qfi_fields_sorted_list $fields_ordered_list
         }
 
-
+	
         # build form using qf_* api
         set form_m ""
 	
@@ -1256,7 +1271,7 @@ ad_proc -public qfo_2g {
                             }
                         }
                     }
-
+		    
 
                     set n2 $fatts_arr(${f_hash},names)
                     if { [info exists qfv_arr(${n2}) ] } {
@@ -1298,7 +1313,7 @@ ad_proc -public qfo_2g {
                                                                        -attributes_value_array_name fav_arr \
                                                                        -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
                                                                        -qfv_array_name qfv_arr ]
-
+				
                             }
                         }
                         default {
