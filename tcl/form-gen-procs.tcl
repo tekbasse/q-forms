@@ -1399,6 +1399,7 @@ ad_proc -public qfo_2g {
 	    qf_close form_id $form_id
 	    append form_m [qf_read form_id $form_id]
 	} else {
+	    # write_p is 0
 	    # Display form data only
 	    
 	    append form_m "<ul id="
@@ -1417,34 +1418,37 @@ ad_proc -public qfo_2g {
 		    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
 			textarea -
 			input {
-			    append form_m "<li>"
-			    set class_p [info exists attv_arr(class)]
-			    set style_p [info exists attv_arr(style)]
-			    set value_p [info exists attv_arr(value)]
-			    set name_p [info exists attv_arr(name)]
-			    set label_p [info exists attv_arr(label)]
-			    if { $label_p } {
-				set label $attv_arr(label)
-			    } else {
-				set label ""
-			    }
-			    if { $class_p || $style_p } {
-				append form_m "<span"
-				if { $class_p } {
-				    append form_m " class=\"" $attv_arr(class) "\""
+			    if { [info exists attv_arr(type) ] \
+				     && ![string match -nocase "hidden" $attv_arr(type) ] } {
+				append form_m "<li>"
+				set class_p [info exists attv_arr(class)]
+				set style_p [info exists attv_arr(style)]
+				set value_p [info exists attv_arr(value)]
+				set name_p [info exists attv_arr(name)]
+				set label_p [info exists attv_arr(label)]
+				if { $label_p } {
+				    set label $attv_arr(label)
+				} else {
+				    set label ""
 				}
-				if { $style_p } {
-				    append form_m " style=\"" $attv_arr(style) "\""
+				if { $class_p || $style_p } {
+				    append form_m "<span"
+				    if { $class_p } {
+					append form_m " class=\"" $attv_arr(class) "\""
+				    }
+				    if { $style_p } {
+					append form_m " style=\"" $attv_arr(style) "\""
+				    }
+				    append form_m ">" $label "</span>"
+				} else {
+				    append form_m $label
 				}
-				append form_m ">" $label "</span>"
-			    } else {
-				append form_m $label
-			    }
-			    if { $value_p } {
-				append form_m "<br>'" $attv_arr(value) "'</li>\n"
-			    } else {
-				append form_m "<br></li>\n"
-				#ns_log Notice "qfo_2g.1420. No value for attv_(value) array get attv_arr '[array get attv_arr]'"
+				if { $value_p } {
+				    append form_m "<br>'" $attv_arr(value) "'</li>\n"
+				} else {
+				    append form_m "<br></li>\n"
+				    #ns_log Notice "qfo_2g.1420. No value for attv_(value) array get attv_arr '[array get attv_arr]'"
+				}
 			    }
 			}
 			default {
@@ -1531,10 +1535,10 @@ ad_proc -public qfo_2g {
 		    }
 		    lappend form_m "</ul>"
 		    append form_m "</li>\n"
-		    array unset attn_arr
-		    array unset attv_arr
 		}
 		
+		array unset attn_arr
+		array unset attv_arr
 		# next field
 	    }
 	}
