@@ -698,8 +698,8 @@ ad_proc -public qf_textarea {
 
     set attributes_full_list $attributes_tag_list
 
-    # datatype is used with qfo_2g paradigm. See proc qfo_2g.
-    lappend attributes_full_list value label form_id datatype
+    # datatype and form_tag_type is used with qfo_2g paradigm. See proc qfo_2g.
+    lappend attributes_full_list value label form_id datatype form_tag_type
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
@@ -1411,8 +1411,8 @@ ad_proc -public qf_input {
 
     set attributes_full_list $attributes_tag_list
 
-    # datatype is used with qfo_2g paradigm. See proc qfo_2g.
-    lappend attributes_full_list form_id label selected title datatype
+    # datatype and form_tag_type is used with qfo_2g paradigm. See proc qfo_2g.
+    lappend attributes_full_list form_id label selected title datatype form_tag_type
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
