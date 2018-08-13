@@ -1082,7 +1082,7 @@ ad_proc -public qfo_2g {
     set row_list [list ]
     if { $form_submitted_p } {
 	
-        # validate inputs
+	# validate inputs
 
         foreach f_hash $qfi_fields_list {
 
