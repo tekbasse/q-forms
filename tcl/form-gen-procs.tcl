@@ -1419,7 +1419,12 @@ ad_proc -public qfo_2g {
 			textarea -
 			input {
 			    if { [info exists attv_arr(type) ] \
-				     && ![string match -nocase "hidden" $attv_arr(type) ] } {
+				     && ![string match -nocase "hidden" $attv_arr(type) ] \
+				     && ![string match -nocase "submit" $attv_arr(type) ] \
+				     && ![string match -nocase "button" $attv_arr(type) ] \
+				     && ![string match -nocase "password" $attv_arr(type) ] \
+				     && ![string match -nocase "reset" $attv_arr(type) ] \
+				     && ![string match -nocase "search" $attv_arr(type) ] } {
 				append form_m "<li>"
 				set class_p [info exists attv_arr(class)]
 				set style_p [info exists attv_arr(style)]
