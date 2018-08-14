@@ -1,15 +1,19 @@
 To be done:
+
+A.
+Should form's uneditable values be included in form as hidden types?
+yes. qf_ paradigm can hide data by default by adding qf_bypass to
+INPUT type 'hidden' declarations in qfo_g2
+that should be overrideable by declaration like anything else with qfo_2g.
+Add as a feature to qfo_2g.  But first, get the apps working..
+
+B.
 Customization is enabled of a package if package:
 1. has a parameter enableFormGenP
 2. enableFormGenP is set to '1' 
 3. q-tables is installed (enabled)
 @see qfo_qtable_label_package_id
 
-
-To present forms in a vertical list as one might expect on a small device,
-include in CSS:
-.label { display: block ; }
-Otherwise, control is assumed at the application level.
 
 
 -----
