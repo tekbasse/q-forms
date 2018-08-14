@@ -1449,7 +1449,7 @@ ad_proc -public qfo_2g {
 				    append form_m $label
 				}
 				if { $value_p } {
-				    append form_m "<br>'" $attv_arr(value) "'</li>\n"
+				    append form_m "<br>" $attv_arr(value) "</li>\n"
 				} else {
 				    append form_m "<br></li>\n"
 				    #ns_log Notice "qfo_2g.1420. No value for attv_(value) array get attv_arr '[array get attv_arr]'"
