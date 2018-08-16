@@ -72,7 +72,7 @@ ad_proc -public qfo_sp_table_g2 {
     <li><strong>nav_next_links_html_varname</strong></li>
     </ul></li>
     <li>
-    <code>table_list_of_lists_varname</code> is unchanged. 
+    <code>table_lists_varname</code> is unchanged. 
     It gets sorted into <code>table_sorted_lists_varname</code>.
     Then the columns are re-ordered based on sort significance,
     with the primary sort column first and set to
@@ -118,13 +118,13 @@ ad_proc -public qfo_sp_table_g2 {
     <br><br>
     Required parameters:
     <br><br>
-    <code>table_list_of_lists_varname</code> 
+    <code>table_lists_varname</code> 
     - Variable holding a table defined as a list of lists, 
     where each list is a row containing values of columns from first to last.
     <br><br>
     <code>titles_list_varname</code> 
     - Variable name containing a list of titles of the columns in 
-    <code>table_list_of_lists</code>, in cooresponding order. 
+    <code>table_lists</code>, in cooresponding order. 
     That is first in list is title of first column in table.
     <br><br>
     An <code>s_varname</code> or <code>p_varname</code> that identifies
