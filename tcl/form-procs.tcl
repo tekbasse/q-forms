@@ -2580,6 +2580,7 @@ ad_proc -public qf_button_form {
     qf_close form_id $form_id
     
     set form_html [qf_read form_id $form_id ]
+    unset __form_arr(${form_id})
     return $form_html
     
 }
