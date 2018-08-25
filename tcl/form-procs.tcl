@@ -2534,6 +2534,8 @@ ad_proc -public qf_button_form {
     
     # Reverse button/form order, because style class expected to go with button
     set button_atts_list [list type submit ]
+    # set default button_id
+    set button_id "button"
     foreach name $button_list {
 	set value [lindex $name_larr(${name}) 0]
 	if { $value eq "" && $name ne "value" } {
