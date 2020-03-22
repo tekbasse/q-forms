@@ -1251,6 +1251,20 @@ ad_proc -public hf_are_visible_characters_q {
     return $visible_p
 }
 
+
+ad_proc -public hf_are_safe_textarea_characters_q {
+    user_input
+} {
+    Verifies that characters are printable, or common whitespace characters.
+} {
+    if { [regexp -- {[[:print:][:space:]]+$} $user_input scratch ] } {
+        set quasivisible_p 1
+    } else {
+        set quasivisible_p 0
+    }
+    return $quasivisible_p
+}
+
 ad_proc -public hf_are_safe_and_visible_characters_q {
     user_input
 } {
