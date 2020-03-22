@@ -263,7 +263,7 @@ ad_proc -public qss_txt_table_stats {
 
     set rowsC [llength $rows_set]
     # determine column delimiter
-    set delimiters_list [list "\t" " " "," "|" "!"]
+    set delimiters_list [list "\t" " " "," "|" "!" ":" ";"]
 
     set delimC 0
     set columns_arr(0-avg) 0.
