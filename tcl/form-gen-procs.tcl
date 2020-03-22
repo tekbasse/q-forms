@@ -1618,6 +1618,9 @@ ad_proc -private qf_validate_input {
             hf_are_safe_and_printable_characters_q {
                 set valid_p [hf_are_safe_and_printable_characters_q $input ]
             }
+	    hf_are_safe_textarea_characters_q {
+		set valid_p [hf_are_safe_textarea_characters_q $input]
+	    }
             hf_list_filter_by_natural_number {
                 set input_list [split $input ";,\t "]
                 set filtered_list [hf_list_filter_by_natural_number $input_list ]
