@@ -1830,8 +1830,16 @@ ad_proc -public qf_choice {
 
         foreach input_attributes_list $attributes_arr(value) {
             if { ![qf_is_even [llength $input_attributes_list ] ] } {
-                ns_log Error "qf_choice.1804 'value' attribute count is odd. \
- arg_list '${arg_list}'. Issue at: value '${input_attributes_list}'"
+		# Provide more useful error detail
+		set err_detail ""
+		set item_count 0
+		foreach item ${input_attributes_list} {
+		    append err_detail "\nItem ${item_count} '${item}'"
+		    incr item_count
+		}
+		ns_log Error "qf_choice.1804 'value' attribute count is odd. \
+ arg_list '${arg_list}'. Issue at: value '${input_attributes_list}' \
+Detail: ${err_detail}"
                 ad_script_abort
             }
 
