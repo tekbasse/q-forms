@@ -658,8 +658,11 @@ ad_proc -public qf_is_integer {
     value
 } {
     answers question: is value an integer?
+    Integer can be negative or start with zeros, but not -0..
     returns 0 or 1
 } {
+    # Is this the most permissive?
+    # Why not allow -0056 for example?  TODO: answer question
     set is_integer [regexp {^(0*)(([\-]?[1-9][0-9]*|0))$} $value match zeros value]
     return $is_integer
 }
@@ -1064,7 +1067,7 @@ ad_proc -public qf_abbreviate {
 } {
     set suffix_len [string length $suffix]
 
-    if { [ad_var_type_check_number_p $max_length] && $max_length > 0 } {
+    if { [qfad_number_p $max_length] && $max_length > 0 } {
         set phrase_len_limit [expr { $max_length - $suffix_len } ]
         regsub -all -- { / } $phrase {/} phrase
         if { [string length $phrase] > $max_length } {
@@ -1821,7 +1824,7 @@ ad_proc -public qf_is_boolean {
         }
         default {
             # check for internationalized cases
-            if { [ad_var_type_check_word_p ] } {
+            if { [qfad_word_p ] } {
                 set yes_local [_ acs-kernel.common_yes]
                 set no_local [_ acs-kernel.common_no]
                 if { $value eq $yes_local || $value eq $no_local } {
@@ -2840,4 +2843,82 @@ ad_proc -private qf_log {
         ns_log Warning $m
     }
     return 1
+}
+
+### editing
+# Following procs are generated from
+# deprecated ad_var_type_check_* in acs-tcl/tcl/utilities-procs.tcl
+# They are added here, because form validation should avoid separate namespaces
+# for security reasons
+
+ad_proc  qfad_is_integer_p {value} {
+    @return 1 if $value is an (positive) integer or zero, 0 otherwise.
+    
+    In general, use either template::data::validate::integer
+    or "string is integer -strict" instead.
+
+    @see ::template::data::validate::integer
+} {
+    # was ad_var_type_check_integer_p
+    if { [regexp {[^0-9]} $value] } {
+        return 0
+    } else {
+        return 1
+    }
+}
+
+ad_proc  qfad_is_safefilename_p {value} {
+    @return 0 if the file contains ".."
+} {
+    # was ad_var_type_check_is_safefilename_p
+    if { [string match "*..*" $value] } {
+        return 0
+    } else {
+        return 1
+    }
+}
+
+ad_proc  qfad_is_dirname_p {value} {
+    @return 0 if $value contains a / or \, 1 otherwise.
+} {
+    # ad_var_type_check_dirname_p
+    if { [regexp {[/\\]} $value] } {
+        return 0
+    } else {
+        return 1
+    }
+}
+
+ad_proc  qfad_is_number_p {value} {
+    @return 1 if $value is a valid number
+} {
+    # was ad_var_type_check_number_p
+    if { [catch {expr {1.0 * $value}}] } {
+        return 0
+    } else {
+        return 1
+    }
+}
+
+ad_proc  qfad_is_word_p {value} {
+    @return 1 if $value contains only letters, numbers, dashes,
+            and underscores, otherwise returns 0.
+} {
+    # was ad_var_type_check_is_word_p
+    if { [regexp {[^-A-Za-z0-9_]} $value] } {
+        return 0
+    } else {
+        return 1
+    }
+}
+
+ad_proc  qfad_is_noquote_p {value} {
+    @return 1 if $value contains any single-quotes
+} {
+    # was ad_var_type_check_is_noquote_p
+    if { [string match "*'*" $value] } {
+        return 0
+    } else {
+        return 1
+    }
 }

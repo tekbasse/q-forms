@@ -1649,13 +1649,13 @@ ad_proc -private qf_validate_input {
                 set valid_p [qf_is_natural_number $input ]
             }
             ad_var_type_check_safefilename_p {
-                set valid_p [ad_var_type_check_safefilename_p $input ]
+                set valid_p [qfad_safefilename_p $input ]
             }
             qf_domain_name_valid_q {
                 set valid_p [qf_domain_name_valid_q $input ]
             }
             ad_var_type_check_word_p {
-                set valid_p [qf_ad_var_type_check_word_p $input]
+                set valid_p [qfad_word_p $input]
             }
             qf_is_boolean {
                 set valid_p [qf_is_boolean $input ]
