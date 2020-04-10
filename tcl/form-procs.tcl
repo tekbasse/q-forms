@@ -231,12 +231,12 @@ ad_proc -public qf_get_inputs_as_array {
                     ns_log Notice "qf_get_inputs_as_array.197: attempt to insert unallowed characters to user input '{__form_key}'."
                 }
             } else {
-                set __form_key [ad_quotehtml $__form_key]
+                set __form_key [ns_quotehtml $__form_key]
                 # The name of the argument passed in the form
                 # no legitimate argument should be affected by quoting:
                 
                 # This is the value
-                set __form_input [ad_quotehtml [ns_set value $__form $__form_counter_i]]
+                set __form_input [ns_quotehtml [ns_set value $__form $__form_counter_i]]
                 
                 set __form_input_exists 1
                 # check for duplicate key?
@@ -831,7 +831,7 @@ ad_proc -public qf_select {
                 lappend attributes_list $attribute_lc
             }
         } else {
-            ns_log Error "qf_select.673: '[ad_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}' arg_list '${arg_list}'"
+            ns_log Error "qf_select.673: '[ns_quotehtml [string range ${attribute} 0 15]]' is not a valid attribute. attributes_full_list '${attributes_full_list}' attributes_tag_list '${attributes_tag_list}' arg_list '${arg_list}'"
             ad_script_abort
         }
     }
