@@ -1251,7 +1251,7 @@ ad_proc -public qf_bypass {
 
     if { ![info exists __form_ids_list] } {
         ns_log Warning "qf_bypass.1083: invoked before qf_form or used in a different namespace than qf_form.."
-        set __form_ids_list [list [random]]
+        set __form_ids_list [list [util::random]]
         set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
@@ -1315,7 +1315,7 @@ ad_proc -public qf_bypass_nv_list {
 
     if { ![info exists __form_ids_list] } {
         ns_log Warning "qf_bhypass_nv_list.1140: invoked before qf_form or used in a different namespace than qf_form.."
-        set __form_ids_list [list [random]]
+        set __form_ids_list [list [util::random]]
         set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
@@ -1440,7 +1440,7 @@ ad_proc -public qf_input {
     }
     if { ![info exists __form_ids_list] } {
         ns_log Warning "qf_input.1036: invoked before qf_form or used in a different namespace than qf_form.."
-        set __form_ids_list [list [random]]
+        set __form_ids_list [list [util::random]]
         set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id
@@ -1477,7 +1477,7 @@ ad_proc -public qf_input {
     if { [info exists attributes_arr(label)] && [info exists attributes_arr(type) ] && $attributes_arr(type) ne "hidden" } {
         if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(name) ] } {
             set attributes_arr(id) $attributes_arr(name)
-            append attributes_arr(id) "-" [string range [clock clicks -milliseconds] end-3 end] "-" [string range [random ] 2 end]
+            append attributes_arr(id) "-" [string range [clock clicks -milliseconds] end-3 end] "-" [string range [util::random ] 2 end]
             lappend attributes_list "id"
         }
         if { [info exists attributes_arr(title) ] } {
@@ -1507,7 +1507,7 @@ ad_proc -public qf_input {
 
     if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(value) ] } {
         set attributes_arr(id) [string range [clock clicks -milliseconds] end-3 end]
-        append attributes_arr(id) "-" [string range [random ] 2 end]
+        append attributes_arr(id) "-" [string range [util::random ] 2 end]
         lappend attributes_list "id"
     }
 
@@ -1605,7 +1605,7 @@ ad_proc -public qf_append {
 
     if { ![info exists __form_ids_list] } {
         ns_log Warning "qf_append.1163: invoked before qf_form or used in a different namespace than qf_form.."
-        set __form_ids_list [list [random]]
+        set __form_ids_list [list [util::random]]
         set __qf_arr(form_id) $__form_ids_list
     }
     # default to last modified form_id

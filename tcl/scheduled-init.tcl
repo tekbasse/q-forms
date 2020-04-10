@@ -15,7 +15,7 @@
 #ns_schedule_daily -thread 4 14 hf::proc...
 
 
-set cycle_duration_s [expr { round( 120 + [randomRange 60] ) } ]
+set cycle_duration_s [expr { round( 120 + [util::random_range 60] ) } ]
 
 
 ad_schedule_proc -thread t $cycle_duration_s qf::schedule::flush
