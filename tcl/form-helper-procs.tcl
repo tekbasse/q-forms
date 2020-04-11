@@ -1067,7 +1067,7 @@ ad_proc -public qf_abbreviate {
 } {
     set suffix_len [string length $suffix]
 
-    if { [qfad_number_p $max_length] && $max_length > 0 } {
+    if { [qfad_is_number_p $max_length] && $max_length > 0 } {
         set phrase_len_limit [expr { $max_length - $suffix_len } ]
         regsub -all -- { / } $phrase {/} phrase
         if { [string length $phrase] > $max_length } {
@@ -1824,7 +1824,7 @@ ad_proc -public qf_is_boolean {
         }
         default {
             # check for internationalized cases
-            if { [qfad_word_p ] } {
+            if { [qfad_is_word_p ] } {
                 set yes_local [_ acs-kernel.common_yes]
                 set no_local [_ acs-kernel.common_no]
                 if { $value eq $yes_local || $value eq $no_local } {
