@@ -301,6 +301,9 @@ ad_proc -private ::qfo::lol_remake {
 # tips_ database that was written to table and matching form_array's unique_key
 # except that there is no extra trips to db.
 
+
+## html4/html5/xml are determined by the qf_ procs polling
+## the document type declaration
 #qfo_generate_html4 form_id
 # converts prepared list_array to html4
 
@@ -310,7 +313,9 @@ ad_proc -private ::qfo::lol_remake {
 #qfo_generate_xml_v001 form_id
 # converts prepared list_array to xml (mainly for saas)
 
+
 #qfo_view arrayname returns form definition as text in generated format
+#This is redundant. Same as setting write_p 0 in qfo_2g
 
 ad_proc -public qfo_2g {
     -fields_array:required
@@ -1807,3 +1812,15 @@ ad_proc -public ::qfo::form_list_def_to_array {
     ##ns_log Notice "::qfo::form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
     return $fields_ordered_list
 }
+
+ad_proc -public ::qfo::form_list_def_to_table_rows {
+    -list_of_lists_name
+    {-ignore_parse_issues_p "1"}
+} {
+    Converts a well formed list of lists of form input elements into
+    multiple scalar arrays of same.
+
+} {
+    return $fields_ordered_list
+}
+
