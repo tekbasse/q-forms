@@ -1800,11 +1800,13 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         if { ![info exists groups_used_list] } {
             set groups_used_list [list ]
         }
-        set alphabet_list [split"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" ""]
+        set alphabet_c "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        set alphabet_list [split ${alphabet_c} ""]
         set k 0
-        while { ( $group_letter eq "" || $group_letter in $groups_used_list \
-                      || $group_letter not in $alphabet_list ) && $k < 26 } {
-            set group_letter [lrange $alphabet_list $k $k]
+        set group $group_letter
+        while { ( $group eq "" || $group in $groups_used_list \
+                      || $group not in $alphabet_list ) && $k < 26 } {
+            set group [lrange $alphabet_list $k $k]
             incr k
         }
         if { $k > 51 } {
@@ -1814,11 +1816,14 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
             # on a page.
             ad_script_abort
         }
-
+        
         set elements_new_lol [list ]
+        set qfo_ct_c "qfo_ct_"
         set name_c "name"
         for {set i 1} {$i <= $rows_count} {incr i} {
+            set column_ct 0
             foreach element_nvl $elements_lol {
+                set column [string range $alphabet_c $column_ct $column_ct]
                 # convert list to array
                 # array set e_arr $element_nvl,
                 # except convert names to lowercase
@@ -1830,8 +1835,9 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
                     set n_arr(${nlc}) $n
                 }
 
-                # change name's value by appending _r${i}
-                append n_arr(${name_c}) "_r" $i
+                # change name's value by appending $group$column${i}
+                append n_arr(${name_c}) "_" ${group} ${column} $i
+                
                 # change back to list
                 set element_new_nvl [list ]
                 foreach n $n_list {
@@ -1842,10 +1848,13 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
                 unset n_arr
                 # append to new list
                 lappend elements_new_lol $element_new_nvl
+                incr column_ct
             }
         }
         # append a hidden table_name_count variable
-        set rc_list [list type hidden name qfo_ct_${group_letter} value index ]
+        set name $qfo_ct_c
+        append name ${group} ${column}
+        set rc_list [list type hidden name ${name} value index ]
         append elements_new_lol $rc_list
         set fldtctr_list $elements_new_lol
     } else {
