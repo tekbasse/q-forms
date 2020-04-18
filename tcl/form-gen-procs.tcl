@@ -273,50 +273,6 @@ ad_proc -private ::qfo::lol_remake {
 }
 
 
-
-#ad_proc qfo_form_fields_prepare {
-#    {-form_fields_larr_name}
-#} {
-
-#}
-
-
-#      Prepares a lists_array definition of a form
-
-#      Grabs data type definitions in context of q-data-types
-
-
-#           default values (set in context of qf_input_as_array)
-
-
-
-
-# qfo_fields form_id
-#      returns list of default form fields + plus any custom ones
-
-# qfo_input_as_array ??
-# qfo_row_array_read (as name/val list pairs)
-#      reads data into tcl space from connection input
-#which should be idential to data from 
-# tips_ database that was written to table and matching form_array's unique_key
-# except that there is no extra trips to db.
-
-
-## html4/html5/xml are determined by the qf_ procs polling
-## the document type declaration
-#qfo_generate_html4 form_id
-# converts prepared list_array to html4
-
-#qfo_generate_html5 form_id
-# converts prepared list_array to html5
-
-#qfo_generate_xml_v001 form_id
-# converts prepared list_array to xml (mainly for saas)
-
-
-#qfo_view arrayname returns form definition as text in generated format
-#This is redundant. Same as setting write_p 0 in qfo_2g
-
 ad_proc -public qfo_2g {
     -fields_array:required
     {-fields_ordered_list ""}
@@ -1813,14 +1769,89 @@ ad_proc -public ::qfo::form_list_def_to_array {
     return $fields_ordered_list
 }
 
-ad_proc -public ::qfo::form_list_def_to_table_rows {
+ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     -list_of_lists_name
+    -rows_count
+    {-group_letter ""}
     {-ignore_parse_issues_p "1"}
+    {-rows_count_max "999"}
 } {
-    Converts a well formed list of lists of form input elements into
-    multiple scalar arrays of same.
+    Converts a well formed list of lists of form input fields into
+    multiple scalar arrays of same. For example, suppose one has
+    a form where some data inputs are repeated, such as on an invoice.
+    If the input names are: qty unit description price_per_unit qty_price,
+    And list_of_lists_name is a list_of_lists defining the fields,
+    and rows_count is '2', then this proc returns a well formed list of lists
+    with two rows defined using rc table naming convention with a twist.
 
+    Instead of the conventional group:rowcolumn like sheet1:3A,
+    to fit the html form paradigm, column_grouprow is used, where
+    column is the name of each field. This becomes: name_grouprow,
+    and as an example for this proc, groups are designated a letter:
+    address_line1_b3 for second group, third row of address_line1.
 } {
-    return $fields_ordered_list
+    upvar 1 $list_of_lists_name elements_lol
+    upvar 1 __qfo_groups_used_list groups_used_list
+    # Let's put an upper limit on rows,
+    # maybe to help avoid some kind of DOS issue
+    # A survey of other web app limits suggests 999
+    # is above the max for most all practical cases
+    if { $rows_count > 0 && $rows_count < $rows_count_max } {
+        if { ![info exists groups_used_list] } {
+            set groups_used_list [list ]
+        }
+        set alphabet_list [split"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" ""]
+        set k 0
+        while { ( $group_letter eq "" || $group_letter in $groups_used_list \
+                      || $group_letter not in $alphabet_list ) && $k < 26 } {
+            set group_letter [lrange $alphabet_list $k $k]
+            incr k
+        }
+        if { $k > 51 } {
+            ns_log "qfo::form_list_def_to_css_table_rows.1811 Warning: ran out of group letters. used: '${groups_used_list}' k '${k}'."
+            # something must be wrong. There must be a better way
+            # to do what the page developer wants to accomplish with rows
+            # on a page.
+            ad_script_abort
+        }
+
+        set elements_new_lol [list ]
+        set name_c "name"
+        for {set i 1} {$i <= $rows_count} {incr i} {
+            foreach element_nvl $elements_lol {
+                # convert list to array
+                # array set e_arr $element_nvl,
+                # except convert names to lowercase
+                set n_list [list ]
+                foreach {n v} $element_nvl {
+                    set nlc [string tolower $n]
+                    lappend n_list $nlc
+                    set v_arr(${nlc}) $v
+                    set n_arr(${nlc}) $n
+                }
+
+                # change name's value by appending _r${i}
+                append n_arr(${name_c}) "_r" $i
+                # change back to list
+                set element_new_nvl [list ]
+                foreach n $n_list {
+                    lappend element_new_nvl $n_arr(${n}) $v_arr(${n})
+                }
+                # unset arrays
+                unset v_arr
+                unset n_arr
+                # append to new list
+                lappend elements_new_lol $element_new_nvl
+            }
+        }
+        # append a hidden table_name_count variable
+        set rc_list [list type hidden name qfo_ct_${group_letter} value index ]
+        append elements_new_lol $rc_list
+        set fldtctr_list $elements_new_lol
+    } else {
+        set fldtctr_list $elements_lol
+    }
+
+    return $fldtctr_list
 }
 
