@@ -16,7 +16,10 @@ ad_library {
 # qfo_<some_name> refers to a qfo_ paradigm or sub-api
 # This permits creating variations of qfo_2g as needed.
 
-namespace eval ::qfo {}
+namespace eval ::qfo {
+    # constants used in this space
+    set alphabet_c "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+}
 
 ad_proc -private ::qfo::qtable_label_package_id {
     form_id
@@ -1776,7 +1779,9 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     {-ignore_parse_issues_p "1"}
     {-rows_count_max "999"}
 } {
-    Converts a well formed list of lists of form input fields into
+    Converts a row of related form fields formated for input into aqf_2g,
+    into multiple rows with related naming conventions. Put another
+    way, it takes a well formed list of lists of qaf_2g form input fields into
     multiple scalar arrays of same. For example, suppose one has
     a form where some data inputs are repeated, such as on an invoice.
     If the input names are: qty unit description price_per_unit qty_price,
@@ -1785,10 +1790,11 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     with two rows defined using rc table naming convention with a twist.
 
     Instead of the conventional group:rowcolumn like sheet1:3A,
-    to fit the html form paradigm, column_grouprow is used, where
-    column is the name of each field. This becomes: name_grouprow,
-    and as an example for this proc, groups are designated a letter:
-    address_line1_b3 for second group, third row of address_line1.
+    to fit the html form paradigm, name_{group}{column}{row} is used, where
+    name is the name of each field.
+    As an example, for this proc, groups are designated a letter:
+    address_line1_ba3 for second group, first column, third row of
+    address_line1.
 } {
     upvar 1 $list_of_lists_name elements_lol
     upvar 1 __qfo_groups_used_list groups_used_list
@@ -1800,8 +1806,8 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         if { ![info exists groups_used_list] } {
             set groups_used_list [list ]
         }
-        set alphabet_c "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        set alphabet_list [split ${alphabet_c} ""]
+
+        set alphabet_list [split ${qfo::alphabet_c} ""]
         set k 0
         set group $group_letter
         while { ( $group eq "" || $group in $groups_used_list \
@@ -1823,7 +1829,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         for {set i 1} {$i <= $rows_count} {incr i} {
             set column_ct 0
             foreach element_nvl $elements_lol {
-                set column [string range $alphabet_c $column_ct $column_ct]
+                set column [string range $qfo::alphabet_c $column_ct $column_ct]
                 # convert list to array
                 # array set e_arr $element_nvl,
                 # except convert names to lowercase
