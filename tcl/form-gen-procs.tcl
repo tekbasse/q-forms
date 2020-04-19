@@ -1853,8 +1853,8 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         }
         # append a hidden table_name_count variable
         set name $qfo_ct_c
-        append name ${group} ${column}
-        set rc_list [list type hidden name ${name} value index ]
+        append name ${group} ${column} ${rows_count}
+        set rc_list [list type hidden name ${name} value ${rows_count} ]
         append elements_new_lol $rc_list
         set fldtctr_list $elements_new_lol
     } else {
