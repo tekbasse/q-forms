@@ -1828,7 +1828,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     upvar 1 __qfo_groups_used_list groups_used_list
     if { $list_of_lists_name ne "" } {
         set add_to_lol_p 1
-        upvar 1 list_of_lists_name lol_name
+        upvar 1 $list_of_lists_name lol_name
     } else {
         set add_to_lol_p 0
     }
