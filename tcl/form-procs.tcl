@@ -1477,7 +1477,9 @@ ad_proc -public qf_input {
     if { [info exists attributes_arr(label)] && [info exists attributes_arr(type) ] && $attributes_arr(type) ne "hidden" } {
         if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(name) ] } {
             set attributes_arr(id) $attributes_arr(name)
-            append attributes_arr(id) "-" [string range [clock clicks -milliseconds] end-3 end] "-" [string range [util::random ] 2 end]
+            set b [string range [util::random] end end]
+            incr b
+            append attributes_arr(id) "-" [string range [clock clicks -milliseconds] end-${b} end] [string range [util::random ] ${b} end]
             lappend attributes_list "id"
         }
         if { [info exists attributes_arr(title) ] } {
@@ -1507,7 +1509,8 @@ ad_proc -public qf_input {
 
     if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(value) ] } {
         set attributes_arr(id) [string range [clock clicks -milliseconds] end-3 end]
-        append attributes_arr(id) "-" [string range [util::random ] 2 end]
+        set b [string range [util::random] end end]
+        append attributes_arr(id) "-" [string range [util::random ] $b end]
         lappend attributes_list "id"
     }
 
