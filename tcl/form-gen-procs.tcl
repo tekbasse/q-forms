@@ -1802,6 +1802,14 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     # maybe to help avoid some kind of DOS issue
     # A survey of other web app limits suggests 999
     # is above the max for most all practical cases
+
+    # make sure user input a list of lists, not just a list (single form element)
+    set name_c "name"
+    if { [lsearch -nocase $elements_lol $name_c] > -1 } {
+        ns_log Error "form_list_def_to_css_table_rows.1809 Detected list_of_lists is a list instead. Wrap it with another list."
+        ad_script_abort
+    }
+    
     if { $rows_count > 0 && $rows_count < $rows_count_max } {
         if { ![info exists groups_used_list] } {
             set groups_used_list [list ]
@@ -1811,12 +1819,12 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         set k 0
         set group $group_letter
         while { ( $group eq "" || $group in $groups_used_list \
-                      || !($group in $alphabet_list) ) && $k < 26 } {
+                      || !($group in $alphabet_list) ) && $k < 53 } {
             set group [lrange $alphabet_list $k $k]
             incr k
         }
-        if { $k > 51 } {
-            ns_log "qfo::form_list_def_to_css_table_rows.1811 Warning: ran out of group letters. used: '${groups_used_list}' k '${k}'."
+        if { $k > 51 || $group eq "" } {
+            ns_log Error "qfo::form_list_def_to_css_table_rows.1811 Ran out of group letters. used: '${groups_used_list}' k '${k}' group '${group}'."
             # something must be wrong. There must be a better way
             # to do what the page developer wants to accomplish with rows
             # on a page.
@@ -1825,9 +1833,10 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         
         set elements_new_lol [list ]
         set qfo_ct_c "qfo_ct_"
-        set name_c "name"
+
         for {set i 1} {$i <= $rows_count} {incr i} {
             set column_ct 0
+            
             foreach element_nvl $elements_lol {
                 set column [string range $qfo::alphabet_c $column_ct $column_ct]
                 # convert list to array
@@ -1842,7 +1851,9 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
                 }
 
                 # change name's value by appending $group$column${i}
-                append n_arr(${name_c}) "_" ${group} ${column} $i
+                ns_log Notice "form_list_def_to_css_table_rows.1845 array get n_arr '[array get n_arr]'"
+                ns_log Notice "form_list_def_to_css_table_rows.1845 n_arr(${name_c}) '$n_arr(${name_c})' group '${group}' column '${column}' i '${i}' column_ct '${column_ct}'"
+                append v_arr(${name_c}) "_" ${group} ${column} $i
                 
                 # change back to list
                 set element_new_nvl [list ]
@@ -1861,7 +1872,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         set name $qfo_ct_c
         append name ${group} ${column} ${rows_count}
         set rc_list [list type hidden name ${name} value ${rows_count} ]
-        append elements_new_lol $rc_list
+        lappend elements_new_lol $rc_list
         ns_log Notice "qfo::form_list_def_to_css_table_rows.1865: elements_new_lol '${elements_new_lol}'"
         set fldtctr_list $elements_new_lol
     } else {
