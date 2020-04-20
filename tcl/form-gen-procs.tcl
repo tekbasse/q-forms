@@ -1779,7 +1779,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     {-ignore_parse_issues_p "1"}
     {-rows_count_max "999"}
 } {
-    Converts a row of related form fields formated for input into aqf_2g,
+    Converts a row of related form fields formated for input into qal_3g,
     into multiple rows with related naming conventions. Put another
     way, it takes a well formed list of lists of qaf_2g form input fields into
     multiple scalar arrays of same. For example, suppose one has
@@ -1811,7 +1811,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         set k 0
         set group $group_letter
         while { ( $group eq "" || $group in $groups_used_list \
-                      || $group not in $alphabet_list ) && $k < 26 } {
+                      || !($group in $alphabet_list) ) && $k < 26 } {
             set group [lrange $alphabet_list $k $k]
             incr k
         }
@@ -1862,6 +1862,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         append name ${group} ${column} ${rows_count}
         set rc_list [list type hidden name ${name} value ${rows_count} ]
         append elements_new_lol $rc_list
+        ns_log Notice "qfo::form_list_def_to_css_table_rows.1865: elements_new_lol '${elements_new_lol}'"
         set fldtctr_list $elements_new_lol
     } else {
         set fldtctr_list $elements_lol
