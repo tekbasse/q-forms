@@ -1773,12 +1773,35 @@ ad_proc -public ::qfo::form_list_def_to_array {
 }
 
 ad_proc -public ::qfo::form_list_def_to_css_table_rows {
-    -list_of_lists_name
+    -form_field_defs_to_multiply
     -rows_count
+    {-list_of_lists_name ""}
     {-group_letter ""}
     {-ignore_parse_issues_p "1"}
     {-rows_count_max "999"}
 } {
+    Returns a multiple set of form field definitions by copying each supplied
+    field definition, and changing the field name.
+    This is for use in the <code>qal_3g</code> paradigm.
+    <br><br>
+    <code>form_field_defs_to_multiply</code> The name of a list of field
+    definitions per qal_3g/qfo_2g paradigm that are to be multiplied.
+    <br><br>
+    <code>rows_count</code> The number of times each field is to be
+    multiplied.
+    <br><br>
+    <code>list_of_lists_name</code> The name of the complete form definition
+    list_of_lists that gets passed to qal_3g or qfo_2g.  If provided,
+    this proc will automatically add the generated fields to this list.
+    <br><br>
+    <code>group_letter</code> This a unique, single letter that is assigned to
+    each group of multiplied rows that help identify the group. It is
+    supplied by default, but you can choose it to.
+    <br><br>
+    <code>rows_count_max</code> Fields cannot be multiplied higher than this.
+    On invoices at least, a survey of software specs suggests four digits
+    is considered a practical high limit for BOM items.
+    <br><br>
     Converts a row of related form fields formated for input into qal_3g,
     into multiple rows with related naming conventions. Put another
     way, it takes a well formed list of lists of qaf_2g form input fields into
@@ -1788,16 +1811,28 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     And list_of_lists_name is a list_of_lists defining the fields,
     and rows_count is '2', then this proc returns a well formed list of lists
     with two rows defined using rc table naming convention with a twist.
-
+    <br><br>
     Instead of the conventional group:rowcolumn like sheet1:3A,
     to fit the html form paradigm, name_{group}{column}{row} is used, where
     name is the name of each field.
     As an example, for this proc, groups are designated a letter:
     address_line1_ba3 for second group, first column, third row of
     address_line1.
+    <br><br>
+    This proc does not work with select multiple (checkbox or select)
+    inputs, but those cases *could* be added without too much additional
+    complexity if you find a case that needs them and want to program it.
+    @see qal_3g
 } {
-    upvar 1 $list_of_lists_name elements_lol
+    upvar 1 $form_field_defs_to_multiply elements_lol
     upvar 1 __qfo_groups_used_list groups_used_list
+    if { $list_of_lists_name ne "" } {
+        set add_to_lol_p 1
+        upvar 1 list_of_lists_name lol_name
+    } else {
+        set add_to_lol_p 0
+    }
+
     # Let's put an upper limit on rows,
     # maybe to help avoid some kind of DOS issue
     # A survey of other web app limits suggests 999
@@ -1874,11 +1909,16 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         set rc_list [list type hidden name ${name} value ${rows_count} ]
         lappend elements_new_lol $rc_list
         ns_log Notice "qfo::form_list_def_to_css_table_rows.1865: elements_new_lol '${elements_new_lol}'"
-        set fldtctr_list $elements_new_lol
+        set fldtctr_lol $elements_new_lol
     } else {
-        set fldtctr_list $elements_lol
+        set fldtctr_lol $elements_lol
     }
-
-    return $fldtctr_list
+    if { $add_to_lol_p } {
+        foreach f_list  $fldtctr_lol {
+            lappend lol_name $f_list
+        }
+    }
+    #ns_log Notice "qfo::form_list_def_to_css_table_rows.1921 fldtctr_lol '${fldtctr_lol}'"
+    return $fldtctr_lol
 }
 

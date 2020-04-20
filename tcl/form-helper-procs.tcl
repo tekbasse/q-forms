@@ -2922,3 +2922,20 @@ ad_proc  qfad_is_noquote_p {value} {
         return 1
     }
 }
+
+ad_proc qf_append_lol2_to_lol1 {
+    lol1_name
+    lol2_name
+} {
+    Appends list of lists lol1_name with lol2 list items appended.
+    lol1_name and lol2_name are the names of the list of lists,
+    not their values.
+    @return 1
+} {
+    upvar 1 $lol1_name first_lol
+    upvar 1 $lol2_name second_lol
+    foreach f_list $second_lol {
+        lappend first_lol $f_list
+    }
+    return 1
+} 
