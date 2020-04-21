@@ -1886,7 +1886,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
                 }
 
                 # change name's value by appending $group$column${i}
-                ns_log Notice "form_list_def_to_css_table_rows.1845 array get n_arr '[array get n_arr]'"
+                #ns_log Notice "form_list_def_to_css_table_rows.1845 array get n_arr '[array get n_arr]'"
                 ns_log Notice "form_list_def_to_css_table_rows.1845 n_arr(${name_c}) '$n_arr(${name_c})' group '${group}' column '${column}' i '${i}' column_ct '${column_ct}'"
                 append v_arr(${name_c}) "_" ${group} ${column} $i
                 
@@ -1908,7 +1908,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         append name ${group} ${column} ${rows_count}
         set rc_list [list type hidden name ${name} value ${rows_count} ]
         lappend elements_new_lol $rc_list
-        ns_log Notice "qfo::form_list_def_to_css_table_rows.1865: elements_new_lol '${elements_new_lol}'"
+        #ns_log Notice "qfo::form_list_def_to_css_table_rows.1865: elements_new_lol '${elements_new_lol}'"
         set fldtctr_lol $elements_new_lol
     } else {
         set fldtctr_lol $elements_lol
