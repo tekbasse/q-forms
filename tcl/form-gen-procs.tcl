@@ -1887,7 +1887,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
 
                 # change name's value by appending $group$column${i}
                 #ns_log Notice "form_list_def_to_css_table_rows.1845 array get n_arr '[array get n_arr]'"
-                ns_log Notice "form_list_def_to_css_table_rows.1845 n_arr(${name_c}) '$n_arr(${name_c})' group '${group}' column '${column}' i '${i}' column_ct '${column_ct}'"
+                #ns_log Notice "form_list_def_to_css_table_rows.1845 n_arr(${name_c}) '$n_arr(${name_c})' group '${group}' column '${column}' i '${i}' column_ct '${column_ct}'"
                 append v_arr(${name_c}) "_" ${group} ${column} $i
                 
                 # change back to list
