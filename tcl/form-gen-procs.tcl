@@ -1938,6 +1938,7 @@ ad_proc -public qal_3g {
     {-form_id ""}
     {-doc_type ""}
     {-form_varname "form_m"}
+    {-form_verify_varname ""}
     {-duplicate_key_check "0"}
     {-multiple_key_as_list "0"}
     {-hash_check "0"}
@@ -1957,13 +1958,13 @@ ad_proc -public qal_3g {
     <br><br>
 
     A 'scalared array' here means a scalar variable with a suffix
-    number appened that represents an array index.  For example, if an input
+    number appended that represents an array index.  For example, if an input
     tag with the name's attribute set to 'foobar', and there are 3 rows
     of the input tag, then it would be represented with something like
     foobar_1, foobar_2, foobar_3. Actually, it would be foobar_aa1,
     foobar_aa2, foobar_aa3. The two letters before the number help
     with structuring the form on the page properly by putting the fields
-    in the expected order. 
+    in the expected order and grouping. 
 
     <br><br>
     2. split 'form_varname'(s) for placing different parts of the output
@@ -1972,11 +1973,12 @@ ad_proc -public qal_3g {
     '<code>context</code>' and its value (name/value pair).
     The value of context is the form_varname that the associated form field
     html is assigned to.  In qfo_2g, the form output defaults to form_html.
-    In qal_3g, uses the same parameter 'form_varname' with default form_m,
-    but outputs the results in a series of variables. E.g. form_m1, form_m2,
-    form_m3. where "form_m" is the value of attribute "context" supplied
+    In qal_3g the same parameter 'form_varname' is used,
+    but outputs the results in a series of variables.
+    E.g. form_varname1, form_varname2, form_varname3
+    where "form_varname" is the value of attribute "context" supplied
     during form field defintion. If the context attribute is left out of any
-    field, the default form_m is used.
+    field, the default form_varname is used.
     
     The field <code>context</code> attribute and its value determines
     which form context the form element is added to.
@@ -1986,19 +1988,30 @@ ad_proc -public qal_3g {
     supplied, the previous context is assumed based on TABINDEX order.
     The generated form fragments containing HTML markup language and
     are assigned to the form_varname with a numeric suffix.
-    form_varname_open contains the open FORM tag.
-    form_varname1 contains the first form fragment determined by context
-    form_varname2 contains the second form fragment..
-    form_varnameN contains the Nth form fragment
-    form_varname_close contains the close FORM tag. This is supplied for
-    consistency, but its value is constant.
-    The first context contains open FORM tag. The last defined context includes
+    Using the default form_varname value 'form_m', these variables are created:
+    <br><code>form_m_open</code> contains the open FORM tag.
+    <br><code>form_m1</code> contains the first form fragment determined by context
+    <br><code>form_m2</code> contains the second form fragment..
+    <br><code>form_mN</code> contains the Nth form fragment
+    <br><code>form_m_close</code> contains the close FORM tag.
+    This is supplied for consistency, but its value is constant.
+    <br>The first context contains open FORM tag.
+    The last defined context includes
     the closed FORM tag.  <b>If there is no context provided, the context
     defaults to form_varname's value.
     <br><br>
-    Each html form element (tag) can now have attributes "html_before" and
+    Each html form element (tag) may now have attributes "html_before" and
     "html_after", which inserts that html before and after.
-
+    <br><br>
+    <b>app workflow modes</b>
+    qal_3g provides these workflow modes:
+    1. 'validate' Generates a blank form when data validates.
+    Also, importantly, passes validated values from the form.
+    2. If <code>form_verify_varname</code> is not "",
+    it generates a form with validated values in
+    supplied form_verify_varname when the form validates.
+    This is useful if app wants to display validated information
+    after processing.
     
     <br><br>
 
@@ -2152,6 +2165,15 @@ ad_proc -public qal_3g {
     upvar 1 $form_varname form_m
     upvar 1 ${form_varname}_open form_m_open
     upvar 1 ${form_varname}_close form_m_close
+
+    set form_v_exists_p 0
+    if { $form_verify_varname ne "" } {
+        upvar 1 ${form_verify_varname} form_v
+        upvar 1 ${form_varname}_open form_v_open
+        upvar 1 ${form_varname}_close form_v_close
+        set form_v_exists_p 1
+    }
+
     # upvar assignments like:  upvar 1 ${form_varname}N form_mN
     # are deferred until determined dynamically
 
@@ -2424,6 +2446,7 @@ ad_proc -public qal_3g {
     ### count contexts, create upvar links for them.
     set context_ct 1
     set context_prev ""
+    set context2_prev ""
     set one_digit {[1-9]}
     set two_digits {[1-9][0-9]}
     foreach f_hash $fields_ordered_list {
@@ -2431,47 +2454,68 @@ ad_proc -public qal_3g {
         ### in fcshtml_arr, but not in fields_arr.
         ### If not, add one.
         if { [info exists fcshtml_arr(${f_hash},${context_c}) ] } {
-            set context $fcshtml_arr(${f_hash},${context_c})
+            set a_context $fcshtml_arr(${f_hash},${context_c})
         } else {
             #ns_log Notice "qal_3g.516 no context attr found for f_hash '${f_hash}'"
             set fcshtml_arr(${f_hash},${context_c}) ""
         }
         
         set fvarn_len [string length $form_varname]
+
         ### avoid form_varname / form_m mixup.
         ### Here we just want the name of form_m
         set fvarn $form_varname
         # switch doesn't accept variables for the cases, so
         # using if statements.
         #ns_log Notice "qal_3g.524 fvarn '${fvarn}'"
-        if { [string match "${fvarn}${two_digits}" $context] || [string match "${fvarn}${one_digit}" $context] } {
+        if { $gen_validated_form_p } {
+            set fvvarn_len [string length $form_verify_varname]
+            set fvvarn $form_verify_varname
+        }
+        # make a form_m and maybe form_v context
+        if { [string match "${fvarn}${two_digits}" $a_context] || [string match "${fvarn}${one_digit}" $a_context] } {
             # in good form. Leave as is.
             # Assumes there are less than 9999 contexts on a page.
             # update context_ct
-            set context_new $context
-            set context_ct [string range $context $fvarn_len end]
-        } elseif { [string match "*${two_digits}" $context] || [string match "*${one_digit}" $context ] } {
+            set context_new $fvarn
+            set context_ct [string range $a_context $fvarn_len end]
+            if { $gen_validated_form_p } {
+                set context2_new $fvvarn
+            }
+        } elseif { [string match "*${two_digits}" $a_context] || [string match "*${one_digit}" $a_context ] } {
             # There's a number there,
             # and maybe nothing else, or maybe a spelling
-            # issue. Use the number..
+            # issue or different context root. Use the number..
             # update context_ct to the same.
             #ns_log Notice "qal_3g.540: context '${context}' not \
             #    recognized for f_hash '${f_hash}' form_id '${form_id}'"
-            regexp -- {^[^0-9]*([0-9]+)$} $context context_ct
+            regexp -- {^[^0-9]*([0-9]+)$} $a_context context_ct
             set context_new $fvarn
             append context_new $context_ct
+            if { $gen_validated_form_p } {
+                set context2_new $fvvarn
+            }
         } elseif { $context_prev ne "" } {
             # No recognizable context assigned.
             # Assign the same as the last context, or the first
             # if no previous ones.
             set context_new $context_prev
+            if { $gen_validated_form_p } {
+                set context2_new $context2_prev
+            }
             #ns_log Notice "qal_3g.548 Using previous context."
         } else {
             set context_new $fvarn
             append context_new $context_ct
             #ns_log Notice "qal_3g.552 Creating new context '${context_new}'"
+            if { $gen_validated_form_p } {
+                set context2_new $fvvarn
+                append context2_new $context_ct
+            }
         }
         #ns_log Notice "qal_3g.553 context '${context}' -> context_new '${context_new}'"
+        ###########
+            
         ### Create the upvar link before the context is used.
         if { ![info exists ${context_new} ] } {
             #ns_log Notice "qal_3g.557: creating context '${context_new}' for form_varname/fvarn '${fvarn}'"
@@ -2481,11 +2525,16 @@ ad_proc -public qal_3g {
             ### set $context_new ""
         }
         #ns_log Notice "qal_3g.563 f_hash '${f_hash}'  context '${context_new}'"
+        if { $gen_validated_form_p && ![info exists ${context2_new} ] } {
+            upvar 1 $context2_new $context2_new
+        }
         set fcshtml_larr(${f_hash},${context_c}) $context_new
         set context_prev $context_new
-
+        if { $gen_validated_form_p } {
+            set fvv_context_arr(${f_hash}) $context2_new
+            set context2_prev $context2_new
+        }
     }
-
 
 
     # Create a field attributes array
@@ -3157,10 +3206,19 @@ ad_proc -public qal_3g {
         # put qfv_arr back into qfi_arr
         array set qfi_arr [array get qfv_arr]
 
-    } else {
-        # validated_p 0, form_submitted_p is 0 or 1.
+    }
 
-        # generate form
+    if { $validated_p && $form_v_exists_p } {
+        set gen_validated_form_p 1
+    }
+
+    ### Expand permissions to consider multiple output possibilities
+
+    if { !$validated_p || $gen_validated_form_p } {
+        # if validated_p 0, form_submitted_p is 0 or 1.
+        # OR $validated_p is true, and set write_p 0
+        
+        # generate form(s)
 
         # Blend tabindex attributes, used to order html tags:
         # input, select, textarea. 
@@ -3200,17 +3258,14 @@ ad_proc -public qal_3g {
 
         
         # build form using qf_* api
-        
-        set form_m ""
-        
-        set form_id [qf_form form_id $form_id hash_check $hash_check]
-        set form_m_open [qf_read form_id $form_id]
+
         #ns_log Notice "qal_3g.1271: form_m_open '${form_m_open}'"
         
         # Use qfi_fields_sorted_list to generate 
         # an ordered list of form elements
 
-        if { !$validated_p && $form_submitted_p } {
+        if { ( !$validated_p && $form_submitted_p ) \
+                 || $gen_validated_form_p } {
 
             # Update form values to those provided by user.
             # That is, update value of 'value' attribute to one from qfv_arr
@@ -3234,8 +3289,9 @@ ad_proc -public qal_3g {
                     set fav_arr(${nlc}) $v
                     set fan_arr(${nlc}) $n
                 }
-
-
+                ### default value is here in  fav_arr(value)
+                set fatts_def_v_arr(${f_hash}) $fav_arr(value)
+                
                 if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
 
@@ -3330,94 +3386,130 @@ ad_proc -public qal_3g {
         ### the rendering, so write_p is checked for each tag, and disabled
         ### or the equivalent is added to the attributes.
         
-        # build form
-        set tabindex $tabindex_start
-        
-        foreach f_hash $qfi_fields_sorted_list {
-            #ns_log Notice "qal_3g.1400. f_hash '${f_hash}'"
-            set atts_list $fatts_arr(${f_hash},form_tag_attrs)
-            foreach {n v} $atts_list {
-                set nlc [string tolower $n]
-                set attn_arr(${nlc}) $n
-                set attv_arr(${nlc}) $v
-            }
-            set f_context $fcshtml_arr(${f_hash},${context_c})
-            
-            if { [info exists attv_arr(tabindex) ] } {
-                if { $suppress_tabindex_p } {
-                    unset attv_arr(tabindex)
-                    unset attn_arr(tabindex)
-                } else {
-                    set attv_arr(tabindex) $tabindex
-                }
-            }
-
-            set atts_list [list ]
-            foreach nlc [array names attn_arr ] {
-                lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
-            }
-            if { !$write_p } {
-                lappend atts_list $disabled_c 1
-            }
-            array unset attn_arr
-            array unset attv_arr
-            
-            ### add html before tag
-            set html_b $fcshtml_arr(${f_hash},${html_before_c})
-            if { $html_b ne "" } {
-                #qf_append html $html_b
-                append $f_context $html_b
-            }
-            
-            if { $fatts_arr(${f_hash},is_datatyped_p) } {
-
-                switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
-                    input {
-                        #ns_log Notice "qal_3g.1439: qf_input \
-                        ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
-                        append $f_context [qf_input $atts_list ]
-                    }
-                    textarea {
-                        #ns_log Notice "qal_3g.1444: qf_textarea \
-                        # fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
-                        append $f_context [qf_textarea $atts_list ]
-                    }
-                    default {
-                        # this is not a form_tag_type
-                        # tag attribute 'type' determines if this
-                        # is checkbox, radio, select, or select/multiple
-                        # This should not happen, because
-                        # fatts_arr(${f_hash},is_datatyped_p) is false for 
-                        # these cases.
-                        ns_log Warning "qal_3g.1455: Unexpected form element: \
- f_hash '${f_hash}' ignored. \
- fatts_arr(${f_hash},form_tag_type) '$fatts_arr(${f_hash},form_tag_type)'"
-                    }
-                }
-            } else {
-                # choice/choices
-
-                if { $fatts_arr(${f_hash},multiple_names_p) } {
-                    append $f_context [qf_choices $atts_list ]
-                } else {
-                    append $f_context [qf_choice $atts_list ]
-                }
-
-            }
-
-            ### add html after tag
-            set html_a $fcshtml_arr(${f_hash},${html_after_c})
-            if { $html_a ne "" } {
-                #qf_append html $html_a
-                append $f_context $html_a
-            }
-            
-            incr tabindex
+        # build form(s)
+        ### if gen_validated_form_p there are two forms to generate
+        set form_count 1
+        if { $gen_validated_form_p } {
+            set form_count 2
         }
-        #qf_close form_id $form_id
-        set form_m_close "</form>"
-        append form_m [qf_read form_id $form_id]
+        for { set ff 0} {$ff < $form_count} { incr ff} {
+            # ff is 1 to generate disabled, validated form
+            # ff is 0 to generate unvalidated form or blank form
 
+            if { $ff } {
+                set form_v ""
+                # No need for hash check. It's not submitted
+                set form2_id [qf_form form_id "${form_id}-2"]
+                set form2_open [qf_read form_id $form2_id]
+            } else {
+                set form_m ""
+                set form_id [qf_form form_id $form_id hash_check $hash_check]
+                set form_m_open [qf_read form_id $form_id]
+            }
+            
+            set tabindex $tabindex_start
+            
+            foreach f_hash $qfi_fields_sorted_list {
+                #ns_log Notice "qal_3g.1400. f_hash '${f_hash}'"
+                set atts_list $fatts_arr(${f_hash},form_tag_attrs)
+                foreach {n v} $atts_list {
+                    set nlc [string tolower $n]
+                    set attn_arr(${nlc}) $n
+                    set attv_arr(${nlc}) $v
+                }
+                if { $ff } {
+                    set f_context $fvv_context_arr(${f_hash})
+                    # set default value
+                    set attv_arr(value) $fatts_def_v_arr(${f_hash})
+                } else {
+                    set f_context $fcshtml_arr(${f_hash},${context_c})
+                }
+                
+                if { [info exists attv_arr(tabindex) ] } {
+                    if { $suppress_tabindex_p } {
+                        unset attv_arr(tabindex)
+                        unset attn_arr(tabindex)
+                    } else {
+                        set attv_arr(tabindex) $tabindex
+                    }
+                }
+                
+                set atts_list [list ]
+                foreach nlc [array names attn_arr ] {
+                    lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
+                }
+                if { !$write_p || $ff } {
+                    lappend atts_list $disabled_c 1
+                }
+                array unset attn_arr
+                array unset attv_arr
+                
+                ### add html before tag
+                set html_b $fcshtml_arr(${f_hash},${html_before_c})
+                if { $html_b ne "" } {
+                    #qf_append html $html_b
+                    append $f_context $html_b
+                }
+                
+                if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                    
+                    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
+                        input {
+                            #ns_log Notice "qal_3g.1439: qf_input \
+                                   ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                            append $f_context [qf_input $atts_list ]
+                        }
+                        textarea {
+                            #ns_log Notice "qal_3g.1444: qf_textarea \
+                                      # fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                            append $f_context [qf_textarea $atts_list ]
+                        }
+                        default {
+                            # this is not a form_tag_type
+                            # tag attribute 'type' determines if this
+                            # is checkbox, radio, select, or select/multiple
+                            # This should not happen, because
+                            # fatts_arr(${f_hash},is_datatyped_p) is false for 
+                            # these cases.
+                            ns_log Warning "qal_3g.1455: Unexpected form element: \
+ f_h                        ash '${f_hash}' ignored. \
+ fatts_arr(${f_hash},form_ta    g_type) '$fatts_arr(${f_hash},form_tag_type)'"
+                        }
+                    }
+                } else {
+                    # choice/choices
+                    
+                    if { $fatts_arr(${f_hash},multiple_names_p) } {
+                        append $f_context [qf_choices $atts_list ]
+                    } else {
+                        append $f_context [qf_choice $atts_list ]
+                    }
+                    
+                }
+                
+                ### add html after tag
+                set html_a $fcshtml_arr(${f_hash},${html_after_c})
+                if { $html_a ne "" } {
+                    #qf_append html $html_a
+                    append $f_context $html_a
+                }
+                
+                incr tabindex
+            }
+            # close foreach f_hash
+            #qf_close form_id $form_id
+
+
+            if { $ff } {
+                set form_v_close "</form>"
+                append form_v [qf_read form_id $form2_id]
+            } else {
+                set form_m_close "</form>"
+                append form_m [qf_read form_id $form_id]
+            }
+        }
+        # end form generation loop
+        
     }    
     return $validated_p
 }
