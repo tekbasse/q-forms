@@ -212,7 +212,7 @@ ad_proc -public qf_get_inputs_as_array {
             }
         }
     }
-    ns_log Notice "qf_get_inputs_as_array.215: arg_list '${arg_list}' arg_arr(multiple_key_as_list) '$arg_arr(multiple_key_as_list)' "
+  
     if { ( $arg_arr(post_only) && [string match -nocase "post" [ad_conn method]] ) || !$arg_arr(post_only) } {
         # get form variables passed with connection
         set __form_input_exists 0
@@ -977,7 +977,6 @@ ad_proc -public qf_select {
         set value_list_html ""
     }
     if { [info exists attributes_arr(value)] } {
-        ns_log Notice "qfo_2g.971 attributes_arr(value) '$attributes_arr(value)'"
         append value_list_html [qf_options $attributes_arr(value)]
         
     }
