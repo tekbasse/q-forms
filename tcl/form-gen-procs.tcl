@@ -285,7 +285,7 @@ ad_proc -public qfo_2g {
     {-doc_type ""}
     {-form_varname "form_m"}
     {-duplicate_key_check "0"}
-    {-multiple_key_as_list "0"}
+    {-multiple_key_as_list "1"}
     {-hash_check "0"}
     {-post_only "0"}
     {-tabindex_start "1"}
@@ -997,7 +997,7 @@ ad_proc -public qfo_2g {
                                   multiple_key_as_list $multiple_key_as_list \
                                   hash_check $hash_check \
                                   post_only $post_only ]
-        #ns_log Debug "qfo_2g.891 array get qfi_arr '[array get qfi_arr]'"
+        #ns_log Notice "qfo_2g.891 array get qfi_arr '[array get qfi_arr]'"
     } 
 
     # Make sure every qfi_arr(x) exists for each field
@@ -1063,7 +1063,7 @@ ad_proc -public qfo_2g {
 
             # validate.
             ns_log Debug "qfo_2g.1077: f_hash '${f_hash}', datatype '${datatype}'"
-            ns_log Notice "qfo_2g.1078 array get qfv_arr '[array get qfv_arr]'"
+            #ns_log Notice "qfo_2g.1078 array get qfv_arr '[array get qfv_arr]'"
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 # Do not set a name to exist here,
                 # because then it might validate and provide
@@ -1110,11 +1110,14 @@ ad_proc -public qfo_2g {
                         # qfv_arr may contain multiple values
                         foreach m $qfv_arr(${name}) {
                             set m_valid_p 1
-                            if { [lsearch -exact $fchoices_larr(${name}) $m ] < 0 } {
-                                # name exists, value not found
-                                set m_valid_p 0
-                                ns_log Notice "qfo_2g.1136: name '${name}' \
+                            if { [info exists fchoices_larr(${name})] } {
+                                if { [lsearch -exact $fchoices_larr(${name}) $m ] < 0 } {
+                                    # name exists, value not found
+                                    set m_valid_p 0
+                                    ns_log Notice "qfo_2g.1136: name '${name}' \
  has not valid value '$qfv_arr(${name})'"
+                                    
+                                }
                             }
                             set valid_p [expr { $valid_p && $m_valid_p } ]
                         }

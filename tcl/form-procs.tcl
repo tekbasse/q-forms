@@ -200,6 +200,7 @@ ad_proc -public qf_get_inputs_as_array {
     } else {
         set arg_list [list ]
     }
+    
     # normalize args 
     foreach {name value} $arg_list {
         set attribute_index [lsearch -exact $arg_full_list $name]
@@ -211,7 +212,7 @@ ad_proc -public qf_get_inputs_as_array {
             }
         }
     }
-
+    ns_log Notice "qf_get_inputs_as_array.215: arg_list '${arg_list}' arg_arr(multiple_key_as_list) '$arg_arr(multiple_key_as_list)' "
     if { ( $arg_arr(post_only) && [string match -nocase "post" [ad_conn method]] ) || !$arg_arr(post_only) } {
         # get form variables passed with connection
         set __form_input_exists 0
@@ -248,6 +249,7 @@ ad_proc -public qf_get_inputs_as_array {
                 set __form_input_exists 1
                 # check for duplicate key?
                 set __form_key_exists [info exists __form_buffer_arr(${__form_key}) ]
+                
                 if { $arg_arr(duplicate_key_check) && $__form_key_exists } {
                     if { $__form_input ne $__form_buffer_arr(${__form_key}) } {
                         # which one is correct? log error
@@ -272,11 +274,11 @@ ad_proc -public qf_get_inputs_as_array {
                     set __form_buffer_arr(${__form_key}) $__form_input
                     #                ns_log Debug "qf_get_inputs_as_array.231: set ${form_array_name}($__form_key) '${__form_input}'."
                 }
-                
-                # next key-value pair
             }
-            
+
         }
+        # next key-value pair
+        
     } else {
         set __form_input_exists 0
         ns_log "qf_get_inputs_as_array.26: form not sent via POST. Ignored."
@@ -1116,7 +1118,7 @@ ad_proc -public qf_close {
 } {
     Closes a form by appending a close form tag (and fieldset tag if any are open). if form_id supplied, only closes that referenced form and any fieldsets associated with it. 
 
-@return Number of forms that are closed.
+    @return Number of forms that are closed.
 } {
     # use upvar to set form content, set/change defaults
     upvar 1 __form_ids_list __form_ids_list
@@ -1850,14 +1852,14 @@ ad_proc -public qf_choice {
 
         foreach input_attributes_list $attributes_arr(value) {
             if { ![qf_is_even [llength $input_attributes_list ] ] } {
-		# Provide more useful error detail
-		set err_detail ""
-		set item_count 0
-		foreach item ${input_attributes_list} {
-		    append err_detail "\nItem ${item_count} '${item}'"
-		    incr item_count
-		}
-		ns_log Error "qf_choice.1804 'value' attribute count is odd. \
+                # Provide more useful error detail
+                set err_detail ""
+                set item_count 0
+                foreach item ${input_attributes_list} {
+                    append err_detail "\nItem ${item_count} '${item}'"
+                    incr item_count
+                }
+                ns_log Error "qf_choice.1804 'value' attribute count is odd. \
  arg_list '${arg_list}'. Issue at: value '${input_attributes_list}' \
 Detail: ${err_detail}"
                 ad_script_abort
@@ -1912,7 +1914,7 @@ Detail: ${err_detail}"
                         set input_arr(${ti_name}) $unselected
                     }
                 } else {
-                        set input_arr(${ti_name}) $unselected
+                    set input_arr(${ti_name}) $unselected
                 }
             }
 
@@ -1970,7 +1972,7 @@ ad_proc -public qf_choices {
 
     Set "selected" attribute to 1 in the value list_of_lists to indicate item selected. Default is unselected (if selected attributed is not included, or its value not 1)..
 
-<pre>
+    <pre>
     Example usage. This code:
 
     set multi_choice_tag_attribute_list [list [list name card1 label " label1 " value visa1 selected 1] [list name card2 label " label2 " value visa2 selected 0] [list name card3 label " label3 " value visa3] ]
@@ -1978,13 +1980,13 @@ ad_proc -public qf_choices {
 
     Generates:
 
-&lt;ul>
-&lt;li>&lt;label for="card1-9713-9984053497942387">&lt;input value="visa1" name="card1" type="checkbox" id="card1-9713-9984053497942387" checked> label1 &lt;/label>
-&lt;/li>&lt;li>&lt;label for="card2-9713-37947959533607684">&lt;input value="visa2" name="card2" type="checkbox" id="card2-9713-37947959533607684"> label2 &lt;/label>
-&lt;/li>&lt;li>&lt;label for="card3-9713-7510373799725651">&lt;input value="visa3" name="card3" type="checkbox" id="card3-9713-7510373799725651"> label3 &lt;/label>
-&lt;/li>&lt;/ul>
+    &lt;ul>
+    &lt;li>&lt;label for="card1-9713-9984053497942387">&lt;input value="visa1" name="card1" type="checkbox" id="card1-9713-9984053497942387" checked> label1 &lt;/label>
+    &lt;/li>&lt;li>&lt;label for="card2-9713-37947959533607684">&lt;input value="visa2" name="card2" type="checkbox" id="card2-9713-37947959533607684"> label2 &lt;/label>
+    &lt;/li>&lt;li>&lt;label for="card3-9713-7510373799725651">&lt;input value="visa3" name="card3" type="checkbox" id="card3-9713-7510373799725651"> label3 &lt;/label>
+    &lt;/li>&lt;/ul>
 
-</pre>
+    </pre>
     <p>The id and for attributes are auto generated when not supplied.</p>
     <p>For a complete example case, see tcl/adp files at q-forms/www/admin/test.tcl and test.adp</p>
 } {
@@ -2195,7 +2197,7 @@ ad_proc -public qf_choices {
         append tag_wrapping_arg $tag_wrapping ">"
 
         append return_html [qf_append form_id $attributes_arr(form_id) html $tag_wrapping_arg]
-            
+        
 
 
     } else {
@@ -2259,27 +2261,27 @@ ad_proc -private qf_html4_tag_attributes {
         }
         fieldset {
             lappend attr_list accesskey]
-        }
-        textarea {
-            lappend attr_list name rows cols disabled readonly tabindex accesskey
-        }
-        select {
-            lappend attr_list name size multiple disabled tabindex disabled
-        }
-        input {
-            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey alt align accept
-        }
-        optgroup {
-            lappend attr_list selected disabled label
-        }
-        option {
-            lappend attr_list selected value label disabled
-        }
-        default {
-            set attr_list [list ]
-        }
     }
-    return $attr_list
+    textarea {
+        lappend attr_list name rows cols disabled readonly tabindex accesskey
+    }
+    select {
+        lappend attr_list name size multiple disabled tabindex disabled
+    }
+    input {
+        lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey alt align accept
+    }
+    optgroup {
+        lappend attr_list selected disabled label
+    }
+    option {
+        lappend attr_list selected value label disabled
+    }
+    default {
+        set attr_list [list ]
+    }
+}
+return $attr_list
 }
 
 ad_proc -private qf_html5_tag_attributes {
@@ -2459,19 +2461,19 @@ ad_proc -public qf_element {
 } {
     Returns an html or xml element consisting of a consistent structure based on tag type and passed content and/or attributes (as a tcl name value list).
     Does not get passed to a form_id.
-<br><br>
+    <br><br>
     Accepts name value pairs, where name is: tag, attribute_nv_list or content.
-<br><br>
+    <br><br>
     tag is the tag of the element.
     For example, if element is '&lt;hr />', tag is 'hr'.
-<br><br>
+    <br><br>
     attribute_nv_list is the name value list to add to the element as attributes. 
-If list consists of 'class test', then continuing the hr example, attributes are added like so:
+    If list consists of 'class test', then continuing the hr example, attributes are added like so:
     &lt;hr class="test" />
-<br><br>
+    <br><br>
     content is the information wrapped by the element, if any.
     For example, if tag is 'p', then content is: &lt;p>content&lt;/p>.
-<br><br>
+    <br><br>
     No validation is performed on generated markup.
 } {
     upvar 1 doc doc
@@ -2552,11 +2554,11 @@ ad_proc -public qf_button_form {
     # set defaults
     set names_list [concat $form_list $button_list $hidden_list ]
     foreach name $names_list {
-	set name_larr(${name}) [list ]
+        set name_larr(${name}) [list ]
     }
     foreach {n v} $args {
-	set nlc [string tolower $n]
-	lappend name_larr(${nlc}) $v
+        set nlc [string tolower $n]
+        lappend name_larr(${nlc}) $v
     }
 
     
@@ -2565,32 +2567,32 @@ ad_proc -public qf_button_form {
     # set default button_id
     set button_id "button"
     foreach name $button_list {
-	set value [lindex $name_larr(${name}) 0]
-	if { $value eq "" && $name ne "value" } {
-	    # skip
-	} else {
-	    lappend button_atts_list $name $value
-	    if { $name eq "id" } {
-		set button_id $value
-	    }
-	}
-	
-	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
+        set value [lindex $name_larr(${name}) 0]
+        if { $value eq "" && $name ne "value" } {
+            # skip
+        } else {
+            lappend button_atts_list $name $value
+            if { $name eq "id" } {
+                set button_id $value
+            }
+        }
+        
+        set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
     }
 
     set form_atts_list [list ]
     foreach name $form_list {
-	set value [lindex $name_larr(${name}) 0]
-	if { $value eq "" && $name ne "value" } {
-	    # mostly skip
-	    if { $name eq "id" } {
-		append button_id "-form"
-		lappend form_atts_list $name $button_id
-	    }
-	} else {
-	    lappend form_atts_list $name $value
-	}
-	set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
+        set value [lindex $name_larr(${name}) 0]
+        if { $value eq "" && $name ne "value" } {
+            # mostly skip
+            if { $name eq "id" } {
+                append button_id "-form"
+                lappend form_atts_list $name $button_id
+            }
+        } else {
+            lappend form_atts_list $name $value
+        }
+        set name_larr(${name}) [lrange $name_larr(${name}) 1 end]
     }
     
 
@@ -2600,10 +2602,10 @@ ad_proc -public qf_button_form {
 
     set i 0
     foreach name $name_larr(name) {
-	if { $name ne "" } {
-	    qf_input type hidden name $name value [lindex $name_larr(value) $i]
-	}
-	incr i
+        if { $name ne "" } {
+            qf_input type hidden name $name value [lindex $name_larr(value) $i]
+        }
+        incr i
     }
     qf_close form_id $form_id
     
