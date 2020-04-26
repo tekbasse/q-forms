@@ -956,8 +956,8 @@ ad_proc -public qfo_2g {
             set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
             
         }
-        ##ns_log Debug "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
-        ##ns_log Debug "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
+        ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
+        ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
 	
         array unset hfv_arr
         array unset hfn_arr
@@ -1012,8 +1012,8 @@ ad_proc -public qfo_2g {
     # by calling qf_get_inputs_as_array *before* qfo_2g
     #ns_log Debug "qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
 
-    #ns_log Debug "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
-
+    ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
+   
     # qfv = field value
     foreach f_hash $qfi_fields_list {
 
@@ -1729,15 +1729,9 @@ ad_proc -public ::qfo::form_list_def_to_array {
                     # If type is checkbox, it is a multiple choice
                     # If type is select, it must be multiple choice, because
                     # if it wasn't, it would have a 'name' attribute.
-                    if { $v_arr(type) eq $select_c } {
-                        set mx [lsearch -exact $n_list $multiple_c ]
-                        if { $mx > -1 } {
-                            set element_nvl [lreplace $element_nvl $mx $mx 1]
-                        } else {
-                            lappend element_nvl $multiple_c 1
-                        }
-                    }
-
+                    set n_arr(${multiple_c}) $multiple_c
+                    set v_arr(${multiple_c}) 1
+                    
                     # if id exists, use it, or create one.
                     if { [info exists v_arr(id) ] } {
                         set multiple_ref $v_arr(id)
@@ -1745,7 +1739,12 @@ ad_proc -public ::qfo::form_list_def_to_array {
                         set multiple_ref $multiple_c
                         append multiple_ref $multiple_i
                     }
-                    set fields_arr(${multiple_ref}) $element_nvl
+                    set element2_nvl [list ]
+                    foreach nlc [array names n_arr] {
+                        lappend element2_nvl $n_arr(${nlc}) $v_arr(${nlc})
+                    }
+
+                    set fields_arr(${multiple_ref}) $element2_nvl
                     lappend fields_ordered_list $multiple_ref
                     incr multiple_i
                 }
@@ -2449,6 +2448,9 @@ ad_proc -public qal_3g {
     set context2_prev ""
     set one_digit {[1-9]}
     set two_digits {[1-9][0-9]}
+
+    # We don't know if form is validated yet,
+    # so have to use form_v_exists_p instead of gen_validated_form_p here.
     foreach f_hash $fields_ordered_list {
         ### Every html element should have a 'context' attribute
         ### in fcshtml_arr, but not in fields_arr.
@@ -2468,7 +2470,7 @@ ad_proc -public qal_3g {
         # switch doesn't accept variables for the cases, so
         # using if statements.
         #ns_log Notice "qal_3g.524 fvarn '${fvarn}'"
-        if { $gen_validated_form_p } {
+        if { $form_v_exists_p } {
             set fvvarn_len [string length $form_verify_varname]
             set fvvarn $form_verify_varname
         }
@@ -2479,7 +2481,7 @@ ad_proc -public qal_3g {
             # update context_ct
             set context_new $fvarn
             set context_ct [string range $a_context $fvarn_len end]
-            if { $gen_validated_form_p } {
+            if { $form_v_exists_p } {
                 set context2_new $fvvarn
             }
         } elseif { [string match "*${two_digits}" $a_context] || [string match "*${one_digit}" $a_context ] } {
@@ -2492,7 +2494,7 @@ ad_proc -public qal_3g {
             regexp -- {^[^0-9]*([0-9]+)$} $a_context context_ct
             set context_new $fvarn
             append context_new $context_ct
-            if { $gen_validated_form_p } {
+            if { $form_v_exists_p } {
                 set context2_new $fvvarn
             }
         } elseif { $context_prev ne "" } {
@@ -2500,7 +2502,7 @@ ad_proc -public qal_3g {
             # Assign the same as the last context, or the first
             # if no previous ones.
             set context_new $context_prev
-            if { $gen_validated_form_p } {
+            if { $form_v_exists_p } {
                 set context2_new $context2_prev
             }
             #ns_log Notice "qal_3g.548 Using previous context."
@@ -2508,7 +2510,7 @@ ad_proc -public qal_3g {
             set context_new $fvarn
             append context_new $context_ct
             #ns_log Notice "qal_3g.552 Creating new context '${context_new}'"
-            if { $gen_validated_form_p } {
+            if { $form_v_exists_p } {
                 set context2_new $fvvarn
                 append context2_new $context_ct
             }
@@ -2525,12 +2527,12 @@ ad_proc -public qal_3g {
             ### set $context_new ""
         }
         #ns_log Notice "qal_3g.563 f_hash '${f_hash}'  context '${context_new}'"
-        if { $gen_validated_form_p && ![info exists ${context2_new} ] } {
+        if { $form_v_exists_p && ![info exists ${context2_new} ] } {
             upvar 1 $context2_new $context2_new
         }
         set fcshtml_larr(${f_hash},${context_c}) $context_new
         set context_prev $context_new
-        if { $gen_validated_form_p } {
+        if { $form_v_exists_p } {
             set fvv_context_arr(${f_hash}) $context2_new
             set context2_prev $context2_new
         }
@@ -2740,7 +2742,7 @@ ad_proc -public qal_3g {
         # parsing at these logical branches:  is_datatyped_p
         
 
-        #ns_log Notice "qal_3g.774 array get hfv_arr '[array get hfv_arr]'"
+        ns_log Notice "qal_3g.774 array get hfv_arr '[array get hfv_arr]'"
 
         set tag_type ""
         set datatype ""
@@ -2755,9 +2757,12 @@ ad_proc -public qal_3g {
         if { [info exists hfv_arr(${datatype_c}) ] } {
             # This field is partly defined by using datatype
             set datatype $hfv_arr(${datatype_c})
-
-            #ns_log Notice "qal_3g.7382: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
-
+            ns_log Notice "qal_3g.781 datatype '${datatype}'"
+            ns_log Notice "qal_3g.782: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
+   ######         if { ![info exists qdt_types_arr(${datatype}) ] } {
+   #             set datatype $text_c
+   #             set fatts_arr(${f_hash},${datatype_c}) $text_c
+   ######         }
             set dt_idx $datatype
             append dt_idx $comma_c $form_tag_type_c
             set tag_type $qdt_types_arr(${dt_idx})
