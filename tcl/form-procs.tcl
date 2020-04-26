@@ -1074,14 +1074,14 @@ ad_proc -private qf_option {
     if { ([info exists attributes_arr(selected)] && $attributes_arr(selected) eq "1") && $attributes_arr(selected) eq "1" } {
         set option_html "<option"
         append option_html [qf_insert_attributes $tag_attributes_list]
-        append option_html "selected>" $name_html "</option>\n"
+        append option_html " selected>" $name_html "</option>\n"
     } elseif { [info exists attributes_arr(disabled)] && $attributes_arr(disabled) eq "1" } {
         set option_html "<option"
         append option_html [qf_insert_attributes $tag_attributes_list]
         if { $__qf_doctype eq "xml" } {
-            append option_html "disabled=\"disabled\">"
+            append option_html " disabled=\"disabled\">"
         } else {
-            append option_html "disabled>"
+            append option_html " disabled>"
         }
         append option_html $name_html "</option>\n"
     } else {
