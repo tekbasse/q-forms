@@ -293,23 +293,31 @@ ad_proc -public qfo_2g {
     {-replace_datatype_tag_attributes_p "0"}
     {-write_p "1"}
 } {
-    Inputs essentially declare properties of a form and manages field type validation.
+    Inputs essentially declare properties of a form and manages field type
+    validation.  Returns valid inputs or form html to repost form for editing.
     <br><br>
     <code>fields_array</code> is an <strong>array name</strong>. 
     A form element is for example, an INPUT tag.
     Values are name-value pairs representing attributes for form elements.
 
-    Each indexed value is a list containing attribute/value pairs of form element. The form element tag is determined by the data type.
+    Each indexed value is a list containing attribute/value pairs of
+    form element. The form element tag is determined by the data type.
     <br><br>
     Each form element is expected to have a 'datatype' in the list, 
-    unless special cases of 'choice' or 'choices' are used (and discussed later).
+    unless special cases of 'choice' or 'choices' are used
+    (and discussed later). These don't use datatype.
     'text' datatype is default.
     <br><br>
     For html <code>INPUT</code> tags, a 'value' element represents a default value for the form element.
     <br><br>
     For html <code>SELECT</code> tags and <code>INPUT</code> tags with <code>type</code> 'checkbox' or 'radio', the attribute <code>value</code>'s 'value' is expected to be a list of lists consistent with 'value' attributed supplied to <code>qf_select</code>, <code>qf_choice</code> or <code>qf_choices</code>.
     <br><br>
-    Special cases 'choice' and 'choices' are reprepresented by supplying an attribute <code>type</code> with value 'checkbox' or 'radio' or 'select'. If 'select', a single value is assumed to be returned unless an attribute <code>multiple</code> is supplied with corresponding value set to '1'. Note: Supplying a name/value pair '<code>multiple</code> 0' is treated the same as not including a <code>multiple</code> attribute.
+    Special cases 'choice' and 'choices' are reprepresented by supplying
+    an attribute <code>type</code> with value 'checkbox' or 'radio' or
+    'select'. If 'select', a single value is assumed to be returned unless
+    an attribute <code>multiple</code> is supplied with corresponding
+    value set to '1'. Note: Supplying a name/value pair '<code>multiple</code>
+    '0' is treated the same as not including a <code>multiple</code> attribute.
     <br><br>
     Form elements are displayed in order of attribute 'tabindex' values.
     Order defaults are supplied by <code>-fields_ordered_list</code> consisting
@@ -362,13 +370,15 @@ ad_proc -public qfo_2g {
     by outputing a user message such as via <code>util_user_message</code> 
     and redisplaying form instead of processing further.
     <br><br>
-    Any field attribute, default value, tabindex, or datatype assigned via q-tables to the form takes precedence.
+    Any field attribute, default value, tabindex, or datatype assigned via
+    q-tables to the form takes precedence.
     <br><br>
     <code>duplicate_key_check</code>,<br>
     <code>multiple_key_as_list</code>,<br>
     <code>hash_check</code>, and <br>
     <code>post_only</code> see <code>qf_get_inputs_as_array</code>.
-    <code>write_p</code> if write_p is 0, presents form as a list of uneditable information.
+    <code>write_p</code> if write_p is 0,
+    presents form as a list of uneditable information.
     For example, setting to "\n<style>\nlabel { display: block ; }\n</style>\n"
     causes form elements to be displayed in a vertical, linear fashion
     as one would expect on a small device screen.
@@ -913,7 +923,8 @@ ad_proc -public qfo_2g {
                 ns_log Error "qfo_2g.722: value for field '${f_hash}' not found."
             }
         }
-        
+        #ns_log Notice "qfo_2g.926 array get fchoices_larr '[array get fchoices_larr]'"
+        #ns_log Notice "qfo_2g.927 array get fatts_arr '[array get fatts_arr]'"
 
         if { !$error_p } {
             
@@ -956,8 +967,8 @@ ad_proc -public qfo_2g {
             set fatts_arr(${f_hash},form_tag_attrs) $new_field_nvl
             
         }
-        ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
-        ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
+        #ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
+        #ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
         
         array unset hfv_arr
         array unset hfn_arr
@@ -1012,9 +1023,10 @@ ad_proc -public qfo_2g {
     # by calling qf_get_inputs_as_array *before* qfo_2g
     #ns_log Debug "qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
 
-    ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
+    #ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
     
     # qfv = field value
+    #ns_log Notice "qfo_2g.1029 array get qfi_arr '[array get qfi_arr]'"
     foreach f_hash $qfi_fields_list {
 
         # Some form elements have different defaults
@@ -1051,6 +1063,7 @@ ad_proc -public qfo_2g {
 
             # validate.
             ns_log Debug "qfo_2g.1077: f_hash '${f_hash}', datatype '${datatype}'"
+            ns_log Notice "qfo_2g.1078 array get qfv_arr '[array get qfv_arr]'"
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 # Do not set a name to exist here,
                 # because then it might validate and provide
@@ -1086,9 +1099,13 @@ ad_proc -public qfo_2g {
                 set valid_p 1
                 set names_len [llength $fatts_arr(${f_hash},names)]
                 set n_idx 0
+                #ns_log Notice "qfo_2g.1099 fatts_arr(${f_hash},names) '$fatts_arr(${f_hash},names)'"
+
                 while { $n_idx < $names_len && $valid_p } {
-                    set name $fatts_arr(${f_hash},names)
+                    set name [lindex $fatts_arr(${f_hash},names) $n_idx]
                     if { [info exists qfv_arr(${name}) ] } {
+                        #ns_log Notice "qfo_2g.1104 qfv_arr(${name}) '$qfv_arr(${name})"
+                        #ns_log Notice "qfo_2g.1106 fchoices_larr(${name}) '$fchoices_larr(${name})"
                         # check for type=select,checkbox, or radio
                         # qfv_arr may contain multiple values
                         foreach m $qfv_arr(${name}) {
@@ -1096,7 +1113,7 @@ ad_proc -public qfo_2g {
                             if { [lsearch -exact $fchoices_larr(${name}) $m ] < 0 } {
                                 # name exists, value not found
                                 set m_valid_p 0
-                                ns_log Debug "qfo_2g.1136: name '${name}' \
+                                ns_log Notice "qfo_2g.1136: name '${name}' \
  has not valid value '$qfv_arr(${name})'"
                             }
                             set valid_p [expr { $valid_p && $m_valid_p } ]
@@ -1739,6 +1756,8 @@ ad_proc -public ::qfo::form_list_def_to_array {
                         set multiple_ref $multiple_c
                         append multiple_ref $multiple_i
                     }
+                    
+                    # Rebuild element_nvl 
                     set element2_nvl [list ]
                     foreach nlc [array names n_arr] {
                         lappend element2_nvl $n_arr(${nlc}) $v_arr(${nlc})
@@ -3166,7 +3185,7 @@ ad_proc -public qal_3g {
                 set names_len [llength $fatts_arr(${f_hash},names)]
                 set n_idx 0
                 while { $n_idx < $names_len && $valid_p } {
-                    set name $fatts_arr(${f_hash},names)
+                    set name [lindex $fatts_arr(${f_hash},names) $n_idx]
                     if { [info exists qfv_arr(${name}) ] } {
                         # check for type=select,checkbox, or radio
                         # qfv_arr may contain multiple values

@@ -225,8 +225,8 @@ ad_proc -public qf_get_inputs_as_array {
             # no inserting tcl commands etc!
             if { $__form_key_exists == 0 || ( $__form_key_exists == 1 && [string length $__form_key] == 0 ) } {
                 # let's make this an error for now, so we log any attempts
-                #            ns_log Notice "qf_get_inputs_as_array.194: __form_key_exists ${__form_key_exists} length __form_key \[string length ${__form_key}\]"
-                #           ns_log Notice "qf_get_inputs_as_array.196: attempt to insert unallowed characters to user input '{__form_key}' as '\[ns_set key $__form $__form_counter_i\]' for counter ${__form_counter_i}."
+                ns_log Notice "qf_get_inputs_as_array.194: __form_key_exists ${__form_key_exists} length __form_key \[string length ${__form_key}\]"
+                ns_log Notice "qf_get_inputs_as_array.196: attempt to insert unallowed characters to user input '{__form_key}' as '\[ns_set key $__form $__form_counter_i\]' for counter ${__form_counter_i}."
                 if { $__form_counter_i > 0 } {
                     ns_log Notice "qf_get_inputs_as_array.197: attempt to insert unallowed characters to user input '{__form_key}'."
                 }
