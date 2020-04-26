@@ -67,9 +67,9 @@ ad_proc -private ::qfo::larr_replace {
 } { 
     upvar 1 $array_name a_larr
     set i $list_index
-#    ns_log Notice "::qfo::larr_replace.69 ${array_name}(${index}) '$a_larr(${index})'"
+    #    ns_log Notice "::qfo::larr_replace.69 ${array_name}(${index}) '$a_larr(${index})'"
     set a_larr(${index}) [lreplace $a_larr(${index}) $i $i $new_value]
-#    ns_log Notice "::qfo::larr_replace.71 ${array_name}(${index}) '$a_larr(${index})'"
+    #    ns_log Notice "::qfo::larr_replace.71 ${array_name}(${index}) '$a_larr(${index})'"
     return 1
 }
 
@@ -117,7 +117,7 @@ ad_proc -private ::qfo::lol_remake {
         }
     }
     
-#    ns_log Notice "qfo::lol_remake.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
+    #    ns_log Notice "qfo::lol_remake.137 is_multiple_p '${is_multiple_p}' att_name_exists_p '${att_name_exists_p}' array get fav_arr '[array get fav_arr]'"
 
     # normalize form input names
     foreach {n v} [array get qfv_arr] {
@@ -162,7 +162,7 @@ ad_proc -private ::qfo::lol_remake {
                     #  input type select multiple
                     set name_n $fav_arr(name)
                 }
-#                ns_log Notice "qfo::lol_remake.174 name_n '${name_n}'"
+                #                ns_log Notice "qfo::lol_remake.174 name_n '${name_n}'"
                 # Is qvf_arr(name) set to the value of this choice?
                 set selected_p 0
                 if { [info exists qfv_v_arr(${name_n}) ] } {
@@ -171,7 +171,7 @@ ad_proc -private ::qfo::lol_remake {
                     # Instead of checking only if input matches original
                     # check also if original is *in* input, because
                     # input may be a list of multiple inputs of same name.
-#                    ns_log Notice "qfo::lol_remake.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
+                    #                    ns_log Notice "qfo::lol_remake.181 input_unquoted '${input_unquoted}' row_v_arr(value) '$row_v_arr(value)'"
                     if { $input_unquoted eq $row_v_arr(value) \
                              || [lsearch -exact $input_unquoted $row_v_arr(value) ] > -1 } {
                         set selected_p 1
@@ -187,10 +187,10 @@ ad_proc -private ::qfo::lol_remake {
                     lappend new_row_nvl $row_n_arr(${nlc}) $row_v_arr(${nlc})
                 }
                 #ns_log Notice "qfo::lol_remake 191. \
-# new_row_nvl '${new_row_nvl}'"
+                    # new_row_nvl '${new_row_nvl}'"
             } else {
                 #ns_log Notice "qfo::lol_remake 192. \
-# new_row_nvl '${new_row_nvl}'"
+                        # new_row_nvl '${new_row_nvl}'"
                 # selection must be a separator or the like.
                 set new_row_nvl $row_nvl
             }
@@ -440,8 +440,8 @@ ad_proc -public qfo_2g {
     #    ns_log Debug "qfo_2g.292: array get qdt_types_arr text_word '[array get qdt_types_arr "text_word*"]'"
     ##ns_log Debug "qfo_2g.382: array get qdt_types_arr text* '[array get qdt_types_arr "text*"]'"
     if { $qtable_enabled_p && 0 } {
-	# Not supported for this version
-	
+        # Not supported for this version
+        
         # Apply customizations from table defined in q-tables
         ##code This part has not been tested, as it is
         # pseudo code for a feature to add after 
@@ -648,7 +648,7 @@ ad_proc -public qfo_2g {
     # $f_hash is field_index not field name.
     foreach f_hash $qfi_fields_list {
 
-	ns_log Debug "qfo_2g.686  f_hash: '${f_hash}'"
+        ns_log Debug "qfo_2g.686  f_hash: '${f_hash}'"
         # This loop fills fatts_arr(${f_hash},${datatype_element}),
         # where datatype elements are:
         # label xml_format default_proc tcl_format_str tcl_type tcl_clock_format_str abbrev_proc valida_proc input_hint max_length css_abbrev empty_allowed_p html_style text_format_proc css_span form_tag_attrs css_div form_tag_type filter_proc
@@ -681,7 +681,7 @@ ad_proc -public qfo_2g {
         # parsing at these logical branches:  is_datatyped_p
 
 
-	
+        
 
         # get fresh, highest priority field html tag attributes
         set field_nvl $fields_arr(${f_hash})
@@ -690,20 +690,20 @@ ad_proc -public qfo_2g {
             set hfv_arr(${nlc}) $v
             set hfn_arr(${nlc}) $n
         }
-	ns_log Debug "qfo_g2.725 array get hfv_arr '[array get hfv_arr]'"
-
+        ns_log Debug "qfo_g2.725 array get hfv_arr '[array get hfv_arr]'"
+        
         set tag_type ""
-	set datatype ""
+        set datatype ""
         if { [info exists hfv_arr(datatype) ] } {
             # This field is partly defined by datatype
             set datatype $hfv_arr(datatype)
-
-	    ns_log Debug "qfo_2g.733: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
-
+            
+            ns_log Debug "qfo_2g.733: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
+            
             set dt_idx $datatype
             append dt_idx $comma_c $form_tag_type_c
             set tag_type $qdt_types_arr(${dt_idx})
-
+            
             set dta_idx $datatype
             append dta_idx $comma_c $form_tag_attrs_c
             foreach {n v} $qdt_types_arr(${dta_idx}) {
@@ -711,9 +711,9 @@ ad_proc -public qfo_2g {
                 set hfv_arr(${nlc}) $v
                 set hfn_arr(${nlc}) $n
             }
-	    ns_log Debug "qfo_2g.746. array get hfv_arr '[array get hfv_arr]' datatype '${datatype}' tag_type '${tag_type}'"
+            ns_log Debug "qfo_2g.746. array get hfv_arr '[array get hfv_arr]' datatype '${datatype}' tag_type '${tag_type}'"
         } 
-
+        
         # tag attributes provided from field definition
         if { $replace_datatype_tag_attributes_p \
                  && [array exists hfv_arr ] } {
@@ -727,20 +727,20 @@ ad_proc -public qfo_2g {
             set hfv_arr(${nlc}) $v
             set hfn_arr(${nlc}) $n
         }
-	ns_log Debug "qfo_2g.762. array get hfv_arr '[array get hfv_arr]'"
-
+        ns_log Debug "qfo_2g.762. array get hfv_arr '[array get hfv_arr]'"
+        
         # Warning: Variable nomenclature near collision:
         # "datatype,tag_type"  refers to attribute 'type's value,
-	# such as types of INPUT tags, 'hidden', 'text', etc.
-	#
-	# Var $tag_type refers to qdt_data_types.form_tag_type
-	
+        # such as types of INPUT tags, 'hidden', 'text', etc.
+        #
+        # Var $tag_type refers to qdt_data_types.form_tag_type
+        
         if { [info exists hfv_arr(type) ] && $hfv_arr(type) ne "" } {
             set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
         }
-	if { $tag_type eq "" && $datatype ne "" } {
-	    set tag_type $fatts_arr(${f_hash},form_tag_type)
-	}
+        if { $tag_type eq "" && $datatype ne "" } {
+            set tag_type $fatts_arr(${f_hash},form_tag_type)
+        }
         if { $tag_type eq "" } {
             # Let's try to guess tag_type
             if { [info exists hfv_arr(rows) ] \
@@ -757,11 +757,11 @@ ad_proc -public qfo_2g {
                  && [info exists hfv_arr(type) ] } {
             set type $hfv_arr(type)
             #set fatts_arr(${f_hash},tag_type) $type
-	    # ns_log Debug "qfo_2g.630: type '${type}'"
+            # ns_log Debug "qfo_2g.630: type '${type}'"
             switch -exact -nocase -- $type {
                 select {
                     if { [info exists hfv_arr(multiple) ] } {
-                        set multiple_names_p 1
+                        set multiple_names_p $hfv_arr(multiple)
                         # Technically, 'select multiple' case is still one
                         # name, yet multiple values posted.
                         # This case is handled in the context
@@ -826,7 +826,7 @@ ad_proc -public qfo_2g {
                 # If there is no label, add one.
                 if { ![info exists hfv_arr(label)] \
                          && [lsearch -exact $ignore_list $type] == -1 } {
-		    #                    ns_log Debug "qfo_2g.855 array get hfv_arr '[array get hfv_arr]'"
+                    #                    ns_log Debug "qfo_2g.855 array get hfv_arr '[array get hfv_arr]'"
                     set hfv_arr(label) $hfv_arr(name)
                     set hfn_arr(label) $label_c
                 }
@@ -851,7 +851,7 @@ ad_proc -public qfo_2g {
                 set datatype $text_c
                 set fatts_arr(${f_hash},${datatype_c}) $text_c
             }
-	    #ns_log Debug "qfo_2g.875: datatype '${datatype}'"
+            #ns_log Debug "qfo_2g.875: datatype '${datatype}'"
             set name $hfv_arr(name)
             set fatts_arr(${f_hash},names) $name
 
@@ -958,7 +958,7 @@ ad_proc -public qfo_2g {
         }
         ns_log Notice "qfo_2g.761: array get fatts_arr '[array get fatts_arr]'"
         ns_log Notice "qfo_2g.762: data_type_existing_list '${data_type_existing_list}'"
-	
+        
         array unset hfv_arr
         array unset hfn_arr
     }
@@ -1013,7 +1013,7 @@ ad_proc -public qfo_2g {
     #ns_log Debug "qfo_2g.903 form_submitted_p '${form_submitted_p}' array get qfi_arr '[array get qfi_arr]'"
 
     ns_log Notice "qfo_2g.905 array get fields_arr '[array get fields_arr]'"
-   
+    
     # qfv = field value
     foreach f_hash $qfi_fields_list {
 
@@ -1044,13 +1044,13 @@ ad_proc -public qfo_2g {
     set nonexisting_field_val_list [list ]
     set row_list [list ]
     if { $form_submitted_p } {
-	
-	# validate inputs
+        
+        # validate inputs
 
         foreach f_hash $qfi_fields_list {
 
             # validate.
-	    ns_log Debug "qfo_2g.1077: f_hash '${f_hash}', datatype '${datatype}'"
+            ns_log Debug "qfo_2g.1077: f_hash '${f_hash}', datatype '${datatype}'"
             if { $fatts_arr(${f_hash},is_datatyped_p) } {
                 # Do not set a name to exist here,
                 # because then it might validate and provide
@@ -1058,7 +1058,7 @@ ad_proc -public qfo_2g {
 
                 if { [info exists fatts_arr(${f_hash},valida_proc)] } {
                     set name $fatts_arr(${f_hash},names)
-		    #                    ns_log Debug "qfo_2g.900. Validating '${name}'"
+                    #                    ns_log Debug "qfo_2g.900. Validating '${name}'"
                     if { [info exists qfv_arr(${name}) ] } {
                         set valid_p [qf_validate_input \
                                          -input $qfv_arr(${name}) \
@@ -1071,7 +1071,7 @@ ad_proc -public qfo_2g {
                             lappend invalid_field_val_list $f_hash
                         }
                     } else {
-			ns_log Debug "qfo_2g.1111. array get fatts_arr f_hash,* '[array get fatts_arr ${f_hash},*]'"
+                        ns_log Debug "qfo_2g.1111. array get fatts_arr f_hash,* '[array get fatts_arr ${f_hash},*]'"
                         if { ![info exists fatts_arr(${f_hash},tag_type) ] || [lsearch -exact $ignore_list $fatts_arr(${f_hash},tag_type) ] == -1 } {
                             ns_log Debug "qfo_2g.1113: field '${f_hash}' \
  no validation proc. found"
@@ -1109,12 +1109,12 @@ ad_proc -public qfo_2g {
             set all_valid_p [expr { $all_valid_p && $valid_p } ]
         }
         set validated_p $all_valid_p
-	#        ns_log Notice "qfo_2g.1117: Form input validated_p '${validated_p}' \
-	    # invalid_field_val_list '${invalid_field_val_list}' \
-	    # nonexisting_field_val_list '${nonexisting_field_val_list}'"
+        #        ns_log Notice "qfo_2g.1117: Form input validated_p '${validated_p}' \
+            # invalid_field_val_list '${invalid_field_val_list}' \
+            # nonexisting_field_val_list '${nonexisting_field_val_list}'"
     } else {
         # form not submitted
-	
+        
         # Populate form values with defaults if not provided otherwise
         foreach f_hash $qfi_fields_list {
             if { ![info exists fatts_arr(${f_hash},value) ] } {
@@ -1170,10 +1170,10 @@ ad_proc -public qfo_2g {
             set qfi_fields_sorted_list $fields_ordered_list
         }
 
-	
+        
         # build form using qf_* api
         set form_m ""
-	
+        
         set form_id [qf_form form_id $form_id hash_check $hash_check]
 
         # Use qfi_fields_sorted_list to generate 
@@ -1234,7 +1234,7 @@ ad_proc -public qfo_2g {
                             }
                         }
                     }
-		    
+                    
 
                     set n2 $fatts_arr(${f_hash},names)
                     if { [info exists qfv_arr(${n2}) ] } {
@@ -1242,7 +1242,7 @@ ad_proc -public qfo_2g {
                         if { $v2 ne "" \
                                  || ( $v2 eq "" \
                                           && $fatts_arr(${f_hash},empty_allowed_p) ) } {
-			    #                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qf# v_arr(${n2}) '$qfv_arr(${n2})'"
+                            #                            ns_log Notice "qo_g2.1021 n2 '${n2}' v2 '${v2}' qf# v_arr(${n2}) '$qfv_arr(${n2})'"
                             set fav_arr(value) $v2
                             if { ![info exists fan_arr(value) ] } {
                                 set fan_arr(value) $value_c
@@ -1276,7 +1276,7 @@ ad_proc -public qfo_2g {
                                                                        -attributes_value_array_name fav_arr \
                                                                        -is_multiple_p $fatts_arr(${f_hash},multiple_names_p) \
                                                                        -qfv_array_name qfv_arr ]
-				
+                                
                             }
                         }
                         default {
@@ -1292,224 +1292,224 @@ ad_proc -public qfo_2g {
         }
 
         # Every f_hash element has a value at this point..
-	if { $write_p } {
-	    
-	    # build form
-	    set tabindex $tabindex_start
-	    
-	    foreach f_hash $qfi_fields_sorted_list {
-		set atts_list $fatts_arr(${f_hash},form_tag_attrs)
-		foreach {n v} $atts_list {
-		    set nlc [string tolower $n]
-		    set attn_arr(${nlc}) $n
-		    set attv_arr(${nlc}) $v
-		}
-		
+        if { $write_p } {
+            
+            # build form
+            set tabindex $tabindex_start
+            
+            foreach f_hash $qfi_fields_sorted_list {
+                set atts_list $fatts_arr(${f_hash},form_tag_attrs)
+                foreach {n v} $atts_list {
+                    set nlc [string tolower $n]
+                    set attn_arr(${nlc}) $n
+                    set attv_arr(${nlc}) $v
+                }
+                
 
-		if { [info exists attv_arr(tabindex) ] } {
-		    if { $suppress_tabindex_p } {
-			unset attv_arr(tabindex)
-			unset attn_arr(tabindex)
-		    } else {
-			set attv_arr(tabindex) $tabindex
-		    }
-		}
+                if { [info exists attv_arr(tabindex) ] } {
+                    if { $suppress_tabindex_p } {
+                        unset attv_arr(tabindex)
+                        unset attn_arr(tabindex)
+                    } else {
+                        set attv_arr(tabindex) $tabindex
+                    }
+                }
 
-		set atts_list [list ]
-		foreach nlc [array names attn_arr ] {
-		    lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
-		}
-		array unset attn_arr
-		array unset attv_arr
+                set atts_list [list ]
+                foreach nlc [array names attn_arr ] {
+                    lappend atts_list $attn_arr(${nlc}) $attv_arr(${nlc})
+                }
+                array unset attn_arr
+                array unset attv_arr
 
-		if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
-		    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
-			input {
-			    ##ns_log Notice "qfo_2g.1001: qf_input \
-				   ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
-			    qf_input $atts_list
-			}
-			textarea {
-			    ##ns_log Notice "qfo_2g.1003: qf_textarea \
-				      ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
-			    qf_textarea $atts_list
-			}
-			default {
-			    # this is not a form_tag_type
-			    # tag attribute 'type' determines if this
-			    # is checkbox, radio, select, or select/multiple
-			    # This should not happen, because
-			    # fatts_arr(${f_hash},is_datatyped_p) is false for 
-			    # these cases.
-			    ns_log Warning "qfo_2g.1009: Unexpected form element: \
+                    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
+                        input {
+                            ##ns_log Notice "qfo_2g.1001: qf_input \
+                                   ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                            qf_input $atts_list
+                        }
+                        textarea {
+                            ##ns_log Notice "qfo_2g.1003: qf_textarea \
+                                      ## fatts_arr(${f_hash},form_tag_attrs) '${atts_list}'"
+                            qf_textarea $atts_list
+                        }
+                        default {
+                            # this is not a form_tag_type
+                            # tag attribute 'type' determines if this
+                            # is checkbox, radio, select, or select/multiple
+                            # This should not happen, because
+                            # fatts_arr(${f_hash},is_datatyped_p) is false for 
+                            # these cases.
+                            ns_log Warning "qfo_2g.1009: Unexpected form element: \
  f_hash '${f_hash}' ignored. \
  fatts_arr(${f_hash},form_tag_type) '$fatts_arr(${f_hash},form_tag_type)'"
-			}
-		    }
-		} else {
-		    # choice/choices
+                        }
+                    }
+                } else {
+                    # choice/choices
 
-		    if { $fatts_arr(${f_hash},multiple_names_p) } {
-			qf_choices $atts_list
-		    } else {
-			qf_choice $atts_list
-		    }
+                    if { $fatts_arr(${f_hash},multiple_names_p) } {
+                        qf_choices $atts_list
+                    } else {
+                        qf_choice $atts_list
+                    }
 
-		}
-		incr tabindex
-	    }
-	    qf_close form_id $form_id
-	    append form_m [qf_read form_id $form_id]
-	} else {
-	    # write_p is 0
-	    # Display form data only
-	    
-	    append form_m "<ul id="
-	    append form_m "\"" $form_id "\">\n"
-	    
-	    foreach f_hash $qfi_fields_sorted_list {
-		set atts_list $fatts_arr(${f_hash},form_tag_attrs)
-		foreach {n v} $atts_list {
-		    set nlc [string tolower $n]
-		    set attn_arr(${nlc}) $n
-		    set attv_arr(${nlc}) $v
-		}
-		
-		if { $fatts_arr(${f_hash},is_datatyped_p) } {
+                }
+                incr tabindex
+            }
+            qf_close form_id $form_id
+            append form_m [qf_read form_id $form_id]
+        } else {
+            # write_p is 0
+            # Display form data only
+            
+            append form_m "<ul id="
+            append form_m "\"" $form_id "\">\n"
+            
+            foreach f_hash $qfi_fields_sorted_list {
+                set atts_list $fatts_arr(${f_hash},form_tag_attrs)
+                foreach {n v} $atts_list {
+                    set nlc [string tolower $n]
+                    set attn_arr(${nlc}) $n
+                    set attv_arr(${nlc}) $v
+                }
+                
+                if { $fatts_arr(${f_hash},is_datatyped_p) } {
 
-		    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
-			textarea -
-			input {
-			    if { [info exists attv_arr(type) ] \
-				     && ![string match -nocase "hidden" $attv_arr(type) ] \
-				     && ![string match -nocase "submit" $attv_arr(type) ] \
-				     && ![string match -nocase "button" $attv_arr(type) ] \
-				     && ![string match -nocase "password" $attv_arr(type) ] \
-				     && ![string match -nocase "reset" $attv_arr(type) ] \
-				     && ![string match -nocase "search" $attv_arr(type) ] } {
-				append form_m "<li>"
-				set class_p [info exists attv_arr(class)]
-				set style_p [info exists attv_arr(style)]
-				set value_p [info exists attv_arr(value)]
-				set name_p [info exists attv_arr(name)]
-				set label_p [info exists attv_arr(label)]
-				if { $label_p } {
-				    set label $attv_arr(label)
-				} else {
-				    set label ""
-				}
-				if { $class_p || $style_p } {
-				    append form_m "<span"
-				    if { $class_p } {
-					append form_m " class=\"" $attv_arr(class) "\""
-				    }
-				    if { $style_p } {
-					append form_m " style=\"" $attv_arr(style) "\""
-				    }
-				    append form_m ">" $label "</span>"
-				} else {
-				    append form_m $label
-				}
-				if { $value_p } {
-				    append form_m "<br>" $attv_arr(value) "</li>\n"
-				} else {
-				    append form_m "<br></li>\n"
-				    #ns_log Notice "qfo_2g.1420. No value for attv_(value) array get attv_arr '[array get attv_arr]'"
-				}
-			    }
-			}
-			default {
-			    # this is not a form_tag_type
-			    # tag attribute 'type' determines if this
-			    # is checkbox, radio, select, or select/multiple
-			    # This should not happen, because
-			    # fatts_arr(${f_hash},is_datatyped_p) is false for 
-			    # these cases.
-			    ns_log Warning "qfo_2g.1410: Unexpected form element: \
+                    switch -exact -- $fatts_arr(${f_hash},form_tag_type) {
+                        textarea -
+                        input {
+                            if { [info exists attv_arr(type) ] \
+                                     && ![string match -nocase "hidden" $attv_arr(type) ] \
+                                     && ![string match -nocase "submit" $attv_arr(type) ] \
+                                     && ![string match -nocase "button" $attv_arr(type) ] \
+                                     && ![string match -nocase "password" $attv_arr(type) ] \
+                                     && ![string match -nocase "reset" $attv_arr(type) ] \
+                                     && ![string match -nocase "search" $attv_arr(type) ] } {
+                                append form_m "<li>"
+                                set class_p [info exists attv_arr(class)]
+                                set style_p [info exists attv_arr(style)]
+                                set value_p [info exists attv_arr(value)]
+                                set name_p [info exists attv_arr(name)]
+                                set label_p [info exists attv_arr(label)]
+                                if { $label_p } {
+                                    set label $attv_arr(label)
+                                } else {
+                                    set label ""
+                                }
+                                if { $class_p || $style_p } {
+                                    append form_m "<span"
+                                    if { $class_p } {
+                                        append form_m " class=\"" $attv_arr(class) "\""
+                                    }
+                                    if { $style_p } {
+                                        append form_m " style=\"" $attv_arr(style) "\""
+                                    }
+                                    append form_m ">" $label "</span>"
+                                } else {
+                                    append form_m $label
+                                }
+                                if { $value_p } {
+                                    append form_m "<br>" $attv_arr(value) "</li>\n"
+                                } else {
+                                    append form_m "<br></li>\n"
+                                    #ns_log Notice "qfo_2g.1420. No value for attv_(value) array get attv_arr '[array get attv_arr]'"
+                                }
+                            }
+                        }
+                        default {
+                            # this is not a form_tag_type
+                            # tag attribute 'type' determines if this
+                            # is checkbox, radio, select, or select/multiple
+                            # This should not happen, because
+                            # fatts_arr(${f_hash},is_datatyped_p) is false for 
+                            # these cases.
+                            ns_log Warning "qfo_2g.1410: Unexpected form element: \
  f_hash '${f_hash}' ignored. \
  fatts_arr(${f_hash},form_tag_type) '$fatts_arr(${f_hash},form_tag_type)'"
-			}
-		    }
-		} else {
-		    append form_m "<li>"
-		    set class_p [info exists attv_arr(class)]
-		    set style_p [info exists attv_arr(style)]
-		    if { $class_p || $style_p } {
-			append form_m "<span"
-			if { $class_p } {
-			    append form_m " class=\"" $attv_arr(class) "\""
-			}
-			if { $style_p } {
-			    append form_m " style=\"" $attv_arr(style) "\""
-			}
-			append form_m ">" $attv_arr(label) "</span>"
-		    } else {
-			if { [info exists attv_arr(label) ] } {
-			    append form_m $attv_arr(label)
-			} 
-		    }
-		    append form_m "<br><ul>\n"
-		    # choice/choices
-		    # Just show the values selected
-		    ns_log Notice "qfo_2g.1483: f_hash '${f_hash}'"
-		    if { $fatts_arr(${f_hash},multiple_names_p) eq 1 } {
-			#qf_choices
-			foreach row_list $attv_arr(value) {
-			    foreach {n v} $row_list {
-				set nlc [string tolower $n]
-				set choices_arr(${nlc}) $v
-			    }
-			    if { [info exists choices_arr(selected)] } {
-				if { $choices_arr(selected) } {
-				    append form_m "<li>"
-				    if { [info exists choices_arr(label) ] } {
-					append form_m $choices_arr(label)
-				    } elseif { [info exists choices_arr(value) ] } {
-					append form_m $choices_arr(value)
-				    }
-				    append form_m "</li>"
-				}
-			    }
-			    array unset choices_arr
-			}		
-		    } else {
-			#qf_choice
-			if { [info exists attv_arr(value) ] } {
-			    set rows_max [llength $attv_arr(value) ]
-			    set i 0
-			    set i_max 500
-			    while { $i < $rows_max && $i < $i_max } {
-				set row_list [lindex $attv_arr(value) $i]
-				foreach {n v} $row_list {
-				    set nlc [string tolower $n]
-				    set choices_arr(${nlc}) $v
-				}
-				if { [info exists choices_arr(selected)] } {
-				    if { $choices_arr(selected) } {
-					append form_m "<li>"
-					if { [info exists choices_arr(label) ] } {
-					    append form_m $choices_arr(label)
-					} elseif { [info exists choices_arr(value) ] } {
-					    append form_m $choices_arr(value)
-					}
-					append form_m "</li>"
-				    }
-				}
-				array unset choices_arr
-				incr i
-			    }
-			}
-		    }
-		    lappend form_m "</ul>"
-		    append form_m "</li>\n"
-		}
-		
-		array unset attn_arr
-		array unset attv_arr
-		# next field
-	    }
-	}
+                        }
+                    }
+                } else {
+                    append form_m "<li>"
+                    set class_p [info exists attv_arr(class)]
+                    set style_p [info exists attv_arr(style)]
+                    if { $class_p || $style_p } {
+                        append form_m "<span"
+                        if { $class_p } {
+                            append form_m " class=\"" $attv_arr(class) "\""
+                        }
+                        if { $style_p } {
+                            append form_m " style=\"" $attv_arr(style) "\""
+                        }
+                        append form_m ">" $attv_arr(label) "</span>"
+                    } else {
+                        if { [info exists attv_arr(label) ] } {
+                            append form_m $attv_arr(label)
+                        } 
+                    }
+                    append form_m "<br><ul>\n"
+                    # choice/choices
+                    # Just show the values selected
+                    ns_log Notice "qfo_2g.1483: f_hash '${f_hash}'"
+                    if { $fatts_arr(${f_hash},multiple_names_p) eq 1 } {
+                        #qf_choices
+                        foreach row_list $attv_arr(value) {
+                            foreach {n v} $row_list {
+                                set nlc [string tolower $n]
+                                set choices_arr(${nlc}) $v
+                            }
+                            if { [info exists choices_arr(selected)] } {
+                                if { $choices_arr(selected) } {
+                                    append form_m "<li>"
+                                    if { [info exists choices_arr(label) ] } {
+                                        append form_m $choices_arr(label)
+                                    } elseif { [info exists choices_arr(value) ] } {
+                                        append form_m $choices_arr(value)
+                                    }
+                                    append form_m "</li>"
+                                }
+                            }
+                            array unset choices_arr
+                        }		
+                    } else {
+                        #qf_choice
+                        if { [info exists attv_arr(value) ] } {
+                            set rows_max [llength $attv_arr(value) ]
+                            set i 0
+                            set i_max 500
+                            while { $i < $rows_max && $i < $i_max } {
+                                set row_list [lindex $attv_arr(value) $i]
+                                foreach {n v} $row_list {
+                                    set nlc [string tolower $n]
+                                    set choices_arr(${nlc}) $v
+                                }
+                                if { [info exists choices_arr(selected)] } {
+                                    if { $choices_arr(selected) } {
+                                        append form_m "<li>"
+                                        if { [info exists choices_arr(label) ] } {
+                                            append form_m $choices_arr(label)
+                                        } elseif { [info exists choices_arr(value) ] } {
+                                            append form_m $choices_arr(value)
+                                        }
+                                        append form_m "</li>"
+                                    }
+                                }
+                                array unset choices_arr
+                                incr i
+                            }
+                        }
+                    }
+                    lappend form_m "</ul>"
+                    append form_m "</li>\n"
+                }
+                
+                array unset attn_arr
+                array unset attv_arr
+                # next field
+            }
+        }
     }    
     return $validated_p
 }
@@ -1581,9 +1581,9 @@ ad_proc -private qf_validate_input {
             hf_are_safe_and_printable_characters_q {
                 set valid_p [hf_are_safe_and_printable_characters_q $input ]
             }
-	    hf_are_safe_textarea_characters_q {
-		set valid_p [hf_are_safe_textarea_characters_q $input]
-	    }
+            hf_are_safe_textarea_characters_q {
+                set valid_p [hf_are_safe_textarea_characters_q $input]
+            }
             hf_list_filter_by_natural_number {
                 set input_list [split $input ";,\t "]
                 set filtered_list [hf_list_filter_by_natural_number $input_list ]
@@ -2490,7 +2490,7 @@ ad_proc -public qal_3g {
             # issue or different context root. Use the number..
             # update context_ct to the same.
             #ns_log Notice "qal_3g.540: context '${context}' not \
-            #    recognized for f_hash '${f_hash}' form_id '${form_id}'"
+                                                                                                                   #    recognized for f_hash '${f_hash}' form_id '${form_id}'"
             regexp -- {^[^0-9]*([0-9]+)$} $a_context context_ct
             set context_new $fvarn
             append context_new $context_ct
@@ -2517,7 +2517,7 @@ ad_proc -public qal_3g {
         }
         #ns_log Notice "qal_3g.553 context '${context}' -> context_new '${context_new}'"
         ###########
-            
+        
         ### Create the upvar link before the context is used.
         if { ![info exists ${context_new} ] } {
             #ns_log Notice "qal_3g.557: creating context '${context_new}' for form_varname/fvarn '${fvarn}'"
@@ -2759,10 +2759,10 @@ ad_proc -public qal_3g {
             set datatype $hfv_arr(${datatype_c})
             ns_log Notice "qal_3g.781 datatype '${datatype}'"
             ns_log Notice "qal_3g.782: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
-   ######         if { ![info exists qdt_types_arr(${datatype}) ] } {
-   #             set datatype $text_c
-   #             set fatts_arr(${f_hash},${datatype_c}) $text_c
-   ######         }
+            ######         if { ![info exists qdt_types_arr(${datatype}) ] } {
+            #             set datatype $text_c
+            #             set fatts_arr(${f_hash},${datatype_c}) $text_c
+            ######         }
             set dt_idx $datatype
             append dt_idx $comma_c $form_tag_type_c
             set tag_type $qdt_types_arr(${dt_idx})
@@ -2823,7 +2823,7 @@ ad_proc -public qal_3g {
             switch -exact -nocase -- $type {
                 select {
                     if { [info exists hfv_arr(multiple) ] } {
-                        set multiple_names_p 1
+                        set multiple_names_p $hfv_arr(multiple)
                         # Technically, 'select multiple' case is still one
                         # name, yet multiple values posted.
                         # This case is handled in the context
