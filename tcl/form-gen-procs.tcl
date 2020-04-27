@@ -1969,9 +1969,15 @@ ad_proc -public qal_3g {
     {-replace_datatype_tag_attributes_p "0"}
     {-write_p "1"}
 } {
+    Automatically displays defined form (via .adp page),
+    validates input data, and passes state of validation
+    to page, thereby handling most of the UI process by declaration
+    of defining the form within the qal_3g parameters.
     Inputs essentially declare properties of a form and
     manages field type validation like qfo_2g, but with new features:
 
+    0. Switchable workflow modes when inputs validate. See Workflow below.
+    
     1. capacity to handle 'scalared arrays' as names for multiple rows of sets
     of named form elements.  This allows clean handling of arrays in the
     context of form CGI by avoiding use of special characters which may be
@@ -2007,7 +2013,7 @@ ad_proc -public qal_3g {
     the form_varname with its number as a suffix.
     If no context is provided or the context sequence number is not
     supplied, the previous context is assumed based on TABINDEX order.
-    The generated form fragments containing HTML markup language and
+    The generated form fragments contains HTML markup language and
     are assigned to the form_varname with a numeric suffix.
     Using the default form_varname value 'form_m', these variables are created:
     <br><code>form_m_open</code> contains the open FORM tag.
@@ -2018,15 +2024,16 @@ ad_proc -public qal_3g {
     This is supplied for consistency, but its value is constant.
     <br>The first context contains open FORM tag.
     The last defined context includes
-    the closed FORM tag.  <b>If there is no context provided, the context
+    the closed FORM tag. <br>
+    If there is no context provided, the context
     defaults to form_varname's value.
     <br><br>
     Each html form element (tag) may now have attributes "html_before" and
     "html_after", which inserts that html before and after.
     <br><br>
-    <b>app workflow modes</b>
+    <h3>app workflow modes</h3>
     qal_3g provides these workflow modes:
-    1. 'validate' Generates a blank form when data validates.
+    1. 'Validate' mode generates a blank form when data validates.
     Also, importantly, passes validated values from the form.
     2. If <code>form_verify_varname</code> is not "",
     it generates a form with validated values in
@@ -2066,6 +2073,9 @@ ad_proc -public qal_3g {
     value set to '1'.
     Note: Supplying a name/value pair '<code>multiple</code> 0' is treated
     the same as not including a <code>multiple</code> attribute.
+    When using 'choice' or 'choices' parameters, do not set the attribute
+    'datatype'. The code will automatically pass the parameters to qf_choice
+    or qf_choices on a case by case basis.
     <br><br>
 
     Form elements are displayed in order of attribute 'tabindex' values.
