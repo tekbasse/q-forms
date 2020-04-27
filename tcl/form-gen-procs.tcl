@@ -1968,7 +1968,14 @@ ad_proc -public qal_3g {
     {-suppress_tabindex_p "1"}
     {-replace_datatype_tag_attributes_p "0"}
     {-write_p "1"}
+    {-dev_mode_p "0"}
 } {
+    Returns 1 if there is input, and the input is validated.
+    Otherwise returns 0.
+    If there are no fields, input is validated by default.
+    <br>
+    Outputs form in html to a set of variables for use in .adp page.
+    <br><br>
     Automatically displays defined form (via .adp page),
     validates input data, and passes state of validation
     to page, thereby handling most of the UI process by declaration
@@ -2122,11 +2129,6 @@ ad_proc -public qal_3g {
     Otherwise the default is the one supplied by q-forms qf_doctype.
     <br><br>
     <br><br>
-
-    Returns 1 if there is input, and the input is validated.
-    Otherwise returns 0.
-    If there are no fields, input is validated by default.
-    <br><br>
     Note: Validation may be accomplished external to this proc 
     by outputing a user message such as via <code>util_user_message</code> 
     and redisplaying form instead of processing further.
@@ -2152,6 +2154,11 @@ ad_proc -public qal_3g {
     interpreted to be a 'select multiple'.
     With qal_3g, differentiation is not so simple. 'select' may specify
     a single choice, or 'multiple' selections with same name.
+    <br><br>
+    <code>dev_mode_p</code> sends useful notices to server log. For instance,
+    the names of the contexts actually created. Set to 1 to turn on
+    logging notifications. 0 (off) is default.
+    
     <br><br>
 
     Based on  qfo_2g
@@ -2196,13 +2203,19 @@ ad_proc -public qal_3g {
     upvar 1 $form_varname form_m
     upvar 1 ${form_varname}_open form_m_open
     upvar 1 ${form_varname}_close form_m_close
-
+    if { $dev_mode_p } {
+        ns_log Notice "qal_3g.2201: Output variables: '${form_varname}_open' '${form_varname}_close'"
+    }
     set form_v_exists_p 0
     if { $form_verify_varname ne "" } {
         upvar 1 ${form_verify_varname} form_v
-        upvar 1 ${form_varname}_open form_v_open
-        upvar 1 ${form_varname}_close form_v_close
+        upvar 1 ${form_verify_varname}_open form_v_open
+        upvar 1 ${form_verify_varname}_close form_v_close
         set form_v_exists_p 1
+        if { $dev_mode_p } {
+            ns_log Notice "qal_3g.2216: Output variables: '${form_verify_varname}_open' '${form_verify_varname}_close' created."
+        }
+
     }
 
     # upvar assignments like:  upvar 1 ${form_varname}N form_mN
@@ -2494,35 +2507,42 @@ ad_proc -public qal_3g {
             set fcshtml_arr(${f_hash},${context_c}) ""
         }
         
-        set fvarn_len [string length $form_varname]
+
 
         ### avoid form_varname / form_m mixup.
         ### Here we just want the name of form_m
         set fvarn $form_varname
-        # switch doesn't accept variables for the cases, so
+        set fvarn_len [string length $fvarn]
+        # switch doesn't accept variables for cases, so
+        set context_ct 0
         # using if statements.
-        #ns_log Notice "qal_3g.524 fvarn '${fvarn}'"
+        #ns_log Notice "qal_3g.523 fvarn '${fvarn}'"
         if { $form_v_exists_p } {
             set fvvarn_len [string length $form_verify_varname]
             set fvvarn $form_verify_varname
         }
         # make a form_m and maybe form_v context
         if { [string match "${fvarn}${two_digits}" $a_context] || [string match "${fvarn}${one_digit}" $a_context] } {
+            #ns_log Notice "qal_3g.524. Context fits. Keeping '${a_context}'"
             # in good form. Leave as is.
             # Assumes there are less than 9999 contexts on a page.
             # update context_ct
             set context_new $fvarn
             set context_ct [string range $a_context $fvarn_len end]
+            append context_new $context_ct
             if { $form_v_exists_p } {
                 set context2_new $fvvarn
+                append context2_new $context_ct
             }
         } elseif { [string match "*${two_digits}" $a_context] || [string match "*${one_digit}" $a_context ] } {
             # There's a number there,
             # and maybe nothing else, or maybe a spelling
             # issue or different context root. Use the number..
             # update context_ct to the same.
-            #ns_log Notice "qal_3g.540: context '${context}' not \
-                                                                                                                   #    recognized for f_hash '${f_hash}' form_id '${form_id}'"
+            if { $dev_mode_p } {
+                ns_log Notice "qal_3g.540: context '${context}' not \
+                recognized for f_hash '${f_hash}' form_id '${form_id}'. Adapting."
+            }
             regexp -- {^[^0-9]*([0-9]+)$} $a_context context_ct
             set context_new $fvarn
             append context_new $context_ct
@@ -2530,6 +2550,9 @@ ad_proc -public qal_3g {
                 set context2_new $fvvarn
             }
         } elseif { $context_prev ne "" } {
+            if { $dev_mode_p } {
+                ns_log Notice "qal-3g.546: No recognizable context '${a_context}' for '${f_hash}'. Assigning prev."
+            }
             # No recognizable context assigned.
             # Assign the same as the last context, or the first
             # if no previous ones.
@@ -2537,30 +2560,34 @@ ad_proc -public qal_3g {
             if { $form_v_exists_p } {
                 set context2_new $context2_prev
             }
-            #ns_log Notice "qal_3g.548 Using previous context."
         } else {
             set context_new $fvarn
             append context_new $context_ct
-            #ns_log Notice "qal_3g.552 Creating new context '${context_new}'"
+            if { $dev_mode_p } {
+                ns_log Notice "qal_3g.552 No recognizable context and no previous. Making '${context_new}'"
+            }
             if { $form_v_exists_p } {
                 set context2_new $fvvarn
                 append context2_new $context_ct
             }
         }
-        #ns_log Notice "qal_3g.553 context '${context}' -> context_new '${context_new}'"
-        ###########
+        #ns_log Notice "qal_3g.553 a_context '${a_context}' -> context_new '${context_new}'"
+
         
         ### Create the upvar link before the context is used.
         if { ![info exists ${context_new} ] } {
-            #ns_log Notice "qal_3g.557: creating context '${context_new}' for form_varname/fvarn '${fvarn}'"
             upvar 1 $context_new $context_new
-            ### give it a value to make sure it exists.
-            ### Note: context_new is not reset to "" here
-            ### set $context_new ""
+            set $context_new ""
+            if { $dev_mode_p } {
+                ns_log Notice "qal_3g.2571: Output variable: '${context_new}' created."
+            }
         }
-        #ns_log Notice "qal_3g.563 f_hash '${f_hash}'  context '${context_new}'"
         if { $form_v_exists_p && ![info exists ${context2_new} ] } {
             upvar 1 $context2_new $context2_new
+            set context2_new ""
+            if { $dev_mode_p } {
+                ns_log Notice "qal_3g.2582: Output variable: '${context2_new}' created."
+            }
         }
         set fcshtml_larr(${f_hash},${context_c}) $context_new
         set context_prev $context_new
@@ -2774,7 +2801,7 @@ ad_proc -public qal_3g {
         # parsing at these logical branches:  is_datatyped_p
         
 
-        ns_log Notice "qal_3g.774 array get hfv_arr '[array get hfv_arr]'"
+        #ns_log Notice "qal_3g.774 array get hfv_arr '[array get hfv_arr]'"
 
         set tag_type ""
         set datatype ""
@@ -2789,8 +2816,8 @@ ad_proc -public qal_3g {
         if { [info exists hfv_arr(${datatype_c}) ] } {
             # This field is partly defined by using datatype
             set datatype $hfv_arr(${datatype_c})
-            ns_log Notice "qal_3g.781 datatype '${datatype}'"
-            ns_log Notice "qal_3g.782: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
+            #ns_log Notice "qal_3g.781 datatype '${datatype}'"
+            #ns_log Notice "qal_3g.782: qdt_types_arr(${datatype},form_tag_attrs) '$qdt_types_arr(${datatype},form_tag_attrs)' qdt_types_arr(${datatype},form_tag_type) '$qdt_types_arr(${datatype},form_tag_type)'"
             ######         if { ![info exists qdt_types_arr(${datatype}) ] } {
             #             set datatype $text_c
             #             set fatts_arr(${f_hash},${datatype_c}) $text_c
@@ -2828,7 +2855,7 @@ ad_proc -public qal_3g {
         # "datatype,tag_type"  refers to attribute 'type's value,
         # such as types of INPUT tags, 'hidden', 'text', etc.
         #
-        # Var $tag_type refers to qdt_data_types.form_tag_type ie element
+        # Var $tag_type refers to qdt_data_types.form_tag_type ie html element
         if { [info exists hfv_arr(type) ] && $hfv_arr(type) ne "" } {
             set fatts_arr(${f_hash},tag_type) $hfv_arr(type)
         }
@@ -3132,7 +3159,7 @@ ad_proc -public qal_3g {
 
 
 
-    ns_log Notice "qal_3g.1112 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
+    #ns_log Notice "qal_3g.1112 form_submitted_p '${form_submitted_p}' array get qfv_arr '[array get qfv_arr]'"
     # validate inputs?
     set validated_p 0
     set all_valid_p 1
