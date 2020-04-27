@@ -3235,6 +3235,7 @@ ad_proc -public qal_3g {
 
     }
 
+    set gen_validated_form_p 0
     if { $validated_p && $form_v_exists_p } {
         set gen_validated_form_p 1
     }
