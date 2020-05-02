@@ -2933,8 +2933,8 @@ ad_proc qf_append_lol {
     @return 1
 } {
     upvar 1 $lol1_name first_lol
-    upvar 1 $lol2_name second_lol
-    foreach f_list $second_lol {
+    
+    foreach f_list $lol2 {
         lappend first_lol $f_list
     }
     return 1
