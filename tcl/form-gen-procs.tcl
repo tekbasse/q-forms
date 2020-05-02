@@ -1702,7 +1702,7 @@ ad_proc -private qf_validate_input {
     return $valid_p
 }
 
-ad_proc -public ::qfo::form_list_def_to_array {
+ad_proc -public ::qfo::array_set_form_list {
     -array_name
     -list_of_lists_name
     {-fields_ordered_list_name "qf_fields_ordered_list"}
@@ -1772,7 +1772,7 @@ ad_proc -public ::qfo::form_list_def_to_array {
                 }
                 default {
                     if { !$ignore_parse_issues_p } {
-                        ns_log Warning "::qfo::form_list_def_to_array.1241: \
+                        ns_log Warning "::qfo::array_set_form_list.1241: \
  No 'name' attribute found, and type '$v_arr(type)' \
  not of type 'checkbox' or 'select multiple' for element '${element_nvl}'"
                     }
@@ -1780,19 +1780,20 @@ ad_proc -public ::qfo::form_list_def_to_array {
             }
         } else {
             if { !$ignore_parse_issues_p } {
-                ns_log Warning "::qfo::form_list_def_to_array.1249: \
+                ns_log Warning "::qfo::array_set_form_list.1249: \
  No 'name' or 'type' attribute found for element '${element_nvl}'"
             }
         }
         array unset v_arr
         array unset n_arr
     }
-    ##ns_log Notice "::qfo::form_list_def_to_array.1267: ${list_of_lists_name} '${elements_lol}'"
-    ##ns_log Notice "::qfo::form_list_def_to_array.1268: array get ${array_name} '[array get fields_arr ]'"
+    ##ns_log Notice "::qfo::array_set_form_list.1267: ${list_of_lists_name} '${elements_lol}'"
+    ##ns_log Notice "::qfo::array_set_form_list.1268: array get ${array_name} '[array get fields_arr ]'"
     return $fields_ordered_list
 }
 
-ad_proc -public ::qfo::form_list_def_to_css_table_rows {
+### was form_list-def_to_css_table_rows
+ad_proc -public ::qfo::set_form_list_repeat {
     -form_field_defs_to_multiply
     -rows_count
     {-list_of_lists_name ""}
@@ -1869,7 +1870,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
     set name_c "name"
     set value_c "value"
     if { [lsearch -nocase $elements_lol $name_c] > -1 } {
-        ns_log Error "form_list_def_to_css_table_rows.1809 Detected list_of_lists is a list instead. Wrap it with another list."
+        ns_log Error "set_form_list_repeat.1809 Detected list_of_lists is a list instead. Wrap it with another list."
         ad_script_abort
     }
     
@@ -1887,7 +1888,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
             incr k
         }
         if { $k > 51 || $group eq "" } {
-            ns_log Error "qfo::form_list_def_to_css_table_rows.1811 Ran out of group letters. used: '${groups_used_list}' k '${k}' group '${group}'."
+            ns_log Error "qfo::set_form_list_repeat.1811 Ran out of group letters. used: '${groups_used_list}' k '${k}' group '${group}'."
             # something must be wrong. There must be a better way
             # to do what the page developer wants to accomplish with rows
             # on a page.
@@ -1913,8 +1914,8 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
                     set n_arr(${nlc}) $n
                 }
                 # change name's value by appending $group$column${i}
-                #ns_log Notice "form_list_def_to_css_table_rows.1845 array get n_arr '[array get n_arr]'"
-                #ns_log Notice "form_list_def_to_css_table_rows.1845 n_arr(${name_c}) '$n_arr(${name_c})' group '${group}' column '${column}' i '${i}' column_ct '${column_ct}'"
+                #ns_log Notice "set_form_list_repeat.1845 array get n_arr '[array get n_arr]'"
+                #ns_log Notice "set_form_list_repeat.1845 n_arr(${name_c}) '$n_arr(${name_c})' group '${group}' column '${column}' i '${i}' column_ct '${column_ct}'"
 
                 append v_arr(${name_c}) "_" ${group} ${column} $i 
 
@@ -1936,7 +1937,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
         append name ${group} ${column} ${rows_count}
         set rc_list [list type hidden name ${name} value ${rows_count} ]
         lappend elements_new_lol $rc_list
-        #ns_log Notice "qfo::form_list_def_to_css_table_rows.1865: elements_new_lol '${elements_new_lol}'"
+        #ns_log Notice "qfo::set_form_list_repeat.1865: elements_new_lol '${elements_new_lol}'"
         set fldtctr_lol $elements_new_lol
     } else {
         set fldtctr_lol $elements_lol
@@ -1946,7 +1947,7 @@ ad_proc -public ::qfo::form_list_def_to_css_table_rows {
             lappend lol_name $f_list
         }
     }
-    #ns_log Notice "qfo::form_list_def_to_css_table_rows.1921 fldtctr_lol '${fldtctr_lol}'"
+    #ns_log Notice "qfo::set_form_list_repeat.1921 fldtctr_lol '${fldtctr_lol}'"
     return $fldtctr_lol
 }
 
@@ -2281,7 +2282,7 @@ ad_proc -public qal_3g {
     ### look at the name suffix _{group letter}{col letter}{row}
     ###    ..but that doesn't work for qf_choices...
     ###
-    ### qfo::form_list_def_to_array names the multiple choices 'multipleN'
+    ### qfo::array_set_form_list names the multiple choices 'multipleN'
     ### for the ones that don't have a single name, but that doesn't
     ### transfer to the form.. response. Does it need to? 
     ### We're building the form on response from form_array with hints
