@@ -1702,6 +1702,7 @@ ad_proc -private qf_validate_input {
     return $valid_p
 }
 
+# was form_list_def_to_array
 ad_proc -public ::qfo::array_set_form_list {
     -array_name
     -list_of_lists_name
@@ -1792,7 +1793,7 @@ ad_proc -public ::qfo::array_set_form_list {
     return $fields_ordered_list
 }
 
-### was form_list-def_to_css_table_rows
+### was form_list_def_to_css_table_rows
 ad_proc -public ::qfo::set_form_list_repeat {
     -form_field_defs_to_multiply
     -rows_count
