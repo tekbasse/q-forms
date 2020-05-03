@@ -2589,7 +2589,7 @@ ad_proc -public qal_3g {
             if { $dev_mode_p } {
                 ns_log Notice "qal_3g.2582: Output variable: '${context2_new}' created."
             }
-            set context2_new ""
+            set $context2_new ""
         }
         set fcshtml_larr(${f_hash},${context_c}) $context_new
         set context_prev $context_new
