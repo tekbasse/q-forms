@@ -2591,7 +2591,7 @@ ad_proc -public qal_3g {
             }
             set $context2_new ""
         }
-        set fcshtml_larr(${f_hash},${context_c}) $context_new
+        set fcshtml_arr(${f_hash},${context_c}) $context_new
         set context_prev $context_new
         if { $form_v_exists_p } {
             set fvv_context_arr(${f_hash}) $context2_new
