@@ -1551,7 +1551,7 @@ ad_proc -public qf_input {
             }
             append tag_html ">" $attributes_arr(label) "<input"
             append tag_html [qf_insert_attributes $tag_attributes_list] 
-            append tag_html $forwardslash "></label>"
+            append tag_html $tag_suffix $forwardslash "></label>"
         }
     } else {
         if { [info exists attributes_arr(type)] && $attributes_arr(type) eq "hidden" } {
