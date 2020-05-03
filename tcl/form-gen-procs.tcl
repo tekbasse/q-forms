@@ -2579,17 +2579,17 @@ ad_proc -public qal_3g {
         ### Create the upvar link before the context is used.
         if { ![info exists ${context_new} ] } {
             upvar 1 $context_new $context_new
-            set $context_new ""
             if { $dev_mode_p } {
                 ns_log Notice "qal_3g.2571: Output variable: '${context_new}' created."
             }
+            set $context_new ""
         }
         if { $form_v_exists_p && ![info exists ${context2_new} ] } {
             upvar 1 $context2_new $context2_new
-            set context2_new ""
             if { $dev_mode_p } {
                 ns_log Notice "qal_3g.2582: Output variable: '${context2_new}' created."
             }
+            set context2_new ""
         }
         set fcshtml_larr(${f_hash},${context_c}) $context_new
         set context_prev $context_new
