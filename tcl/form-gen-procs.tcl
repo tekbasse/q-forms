@@ -2553,7 +2553,7 @@ ad_proc -public qal_3g {
             }
         } elseif { $context_prev ne "" } {
             if { $dev_mode_p } {
-                ns_log Notice "qal-3g.546: No recognizable context '${a_context}' for '${f_hash}'. Assigning prev."
+                ns_log Notice "qal-3g.2546: No recognizable context '${a_context}' for '${f_hash}'. Assigning prev. '${context_prev}'"
             }
             # No recognizable context assigned.
             # Assign the same as the last context, or the first
@@ -3466,8 +3466,8 @@ ad_proc -public qal_3g {
             if { $ff } {
                 set form_v ""
                 # No need for hash check. It's not submitted
-                set form2_id [qf_form form_id "${form_id}-2"]
-                set form2_open [qf_read form_id $form2_id]
+                set form2_id [qf_form form_id "${form_id}-2" action "" method ""]
+                set form_v_open [qf_read form_id $form2_id]
             } else {
                 set form_m ""
                 set form_id [qf_form form_id $form_id hash_check $hash_check]
