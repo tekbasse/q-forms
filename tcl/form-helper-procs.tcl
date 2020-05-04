@@ -2939,3 +2939,141 @@ ad_proc qf_append_lol {
     }
     return 1
 } 
+
+
+ad_proc -public qss_list_of_lists_to_responsive_table { 
+    table_list_of_lists 
+    {table_div_attribute_list_name ""}
+    {td_div_inner_attribute_lists_name ""}
+    {td_div_outer_attribute_lists_name ""}
+    {th_rows "1"}
+    {tr_div_even_attribute_list_name ""}
+    {tr_div_odd_attribute_list_name ""}
+    {th_div_attribute_list_name ""}
+} {
+    Converts a tcl list_of_lists to an html table made of div tags and css,
+    returns table as text/html.  This presents a table in a way that fits
+    the screen regardless of width
+    (within practical reasons, from phone screen to desktop screen)
+    without shrinking the fonts.
+    
+    *_attribute_list may be a list of attribute name/value pairs to pass to the
+    particular tag. Here are the prefixes and their meanings:
+    <br><br><Pre>
+    table_div_    The DIV tag used in place of the TABLE tag.
+    td_div_inner_ The DIV tag used for formatting cell contents
+    td_div_outer_ The DIV tag used for sizing the column width
+    th_rows       The number of title/header rows. Best to keep at 1.
+    .             because td_div_outer_ DIVs are titled with the
+    .             cooresponding cell values of the first title row.
+    tr_div_even_  The DIV used to wrap cells on even numbered rows.
+    tr_div_odd_   The DIV used to wrap cells on odd numbered rows.
+    th_div_       The DIV used to wrap title/header rows.
+    TABLE tag: attribute1 value1 attribute2 value2..
+    td_attribute_lists adds attributes to TD tags at the same position as table_list_of_lists 
+    First row(s) use html accessibility guidelines TH tag inplace of TD.
+    Number of th_rows sets the number of rows that use TH tag. Default is 1.
+    the list is represented {row1 {cell1} {cell2} {cell3} .. {cell x} } {row2 {cell1}...}
+    Note that attribute - value pairs in td_attribute_lists can be added uniquely to each TD tag.
+} {
+    upvar 1 $table_div_attribute_list_name table_atts_list
+    upvar 1 $td_div_inner_attribute_lists_name td_div_inner_atts_lists
+    upvar 1 $td_div_outer_attribute_lists_name td_div_outer_atts_lists
+    upvar 1 $tr_div_even_attribute_list_name tr_div_even_atts_list
+    upvar 1 $tr_div_odd_attribute_list_name tr_div_odd_atts_list
+    upvar 1 $th_div_attribute_list_name th_div_attribute_list_name
+    
+    set fs "/"
+    set th "th"
+    set gt ">"
+    set lt "<"
+    set quote "\""
+    set eq_quote "=\""
+    set td "td"
+    set sp " "
+    set nl "\n"
+    set tr "tr"
+    set lttr "<tr"
+
+    set table_html "<table"
+    foreach {attribute value} $table_attribute_list {
+        regsub -all -- {\"} $value {\"} value
+        append table_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append table_html ${gt} ${nl}
+    set row_i 0
+    set column_i 0
+    # Setup repeat pattern for formatting rows, 
+    # if last formatting row is not blank.
+    set repeat_last_row_p 0
+    if { [llength [lindex $td_attribute_lists end] ] > 0 } {
+        # This feature only comes into play
+        # if td_attribute_lists is not as long as table_list_of_lists
+        set repeat_last_row_p 1
+        set repeat_row [llength $td_attribute_lists]
+        incr repeat_row -1
+    }
+
+    set td_tag ${th}
+    set td_tag_html ${lt}
+    append td_tag_html $td_tag
+
+    set tr_hr_tag_html ${lttr}
+    foreach {attribute value} $tr_header_attribute_list {
+        append tr_hr_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append tr_hr_tag_html ${gt} ${nl}
+
+    set tr_even_tag_html ${lttr}
+    foreach {attribute value} $tr_even_attribute_list {
+        append tr_even_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append tr_even_tag_html ${gt} ${nl}
+
+    set tr_odd_tag_html ${lttr}
+    foreach {attribute value} $tr_odd_attribute_list {
+        append tr_odd_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+    }
+    append tr_odd_tag_html ${gt} ${nl}
+
+    append table_html "<thead>"
+    foreach row_list $table_list_of_lists {
+
+        if { $row_i == $th_rows } {
+            set td_tag ${td}
+            set td_tag_html ${lt}
+            append td_tag_html ${td_tag}
+            append table_html "</thead><tbody>"
+        }
+
+        set data_row_nbr [expr { ${row_i} - ${th_rows} + 1 } ]
+        if { $data_row_nbr < 1 } {
+            append table_html ${tr_hr_tag_html}
+        } elseif { [qf_is_even $data_row_nbr ] } {
+            append table_html ${tr_even_tag_html}
+        } else {
+            append table_html ${tr_odd_tag_html}
+        }
+
+        foreach column $row_list {
+            append table_html $td_tag_html
+            if { $repeat_last_row_p && $row_i > $repeat_row } {
+                set attribute_value_list [lindex [lindex $td_attribute_lists $repeat_row] $column_i]
+
+            } else {
+                set attribute_value_list [lindex [lindex $td_attribute_lists $row_i] $column_i]
+            }
+            foreach {attribute value} $attribute_value_list {
+                regsub -all -- {\"} $value {\"} value
+                append table_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
+            }
+            append table_html ${gt} ${column} ${lt} ${fs} ${td_tag} ${gt}
+            incr column_i
+        }
+        append table_html ${lt} ${fs} ${tr} ${gt} ${nl}
+        incr row_i
+        set column_i 0
+    }
+    append table_html "</tbody></table>\n"
+    return $table_html
+}
