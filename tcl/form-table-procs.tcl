@@ -51,10 +51,24 @@ ad_proc -public qfo_sp_table_g2 {
     {-tr_header_attribute_list {{class} {list-header}}}
     {-tr_odd_attribute_list {{class} {odd}}}
     {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;"}}
+    {-table_tag_open "<table>"}
+    {-table_tag_close ""}
+    {-thead_tag_open ""}
+    {-thead_tag_close ""}
+    {-th_tag_open ""}
+    {-th_tag_close ""}
+    {-tr_tag_open ""}
+    {-tr_tag_close ""}
+    {-td_tag_open ""}
+    {-td_tag_close ""}
+    
+    {
 } {
-    Creates a user customizable sorted table by
+    Creates a user customizable sorted, responsive table by
     creating a one row header into html and a table into html, 
-    and complementary navigation links.
+    and complementary navigation links. This proc exposes the html elements
+    TABLE TR TH TD  (open and closing bracketed ones) so that a responsive
+    table can be defined instead of a classic html one.
     <br><br>
     The table and titles are exposed at various steps in the process, 
     so that customizations may be made without having to
@@ -2059,164 +2073,3 @@ ad_proc -public qfo_sp_table_g3 {
     return 1
 }
 
-ad_proc -public hf_pagination_by_items {
-    item_count
-    items_per_page
-    first_item_displayed
-} {
-    Returns a list of 3 pagination components.
-    The first is a list of page_number and start_row pairs for pages before the current page.
-    The second contains page_number and start_row for the current page.
-    Third is the same value pair for pages after the current page.  
-    See hosting-farm/lib/paginiation-bar for an implementation example. 
-    Returns 0 for each of the three, if there are no items.
-} {
-    # based on ecds_pagination_by_items
-    set bar_list_set [list 0 0 0]
-    if { $items_per_page > 0 \
-             && $item_count > 0 \
-             && $first_item_displayed > 0 \
-             && $first_item_displayed <= $item_count } {
-        set bar_list [list ]
-        set end_page [expr { ( $item_count + $items_per_page - 1 ) / $items_per_page } ]
-
-        set current_page [expr { ( $first_item_displayed + $items_per_page - 1 ) / $items_per_page } ]
-
-        # first row of current page: {(( $current_page-1)*$items_per_page)+1}
-
-        # create bar_list with no pages beyond end_page
-
-        if { $item_count > [expr { $items_per_page * 81 } ] } {
-            # use exponential page referencing
-            set relative_step 0
-            set next_bar_list [list ]
-            set prev_bar_list [list ]
-            # 0.69314718056 = log(2)  
-            set max_search_points [expr { int( ( log( $end_page ) / 0.69314718056 ) + 1 ) } ]
-            for {set exponent 0} { $exponent <= $max_search_points } { incr exponent 1 } {
-                # exponent refers to a page, relative_step refers to a relative row
-                set relative_step_row [expr { int( pow( 2, $exponent ) ) } ]
-                set relative_step_page $relative_step_row
-                lappend next_bar_list $relative_step_page
-                set prev_bar_list [linsert $prev_bar_list 0 [expr { -1 * $relative_step_page } ] ]
-            }
-
-            # template_bar_list and relative_bar_list contain page numbers
-            set template_bar_list [concat $prev_bar_list 0 $next_bar_list ]
-            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list ]
-            
-            # translalte bar_list relative values to absolute rows
-            foreach {relative_page} $relative_bar_list {
-                set new_page [expr { int ( $relative_page + $current_page ) } ]
-                if { $new_page < $end_page } {
-                    lappend bar_list $new_page 
-                }
-            }
-
-        } elseif {  $item_count > [expr { $items_per_page * 10 } ] } {
-            # use linear, stepped page referencing
-
-            set next_bar_list [list 1 2 3 4 5 ]
-            set prev_bar_list [list -5 -4 -3 -2 -1 ]
-            set template_bar_list [concat $prev_bar_list 0 $next_bar_list ]
-            set relative_bar_list [lsort -unique -increasing -integer $template_bar_list ]
-            # translalte bar_list relative values to absolute rows
-            foreach {relative_page} $relative_bar_list {
-                set new_page [expr { int ( $relative_page + $current_page ) } ]
-                if { $new_page < $end_page } {
-                    lappend bar_list $new_page 
-                }
-            }
-            # add absolute page references
-            for {set page_number 10} { $page_number <= $end_page } { incr page_number 10 } {
-                lappend bar_list $page_number
-                set bar_list [linsert $bar_list 0 [expr { -1 * $page_number } ] ]
-            }
-
-        } else {
-            # use complete page reference list
-            for {set page_number 1} { $page_number <= $end_page } { incr page_number 1 } {
-                lappend bar_list $page_number
-            }
-        }
-
-        # add absolute reference for first page, last page
-        lappend bar_list $end_page
-        set bar_list [linsert $bar_list 0 1 ]
-
-        # Clean up list.
-        # Sort and remove any remaining nonpositive integers and duplicates.
-        set filtered_bar_list [lsort -unique -increasing -integer [lsearch -all -glob -inline $bar_list {[0-9 ]*} ] ]
-        # Delete any cases of page zero
-        set zero_index [lsearch $filtered_bar_list 0 ]
-        set bar_list [lreplace $filtered_bar_list $zero_index $zero_index ]
-
-        # Generate list of lists 
-        set prev_bar_list_pair [list ]
-        set current_bar_list_pair [list ]
-        set next_bar_list_pair [list ]
-        foreach page $bar_list {
-            set start_item [expr { ( ( $page - 1 ) * $items_per_page ) + 1 } ]
-            if { $page < $current_page } {
-                lappend prev_bar_list_pair $page $start_item
-            } elseif { $page eq $current_page } {
-                lappend current_bar_list_pair $page $start_item
-            } elseif { $page > $current_page } {
-                lappend next_bar_list_pair $page $start_item
-            }
-        }
-        set bar_list_set [list $prev_bar_list_pair $current_bar_list_pair $next_bar_list_pair ]
-    } else {
-        ns_log Warning "hf_pagination_by_items: value(s) out of bounds  \
- item_count '${item_count}' items_per_page '${items_per_page}' \
- first_item_displayed '${first_item_displayed}'"
-    }
-
-    return $bar_list_set
-}
-
-ad_proc -public ::qfo::css_blend {
-    css_properties
-} {
-    Blends css styles. For example "background: #000; background: #fff; align: right;" becomes "background: #fff; align: right;"
-    <br><br>
-    This is useful when sets of css are used for multiple parameters,
-    and there may be some overlap of properties.
-} {
-    set colon_c ":"
-    set semicolon_c ";"
-    set css_properties_list [split $css_properties $semicolon_c]
-    foreach property $css_properties_list {
-        set colon_first_idx [string first $colon_c $property]
-        if { $colon_first_idx > -1 } {
-            set pname [string range $property 0 ${colon_first_idx}-1 ]
-            set pvalue [string range $property ${colon_first_idx}+1 end ]
-            set property_arr(${pname}) $pvalue
-        }
-    }
-    set css_properties_new ""
-    foreach {n v} [array get property_arr] {
-        append css_properties_new ${n} ${colon_c} ${v} ${semicolon_c}
-    }
-    return $css_properties_new
-}
-
-ad_proc -public ::qfo::names_blend {
-    name_value_list
-    {delimiter ""}
-} {
-    Blends names, so that for example, if there are two
-    names 'class', their values are combined.
-    No precedence is given to order of attributes.
-    A space is the default delimiter for combined values.
-    @return name_value_list
-} {
-    foreach {n v} $name_value_list {
-        lappend attributes_arr(${n}) ${v}
-    }
-    set attributes_list [list ]
-    foreach {n v} [array get attributes_arr] {
-        lappend attributes_list ${n} [join ${v} ${delimiter}]
-    }
-    return $attributes_list
-}
