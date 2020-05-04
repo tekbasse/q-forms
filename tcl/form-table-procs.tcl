@@ -51,18 +51,6 @@ ad_proc -public qfo_sp_table_g2 {
     {-tr_header_attribute_list {{class} {list-header}}}
     {-tr_odd_attribute_list {{class} {odd}}}
     {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;"}}
-    {-table_tag_open "<table>"}
-    {-table_tag_close ""}
-    {-thead_tag_open ""}
-    {-thead_tag_close ""}
-    {-th_tag_open ""}
-    {-th_tag_close ""}
-    {-tr_tag_open ""}
-    {-tr_tag_close ""}
-    {-td_tag_open ""}
-    {-td_tag_close ""}
-    
-    {
 } {
     Creates a user customizable sorted, responsive table by
     creating a one row header into html and a table into html, 
@@ -1168,6 +1156,17 @@ ad_proc -public qfo_sp_table_g3 {
     {-tr_header_attribute_list {{class} {list-header}}}
     {-tr_odd_attribute_list {{class} {odd}}}
     {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;"}}
+    {-table_tag_open "<table>"}
+    {-table_tag_close ""}
+    {-thead_tag_open ""}
+    {-thead_tag_close ""}
+    {-th_tag_open ""}
+    {-th_tag_close ""}
+    {-tr_tag_open ""}
+    {-tr_tag_close ""}
+    {-td_tag_open ""}
+    {-td_tag_close ""}
+
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -2068,7 +2067,16 @@ ad_proc -public qfo_sp_table_g3 {
 
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
-    set table_html [qss_list_of_lists_to_html_table $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_format_reordered_lists "1" $tr_even_attribute_list $tr_odd_attribute_list $tr_header_attribute_list ]
+    set c "class"
+    set d "grid-1 m-grid-4 s-grid-12"
+    set e "grid-3 m-grid-4 s-grid-12"
+    set c_type1 [list $c $d]
+    set c_type2 [list $c $e]
+    set td_div_outer_attribute_lists [list $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type2]
+
+    set table_html [qss_list_of_lists_to_responsive_table \
+                        -td_div_outer_attribute_lists_name td_div_outer_attribute_lists
+                    $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_format_reordered_lists "1" $tr_even_attribute_list $tr_odd_attribute_list $tr_header_attribute_list ]
 
     return 1
 }

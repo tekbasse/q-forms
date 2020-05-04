@@ -2851,7 +2851,7 @@ ad_proc -private qf_log {
 # They are added here, because form validation should avoid separate namespaces
 # for security reasons
 
-ad_proc  qfad_is_integer_p {value} {
+ad_proc -public qfad_is_integer_p {value} {
     @return 1 if $value is an (positive) integer or zero, 0 otherwise.
     
     In general, use either template::data::validate::integer
@@ -2867,7 +2867,7 @@ ad_proc  qfad_is_integer_p {value} {
     }
 }
 
-ad_proc  qfad_is_safefilename_p {value} {
+ad_proc -public qfad_is_safefilename_p {value} {
     @return 0 if the file contains ".."
 } {
     # was ad_var_type_check_is_safefilename_p
@@ -2878,7 +2878,7 @@ ad_proc  qfad_is_safefilename_p {value} {
     }
 }
 
-ad_proc  qfad_is_dirname_p {value} {
+ad_proc -public qfad_is_dirname_p {value} {
     @return 0 if $value contains a / or \, 1 otherwise.
 } {
     # ad_var_type_check_dirname_p
@@ -2889,7 +2889,7 @@ ad_proc  qfad_is_dirname_p {value} {
     }
 }
 
-ad_proc  qfad_is_number_p {value} {
+ad_proc -public qfad_is_number_p {value} {
     @return 1 if $value is a valid number
 } {
     # was ad_var_type_check_number_p
@@ -2900,7 +2900,7 @@ ad_proc  qfad_is_number_p {value} {
     }
 }
 
-ad_proc  qfad_is_word_p {value} {
+ad_proc -public qfad_is_word_p {value} {
     @return 1 if $value contains only letters, numbers, dashes,
             and underscores, otherwise returns 0.
 } {
@@ -2912,7 +2912,7 @@ ad_proc  qfad_is_word_p {value} {
     }
 }
 
-ad_proc  qfad_is_noquote_p {value} {
+ad_proc -public qfad_is_noquote_p {value} {
     @return 1 if $value contains any single-quotes
 } {
     # was ad_var_type_check_is_noquote_p
@@ -2923,7 +2923,7 @@ ad_proc  qfad_is_noquote_p {value} {
     }
 }
 
-ad_proc qf_append_lol {
+ad_proc -public qf_append_lol {
     lol1_name
     lol2
 } {
@@ -2940,6 +2940,24 @@ ad_proc qf_append_lol {
     return 1
 } 
 
+ad_proc -public qf_esc_doublequotes {
+    value
+} {
+    Escape all double quotes used in a string.
+} {
+    regsub -all -- {\"} $value {\"} value
+    return $value
+}
+
+ad_proc -public qf_esc_nvl_doublequotes {
+    nv_list
+} {
+    set nv2_list [list ]
+    foreach {n v} $nv_list {
+        lappend nv2_list $n [qf_esc_doublequotes $v]
+    }
+    return $nv2_list
+}
 
 ad_proc -public qss_list_of_lists_to_responsive_table { 
     table_list_of_lists 
@@ -2962,7 +2980,8 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     <br><br><pre>
     table_div_       The DIV tag used in place of the TABLE tag.
     td_div_inner_    The DIV tag used for formatting cell contents
-    td_div_outer_    The DIV tag used for sizing the column width
+    td_div_outer_    The DIV tag used for sizing the column width.
+    .                  Each item represents attribute/value pairs for one cell.
     th_rows          The number of title/header rows. Best to keep at 1.
     .                  because td_div_outer_ DIVs are titled with the
     .                  cooresponding cell values of the first title row.
@@ -2971,11 +2990,13 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     th_div_          The DIV used to wrap title/header rows.
     attribute_list   expects: list attribute1 value1 attribute2 value2..
     attribute_lists  (note the suffix 's') expects:
-       list attribute_lists_for_cell1 attribute_lists_for_cell2... 
+    .  list attribute_lists_for_cell1 attribute_lists_for_cell2... 
     td_attribute_lists adds attributes to the td_DIV tags at the same
-      position as table_list_of_lists cells in a one-to-one coorespondence.
-      If only one row is provided, the same row is repeated for all rows.
-    First row(s) add title=#q-forms.Title# attribute.
+    . position as table_list_of_lists cells in a one-to-one coorespondence.
+    . If only one row is provided, the same row is repeated for all rows.
+    . If multiple rows are provided, the last row is repeated for all
+    .   remaining rows. To use the default, set the last row
+    .   in td_attribute_lists to empty lists.
     Number of th_rows sets the number of rows that are designated as
       headers/titles. Default is 1.
     table_list_of_lists and td_div_inner_attribute_lists are represented
@@ -2989,6 +3010,7 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     This proc is based on and derived from
     @see qss_list_of_lists_to_html_table
 } {
+    
     upvar 1 $table_div_attribute_list_name table_atts_list
     upvar 1 $td_div_inner_attribute_lists_name td_div_inner_atts_lists
     upvar 1 $td_div_outer_attribute_lists_name td_div_outer_atts_lists
@@ -2997,6 +3019,35 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     upvar 1 $th_div_attribute_list_name th_div_atts_list
     # th = thead or table header row(s)
 
+    array set table_atts_arr [list title "\#acs-templating.Table\#"]
+    if { [info exists table_atts_list] } {
+        array set table_atts_arr $table_atts_list
+    }
+    set table_atts_list [array get table_atts_arr]
+    
+
+    array set tr_div_even_atts_arr [list class even]
+    if { [info exists tr_div_even_atts_list] } {
+        array set tr_div_even_atts_arr $tr_div_even_atts_list
+    }
+    set tr_div_even_atts_list [array get tr_div_even_atts_arr]
+
+    array set tr_div_odd_atts2_arr [list class odd]
+    if { [info exists tr_div_odd_atts_list] } {
+        array set tr_div_odd_atts_arr $tr_div_odd_atts_list
+    }
+    set tr_div_odd_atts_list [array get tr_div_odd_atts_arr]
+
+    array set th_div_atts_arr [list title "\#q-forms.Headings\#"]
+    if { [info exists th_div_atts_list] } {
+        array set th_div_atts_arr $th_div_atts_list
+    }
+    set th_div_atts_list [array get th_div_atts_arr]
+
+    if { ![info exists td_div_outer_atts_lists ] } {
+        ns_log Error "qss_list_of_lists_to_responsive_table.2979: Must supply td_div_outer_attribute_lists_name. "
+        ad_script_abort
+    }
     
     set fs "/"
     set th "div"
@@ -3015,20 +3066,14 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     set column_i 0
     foreach tdoa_list $td_div_outer_atts_lists {
         set td_outer_html $lt
-        append td_outer_html $td_outer
-        foreach {attribute value} $tdoa_list {
-            regsub -all -- {\"} $value {\"} value
-            append td_outer_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
-        }
+        append td_outer_html $td_outer [qf_insert_attributes $tdoa_list]
         append $td_outer_html $gt
         set td_div_outer_tag_html_arr(${column_i}) $td_outer_html
+        incr column_i
     }
 
-    set table_html "<div title=\"\#acs-templating.Table\#\""
-    foreach {attribute value} $table_atts_list {
-        regsub -all -- {\"} $value {\"} value
-        append table_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
-    }
+    set table_html "<div"
+    append table_html [qf_insert_attributes $table_atts_list]
     append table_html ${gt} ${nl}
     set row_i 0
     set column_i 0
@@ -3047,25 +3092,19 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     set td_div_inner_tag_html ${lt}
     append td_div_inner_tag_html $td_div_inner_tag
 
-    set tr_hr_tag_html ${lttr}
-    foreach {attribute value} $th_div_atts_list {
-        append tr_hr_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
-    }
-    append tr_hr_tag_html ${gt} ${nl}
+    set th_tag_html ${lttr}
+    append th_tag_html [qf_insert_attributes $th_div_atts_list]
+    append th_tag_html ${gt} ${nl}
 
     set tr_even_tag_html ${lttr}
-    foreach {attribute value} $tr_div_even_atts_list {
-        append tr_even_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
-    }
+    append tr_even_tag_html [qf_insert_attributes $tr_div_even_atts_list]
     append tr_even_tag_html ${gt} ${nl}
 
     set tr_odd_tag_html ${lttr}
-    foreach {attribute value} $tr_div_odd_atts_list {
-        append tr_odd_tag_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
-    }
+    append tr_odd_tag_html [qf_insert_attributes $tr_div_odd_atts_list]
     append tr_odd_tag_html ${gt} ${nl}
 
-    append table_html "<div title=\"\#q-forms.Headings\#\">"
+    append table_html "<div" [qf_insert_attributes $th_div_atts_list] ${gt}
     foreach row_list $table_list_of_lists {
 
         if { $row_i == $th_rows } {
@@ -3077,14 +3116,14 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
 
         set data_row_nbr [expr { ${row_i} - ${th_rows} + 1 } ]
         if { $data_row_nbr < 1 } {
-            append table_html ${tr_hr_tag_html}
+            append table_html ${th_tag_html}
         } elseif { [qf_is_even $data_row_nbr ] } {
             append table_html ${tr_even_tag_html}
         } else {
             append table_html ${tr_odd_tag_html}
         }
 
-        foreach column $row_list {
+        foreach cell_v $row_list {
 
             append table_html $td_div_outer_tag_html_arr(${column_i})   
             append table_html $td_div_inner_tag_html
@@ -3095,11 +3134,8 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
             } else {
                 set attribute_value_list [lindex [lindex $td_div_inner_attribute_lists $row_i] $column_i]
             }
-            foreach {attribute value} $attribute_value_list {
-                regsub -all -- {\"} $value {\"} value
-                append table_html ${sp} ${attribute} ${eq_quote} ${value} ${quote}
-            }
-            append table_html ${gt} ${column} ${lt} ${fs} ${td_div_inner_tag} ${gt}
+            append table_html [qf_insert_attributes $attribute_value_list]
+            append table_html ${gt} ${cell_v} ${lt} ${fs} ${td_div_inner_tag} ${gt}
             # close td_div_outer
             append table_html $div_c
             incr column_i
