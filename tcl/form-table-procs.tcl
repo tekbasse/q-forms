@@ -2075,8 +2075,14 @@ ad_proc -public qfo_sp_table_g3 {
     set td_div_outer_attribute_lists [list $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type2]
 
     set table_html [qss_list_of_lists_to_responsive_table \
-                        -td_div_outer_attribute_lists_name td_div_outer_attribute_lists
-                    $table_sorted_reordered_w_titles_lists $table_tag_attribute_list $cell_format_reordered_lists "1" $tr_even_attribute_list $tr_odd_attribute_list $tr_header_attribute_list ]
+                        -table_list_of_lists_name table_sorted_reordered_w_titles_lists \
+                        -table_div_attribute_list_name table_tag_attribute_list \
+                        -td_div_outer_attribute_lists_name td_div_outer_attribute_lists \
+                        -td_div_inner_attribute_lists_name cell_format_reordered_lists \
+                        -th_rows "1" \
+                        -tr_div_even_attribute_list_name tr_even_attribute_list \
+                        -tr_div_odd_attribute_list_name tr_odd_attribute_list \
+                        -th_div_attribute_list_name tr_header_attribute_list ]
 
     return 1
 }

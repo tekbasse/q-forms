@@ -2960,14 +2960,14 @@ ad_proc -public qf_esc_nvl_doublequotes {
 }
 
 ad_proc -public qss_list_of_lists_to_responsive_table { 
-    table_list_of_lists 
-    {table_div_attribute_list_name ""}
-    {td_div_inner_attribute_lists_name ""}
-    {td_div_outer_attribute_lists_name ""}
-    {th_rows "1"}
-    {tr_div_even_attribute_list_name ""}
-    {tr_div_odd_attribute_list_name ""}
-    {th_div_attribute_list_name ""}
+    {-table_list_of_lists_name ""}
+    {-table_div_attribute_list_name ""}
+    {-td_div_inner_attribute_lists_name ""}
+    {-td_div_outer_attribute_lists_name ""}
+    {-th_rows "1"}
+    {-tr_div_even_attribute_list_name ""}
+    {-tr_div_odd_attribute_list_name ""}
+    {-th_div_attribute_list_name ""}
 } {
     Converts a tcl list_of_lists to an html table made of div tags and css,
     returns table as text/html.  This presents a table in a way that fits
@@ -3010,7 +3010,7 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     This proc is based on and derived from
     @see qss_list_of_lists_to_html_table
 } {
-    
+    upvar 1 $table_list_of_lists_name table_list_of_lists
     upvar 1 $table_div_attribute_list_name table_atts_list
     upvar 1 $td_div_inner_attribute_lists_name td_div_inner_atts_lists
     upvar 1 $td_div_outer_attribute_lists_name td_div_outer_atts_lists
@@ -3132,7 +3132,7 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
                 set attribute_value_list [lindex [lindex $td_div_inner_atts_lists $repeat_row] $column_i]
 
             } else {
-                set attribute_value_list [lindex [lindex $td_div_inner_attribute_lists $row_i] $column_i]
+                set attribute_value_list [lindex [lindex $td_div_inner_atts_lists $row_i] $column_i]
             }
             append table_html [qf_insert_attributes $attribute_value_list]
             append table_html ${gt} ${cell_v} ${lt} ${fs} ${td_div_inner_tag} ${gt}
