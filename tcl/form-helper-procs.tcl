@@ -3066,14 +3066,14 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     set column_i 0
     foreach tdoa_list $td_div_outer_atts_lists {
         set td_outer_html $lt
-        append td_outer_html $td_outer [qf_insert_attributes $tdoa_list]
-        append $td_outer_html $gt
+        append td_outer_html $td_outer [qf_insert_attributes [qfo::names_blend $tdoa_list]]
+        append td_outer_html $gt
         set td_div_outer_tag_html_arr(${column_i}) $td_outer_html
         incr column_i
     }
-
+    
     set table_html "<div"
-    append table_html [qf_insert_attributes $table_atts_list]
+    append table_html [qf_insert_attributes [qfo::names_blend $table_atts_list]]
     append table_html ${gt} ${nl}
     set row_i 0
     set column_i 0
@@ -3093,18 +3093,18 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     append td_div_inner_tag_html $td_div_inner_tag
 
     set th_tag_html ${lttr}
-    append th_tag_html [qf_insert_attributes $th_div_atts_list]
+    append th_tag_html [qf_insert_attributes [qfo::names_blend $th_div_atts_list]]
     append th_tag_html ${gt} ${nl}
 
     set tr_even_tag_html ${lttr}
-    append tr_even_tag_html [qf_insert_attributes $tr_div_even_atts_list]
+    append tr_even_tag_html [qf_insert_attributes [qfo::names_blend $tr_div_even_atts_list]]
     append tr_even_tag_html ${gt} ${nl}
 
     set tr_odd_tag_html ${lttr}
-    append tr_odd_tag_html [qf_insert_attributes $tr_div_odd_atts_list]
+    append tr_odd_tag_html [qf_insert_attributes [qfo::names_blend $tr_div_odd_atts_list]]
     append tr_odd_tag_html ${gt} ${nl}
 
-    append table_html "<div" [qf_insert_attributes $th_div_atts_list] ${gt}
+    append table_html "<div" [qf_insert_attributes [qfo::names_blend $th_div_atts_list]] ${gt}
     foreach row_list $table_list_of_lists {
 
         if { $row_i == $th_rows } {
@@ -3134,7 +3134,7 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
             } else {
                 set attribute_value_list [lindex [lindex $td_div_inner_atts_lists $row_i] $column_i]
             }
-            append table_html [qf_insert_attributes $attribute_value_list]
+            append table_html [qf_insert_attributes [qfo::names_blend $attribute_value_list]]
             append table_html ${gt} ${cell_v} ${lt} ${fs} ${td_div_inner_tag} ${gt}
             # close td_div_outer
             append table_html $div_c

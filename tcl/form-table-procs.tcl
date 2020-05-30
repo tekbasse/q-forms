@@ -1098,7 +1098,7 @@ ad_proc -public ::qfo::css_blend {
 
 ad_proc -public ::qfo::names_blend {
     name_value_list
-    {delimiter ""}
+    {delimiter " "}
 } {
     Blends names, so that for example, if there are two
     names 'class', their values are combined.
@@ -2068,7 +2068,7 @@ ad_proc -public qfo_sp_table_g3 {
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
     set c "class"
-    set d "grid-1 m-grid-4 s-grid-12"
+    set d "equalize content-box grid-1 m-grid-4 s-grid-12"
     set e "grid-3 m-grid-4 s-grid-12"
     set c_type1 [list $c $d]
     set c_type2 [list $c $e]
