@@ -40,15 +40,15 @@ ad_proc -public qfo_sp_table_g2 {
     {-td_attribute_list {{class} {list-table}}}
     {-td_sorted_attribute_list {}}
     {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
-    {-th_sorted_attribute_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
-    {-th_unsorted_attribute_list {{style} {width: 1.6em; text-align: center; border: 1px solid #999; line-height: 90%;}}}
+    {-th_sorted_attribute_list {{style} {text-align: center; border: 1px solid #999; background-color: #eef;}}}
+    {-th_unsorted_attribute_list {{style} {text-align: center; border: 1px solid #999; line-height: 90%;}}}
     {-this_start_row "1"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
     {-tr_even_attribute_list {{class} {even}}}
-    {-tr_header_attribute_list {{class} {list-header}}}
+    {-tr_header_attribute_list {{class} {list-table}}}
     {-tr_odd_attribute_list {{class} {odd}}}
     {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;"}}
 } {
@@ -66,8 +66,7 @@ ad_proc -public qfo_sp_table_g2 {
     <strong>Highlighted parameters</strong> indicate which parameters
     provide features this proc is specificially optimized for.
     <br><br>
-    Outputs are:
-    <br><br>
+    Outputs are:    <br><br>
     <ul><li>These three variables hold components of a nav bar:
     <ul><li><strong>nav_prev_links_html_varname</strong></li>
     <li><strong>nav_current_pos_html_varname</strong></li>
@@ -1139,23 +1138,23 @@ ad_proc -public qfo_sp_table_g3 {
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
-    {-table_tag_attribute_list {{class} {list-table} {cellpadding} {3} {cellspacing} {1}}}
+    {-table_tag_attribute_list {{class} {grid-whole} }}
     {-td_number_attribute_list {{style} {text-align: left;}}}
     {-td_nonnumber_attribute_list {{style} {text-align: right;}}}
-    {-td_attribute_list {{class} {list-table}}}
+    {-td_attribute_list {{class} {content-box}}}
     {-td_sorted_attribute_list {}}
     {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
-    {-th_sorted_attribute_list {{style} {width: .7em; text-align: center; border: 1px solid #999; background-color: #eef;}}}
-    {-th_unsorted_attribute_list {{style} {width: 1.6em; text-align: center; border: 1px solid #999; line-height: 90%;}}}
+    {-th_sorted_attribute_list {{style} {text-align: center; border: 1px solid #999; background-color: #eef;}}}
+    {-th_unsorted_attribute_list {{style} {text-align: center; border: 1px solid #999; line-height: 90%;}}}
     {-this_start_row "1"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
-    {-tr_even_attribute_list {{class} {even}}}
-    {-tr_header_attribute_list {{class} {list-header}}}
-    {-tr_odd_attribute_list {{class} {odd}}}
-    {-unsorted_attributes {style="font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;"}}
+    {-tr_even_attribute_list {{class} {even grid-whole}}}
+    {-tr_header_attribute_list {{class} {grid-whole} {style} {display: flex;}}}
+    {-tr_odd_attribute_list {{class} {odd grid-whole}}}
+    {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;}}}
     {-table_tag_open "<table>"}
     {-table_tag_close ""}
     {-thead_tag_open ""}
@@ -2068,7 +2067,7 @@ ad_proc -public qfo_sp_table_g3 {
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
     set c "class"
-    set d "equalize content-box grid-1 m-grid-4 s-grid-12"
+    set d "grid-flex content-box grid-1 m-grid-4 s-grid-12"
     set e "grid-3 m-grid-4 s-grid-12"
     set c_type1 [list $c $d]
     set c_type2 [list $c $e]

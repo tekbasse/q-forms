@@ -3026,19 +3026,19 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     set table_atts_list [array get table_atts_arr]
     
 
-    array set tr_div_even_atts_arr [list class even]
+    array set tr_div_even_atts_arr [list class "even grid-flex"]
     if { [info exists tr_div_even_atts_list] } {
         array set tr_div_even_atts_arr $tr_div_even_atts_list
     }
     set tr_div_even_atts_list [array get tr_div_even_atts_arr]
 
-    array set tr_div_odd_atts2_arr [list class odd]
+    array set tr_div_odd_atts2_arr [list class "odd grid-flex"]
     if { [info exists tr_div_odd_atts_list] } {
         array set tr_div_odd_atts_arr $tr_div_odd_atts_list
     }
     set tr_div_odd_atts_list [array get tr_div_odd_atts_arr]
 
-    array set th_div_atts_arr [list title "\#q-forms.Headings\#"]
+    array set th_div_atts_arr [list title "\#q-forms.Headings\#" class "grid-flex"]
     if { [info exists th_div_atts_list] } {
         array set th_div_atts_arr $th_div_atts_list
     }
@@ -3072,9 +3072,7 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
         incr column_i
     }
     
-    set table_html "<div"
-    append table_html [qf_insert_attributes [qfo::names_blend $table_atts_list]]
-    append table_html ${gt} ${nl}
+    set table_html ""
     set row_i 0
     set column_i 0
     # Setup repeat pattern for formatting rows, 
@@ -3104,14 +3102,14 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
     append tr_odd_tag_html [qf_insert_attributes [qfo::names_blend $tr_div_odd_atts_list]]
     append tr_odd_tag_html ${gt} ${nl}
 
-    append table_html "<div" [qf_insert_attributes [qfo::names_blend $th_div_atts_list]] ${gt}
+    append table_html "<div" [qf_insert_attributes [qfo::names_blend $th_div_atts_list]] ${gt} ${nl}
     foreach row_list $table_list_of_lists {
 
         if { $row_i == $th_rows } {
             set td_div_inner_tag ${td_inner}
             set td_div_inner_tag_html ${lt}
             append td_div_inner_tag_html ${td_div_inner_tag}
-            append table_html $div_c "<div title=\"\#acs-templating.Data\#\">"
+            append table_html $div_c "<div title=\"\#acs-templating.data\#\">" ${nl}
         }
 
         set data_row_nbr [expr { ${row_i} - ${th_rows} + 1 } ]
@@ -3125,7 +3123,10 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
 
         foreach cell_v $row_list {
 
-            append table_html $td_div_outer_tag_html_arr(${column_i})   
+            if { $cell_v eq "" } {
+                set cell_v "&nbsp;"
+            }
+            append table_html ${nl} $td_div_outer_tag_html_arr(${column_i})   
             append table_html $td_div_inner_tag_html
 
             if { $repeat_last_row_p && $row_i > $repeat_row } {
@@ -3144,6 +3145,6 @@ ad_proc -public qss_list_of_lists_to_responsive_table {
         incr row_i
         set column_i 0
     }
-    append table_html $div_c $div_c $nl
+    append table_html $div_c $nl
     return $table_html
 }
