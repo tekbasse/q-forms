@@ -2247,7 +2247,8 @@ ad_proc -private qf_doctype_tag_attributes {
 ad_proc -private qf_html4_tag_attributes {
     tag
 } {
-    Returns a list of valid attributes for a generic strict html4.
+    Returns a list of valid attributes for a generic strict html4
+    according to https://www.w3.org/TR/html401/strict.dtd
     For example, if tag is INPUT, returns a list including 'name' 'value' and like.  
     Does not include event attributes such as 'onsubmit' or 'onreset'.
 } {
@@ -2286,7 +2287,8 @@ return $attr_list
 ad_proc -private qf_html5_tag_attributes {
     tag
 } {
-    Returns a list of valid attributes for a generic strict html5.
+    Returns a list of valid attributes for a generic strict html5
+    according to 
     For example, if tag is INPUT, returns a list including 'name' 'value' and like.  
     Does not include event attributes such as 'onsubmit' or 'onreset'.
 } {
