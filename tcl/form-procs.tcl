@@ -2260,35 +2260,38 @@ ad_proc -private qf_html4_tag_attributes {
             lappend attr_list action method enctype accept name
         }
         fieldset {
-            lappend attr_list accesskey]
+            lappend attr_list accesskey
+        }
+        textarea {
+            lappend attr_list name rows cols disabled readonly tabindex accesskey
+        }
+        select {
+            lappend attr_list name size multiple disabled tabindex disabled
+        }
+        input {
+            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey alt align accept
+        }
+        optgroup {
+            lappend attr_list selected disabled label
+        }
+        option {
+            lappend attr_list selected value label disabled
+        }
+        button {
+            lappend attr_list name value type disabled tabindex accesskey
+        }
+        default {
+            set attr_list [list ]
+        }
     }
-    textarea {
-        lappend attr_list name rows cols disabled readonly tabindex accesskey
-    }
-    select {
-        lappend attr_list name size multiple disabled tabindex disabled
-    }
-    input {
-        lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey alt align accept
-    }
-    optgroup {
-        lappend attr_list selected disabled label
-    }
-    option {
-        lappend attr_list selected value label disabled
-    }
-    default {
-        set attr_list [list ]
-    }
-}
-return $attr_list
+    return $attr_list
 }
 
 ad_proc -private qf_html5_tag_attributes {
     tag
 } {
     Returns a list of valid attributes for a generic strict html5
-    according to 
+    according to https://html.spec.whatwg.org/dev/
     For example, if tag is INPUT, returns a list including 'name' 'value' and like.  
     Does not include event attributes such as 'onsubmit' or 'onreset'.
 } {
@@ -2311,13 +2314,22 @@ ad_proc -private qf_html5_tag_attributes {
             lappend attr_list name size multiple disabled tabindex id class lang title style disabled tabindex
         }
         input {
-            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class alt align autocomplete autofocus height width list min max multiple pattern placeholder required step
+            lappend attr_list type name value checked disabled readonly size maxlength src alt usemap ismap tabindex accesskey accept id class alt align autocomplete autofocus height width list min max multiple pattern placeholder required step 
         }
         optgroup {
             lappend attr_list selected disabled label id class
         }
         option {
             lappend attr_list selected value label id class disabled
+        }
+        button {
+            lappend attr_list name value type disabled tabindex accesskey class style form formtarget formaction formenctype
+        }
+        img {
+            lappend attr_list usemap src alt class
+        }
+        area {
+            lappend attr_list shape coords href alt
         }
         default {
             set attr_list [list ]
