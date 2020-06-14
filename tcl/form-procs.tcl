@@ -212,7 +212,7 @@ ad_proc -public qf_get_inputs_as_array {
             }
         }
     }
-  
+    
     if { ( $arg_arr(post_only) && [string match -nocase "post" [ad_conn method]] ) || !$arg_arr(post_only) } {
         # get form variables passed with connection
         set __form_input_exists 0
@@ -1581,6 +1581,157 @@ ad_proc -public qf_input {
 
     return $tag_html
 }
+
+
+ad_proc -public qf_button {
+    {arg1 ""}
+    {value1 ""}
+    args
+} {
+    Creates a form button tag, supplying attributes where nonempty values are supplied. 
+    <br><br>
+    Allowed attributes: id class style title lang dir name value type disabled tabindex accesskey.
+    <br><br>
+    Other allowed: form_id
+} {
+    # use upvar to set form content, set/change defaults
+    # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
+    upvar 1 __form_ids_list __form_ids_list
+    upvar 1 __form_arr __form_arr
+    upvar 1 __qf_remember_attributes __qf_remember_attributes
+    upvar 1 __qf_arr __qf_arr
+    upvar 1 __form_ids_fieldset_open_list __form_ids_fieldset_open_list
+    upvar 1 __qf_hc_arr __qf_hc_arr
+    # following two upvars are for qf_doctype
+    upvar 1 doc doc
+    upvar 1 __qf_forwardslash_p __qf_forwardslash_p
+    upvar 1 __qf_doctype __qf_doctype
+
+    # collect args
+    if { [llength $arg1] > 1 && $value1 eq "" } {
+        set arg_list $arg1
+        foreach arg $args {
+            lappend args_list $arg
+        }
+    } elseif { $arg1 ne "" } {
+        lappend args $arg1 $value1
+        set arg_list $args
+    } else {
+        set arg_list [list ]
+    }
+
+    set __qf_doctype [qf_doctype]
+    set forwardslash ""
+    if { $__qf_forwardslash_p } {
+        set forwardslash "/"
+    }
+
+    set attributes_tag_list [qf_doctype_tag_attributes $__qf_doctype button]
+
+    set attributes_full_list $attributes_tag_list
+
+    # This code is copied from qf_input. So, following 'datatype' and
+    # 'form_tag_type' may be irrelevant here:
+    # datatype and form_tag_type is used with qfo_2g paradigm. See proc qfo_2g.
+    lappend attributes_full_list form_id datatype form_tag_type
+
+    set attributes_list [list]
+    foreach {attribute value} $arg_list {
+        set attribute_index [lsearch -exact -nocase $attributes_full_list $attribute]
+        if { $attribute_index > -1 } {
+            set attribute_lc [string tolower $attribute]
+            set attributes_arr(${attribute_lc}) $value
+            if { [lsearch -exact $attributes_tag_list $attribute_lc] > -1 } {
+                lappend attributes_list $attribute_lc
+            }
+        } elseif { $value eq "" } {
+            # do nothing
+        } else {
+            ns_log Error "qf_button.1027: '${attribute}' is not a valid attribute. arg_list '${arg_list}' doctype '${__qf_doctype}'"
+        }
+    }
+
+    if { [info exists attributes_arr(label)] } {
+        set attributes_arr(label) [string trim $attributes_arr(label)]
+    }
+
+    if { ![info exists __qf_remember_attributes] } {
+        ns_log Notice "qf_button.1032: invoked before qf_form or used in a different namespace than qf_form.."
+        set __qf_remember_attributes 0
+    }
+    if { ![info exists __form_ids_list] } {
+        ns_log Warning "qf_button.1036: invoked before qf_form or used in a different namespace than qf_form.."
+        set __form_ids_list [list [util::random]]
+        set __qf_arr(form_id) $__form_ids_list
+    }
+    # default to last modified form_id
+    if { ![info exists attributes_arr(form_id)] || $attributes_arr(form_id) eq "" } { 
+        set attributes_arr(form_id) $__qf_arr(form_id) 
+    }
+    
+    if { [lsearch $__form_ids_list $attributes_arr(form_id)] == -1 } {
+        ns_log Error "qf_button.1045: unknown form_id $attributes_arr(form_id)"
+        ad_script_abort
+    }
+
+    # use previous tag attribute values?
+    if { $__qf_remember_attributes } {
+        foreach attribute $attributes_list {
+            if { $attribute ne "id" && $attribute ne "value" && ![info exists attributes_arr(${attribute})] && [info exists __qf_arr(input_${attribute})] } {
+                set attributes_arr(${attribute}) $__qf_arr(input_${attribute})
+            }
+        }
+    }
+
+    # provide a blank value by default
+    if { ![info exists attributes_arr(value)] } {
+        set attributes_arr(value) ""
+        lappend attributes_list "value"
+    }
+
+    # by default, wrap the input with a label tag for better UI, part 1
+    if { [info exists attributes_arr(title) ] } {
+        set label_title $attributes_arr(title)
+        unset attributes_arr(title)
+        set title_idx [lsearch -exact $attributes_list "title" ]
+        set attributes_list [lreplace $attributes_list $title_idx $title_idx ]
+    }
+    # prepare attributes to process
+    set tag_attributes_list [list]
+    set tag_suffix ""
+    foreach attribute $attributes_list {
+        set __qf_arr(input_${attribute}) $attributes_arr(${attribute})
+        if { $attribute ne "disabled" } {
+            lappend tag_attributes_list $attribute $attributes_arr(${attribute})
+        } else {
+            if { $__qf_doctype eq "xml" } {
+                lappend tag_attributes_list $attribute $attribute
+            } else {
+                set tag_suffix " "
+                append tag_suffix $attribute
+                # set to disabled
+            }
+        }
+    }
+
+    if { ![info exists attributes_arr(id) ] && [info exists attributes_arr(value) ] } {
+        set attributes_arr(id) [string range [clock clicks -milliseconds] end-3 end]
+        set b [string range [util::random] end end]
+        append attributes_arr(id) "-" [string range [util::random ] $b end]
+        lappend attributes_list "id"
+    }
+
+    set tag_html "<button"
+    append tag_html [qf_insert_attributes $tag_attributes_list] 
+    append tag_html $tag_suffix $forwardslash ">"
+
+    # set results  __form_arr, we checked form_id above.
+    append tag_html "\n"
+    append __form_arr($attributes_arr(form_id)) $tag_html
+
+    return $tag_html
+}
+
 
 ad_proc -public qf_append { 
     {arg1 ""}
