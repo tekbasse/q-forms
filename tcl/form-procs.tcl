@@ -1588,11 +1588,13 @@ ad_proc -public qf_button {
     {value1 ""}
     args
 } {
-    Creates a form button tag, supplying attributes where nonempty values are supplied. 
+    Creates a form button tag, supplying attributes where nonempty values are supplied. Attributes are passed via name/value pairs.
     <br><br>
-    Allowed attributes: id class style title lang dir name value type disabled tabindex accesskey.
+    Allowed attribute names: id class style title lang dir name value type disabled tabindex accesskey.
     <br><br>
-    Other allowed: form_id
+    Other allowed names: form_id content
+    <br><br>
+    'content' is used to pass a value that gets wrapped by button tag.
 } {
     # use upvar to set form content, set/change defaults
     # __qf_arr contains last attribute values of tag, indexed by {tag}_attribute, __form_last_id is in __qf_arr(form_id)
@@ -1633,7 +1635,7 @@ ad_proc -public qf_button {
     # This code is copied from qf_input. So, following 'datatype' and
     # 'form_tag_type' may be irrelevant here:
     # datatype and form_tag_type is used with qfo_2g paradigm. See proc qfo_2g.
-    lappend attributes_full_list form_id datatype form_tag_type
+    lappend attributes_full_list form_id datatype form_tag_type content
 
     set attributes_list [list]
     foreach {attribute value} $arg_list {
@@ -1689,7 +1691,6 @@ ad_proc -public qf_button {
         lappend attributes_list "value"
     }
 
-    # by default, wrap the input with a label tag for better UI, part 1
     if { [info exists attributes_arr(title) ] } {
         set label_title $attributes_arr(title)
         unset attributes_arr(title)
@@ -1701,16 +1702,16 @@ ad_proc -public qf_button {
     set tag_suffix ""
     foreach attribute $attributes_list {
         set __qf_arr(input_${attribute}) $attributes_arr(${attribute})
-        if { $attribute ne "disabled" } {
+        if { $attribute ne "disabled" && $attribute ne "content" } {
             lappend tag_attributes_list $attribute $attributes_arr(${attribute})
         } else {
             if { $__qf_doctype eq "xml" } {
                 lappend tag_attributes_list $attribute $attribute
-            } else {
+            } elseif { $attribute eq "disabled" } {
                 set tag_suffix " "
                 append tag_suffix $attribute
                 # set to disabled
-            }
+            }                 
         }
     }
 
@@ -1722,8 +1723,12 @@ ad_proc -public qf_button {
     }
 
     set tag_html "<button"
-    append tag_html [qf_insert_attributes $tag_attributes_list] 
-    append tag_html $tag_suffix $forwardslash ">"
+    append tag_html [qf_insert_attributes $tag_attributes_list]
+    append tag_html $tag_suffix ">"
+    if { [info exists attributes_arr(content)] } {
+        append tag_html $attributes_arr(content)
+    }
+    append tag_html "</button>"
 
     # set results  __form_arr, we checked form_id above.
     append tag_html "\n"
