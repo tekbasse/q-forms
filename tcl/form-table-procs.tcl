@@ -1155,17 +1155,6 @@ ad_proc -public qfo_sp_table_g3 {
     {-tr_header_attribute_list {{class} {grid-whole} {style} {display: flex;}}}
     {-tr_odd_attribute_list {{class} {odd grid-whole}}}
     {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;}}}
-    {-table_tag_open "<table>"}
-    {-table_tag_close ""}
-    {-thead_tag_open ""}
-    {-thead_tag_close ""}
-    {-th_tag_open ""}
-    {-th_tag_close ""}
-    {-tr_tag_open ""}
-    {-tr_tag_close ""}
-    {-td_tag_open ""}
-    {-td_tag_close ""}
-
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -1229,12 +1218,7 @@ ad_proc -public qfo_sp_table_g3 {
     highlighted. However, this would be the closest result.
     </li></ul>
 
-    <br><br>
-    To sort by timestamp, 
-    use '-dictionary' sort type,
-    and a consistent length format for the column values, 
-    such as ISO-8601 format: "YYYY-MM-DD HH:MM:SS". See: http://wiki.tcl.tk/1277
-    <br><br>
+   
     Required parameters:
     <br><br>
     <code>table_lists_varname</code> 
@@ -1301,6 +1285,12 @@ ad_proc -public qfo_sp_table_g3 {
     For example:
     \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
     Note: <strong>To indicate that a column is unsortable use "-ignore"</strong>
+    <br><br>
+     <br><br>
+    To sort by timestamp, 
+    use '-dictionary' sort type,
+    and a consistent length format for the column values, 
+    such as ISO-8601 format: "YYYY-MM-DD HH:MM:SS". See: http://wiki.tcl.tk/1277
     <br><br>
     <br><br>
     <br><br>
@@ -1466,7 +1456,7 @@ ad_proc -public qfo_sp_table_g3 {
         # $s' first check and change to sort_order_scalar
         regsub -all -- {[^\-0-9a ]} $s {} sort_order_scalar
 
-        # Converting sort_order_scalar to a list
+        # Converting sort_order_scalar to a list, a_h is delimiter
         set sort_order_list [split $sort_order_scalar $a_h ]
         set sort_order_list [lrange $sort_order_list 0 $col_idx_max ]
     }
@@ -1608,6 +1598,13 @@ ad_proc -public qfo_sp_table_g3 {
     }
     set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row ]
 
+    #### Add form tag with base_url and hidden s var to start of nav_prev_links_html
+    set f_id [qf_form action ${base_url} ]
+    
+    qf_input form_id $f_id name s value ${s_urlcoded} type hidden
+    qf_append form_id $f_id html $separator
+    #append nav_prev_links_html [join $nav_bar_prev_list $separator ]
+    set nav_prev_links_html [qf_read $f_id]
     # Previous nav links
     set prev_bar_list [lindex $bar_list_set 0 ]
     set nav_bar_prev_list [list ]
@@ -1623,12 +1620,17 @@ ad_proc -public qfo_sp_table_g3 {
                 append page_ref ${page_num}
             }
         }
-        set this_start_row_link ${a_href_h}
-        append this_start_row_link ${base_url} $qm_h $this_start_row_h ${start_row}
-        append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
-        lappend nav_bar_prev_list $this_start_row_link
-    } 
-    set nav_prev_links_html [join $nav_bar_prev_list $separator ]
+        #### Redo these variables from links to buttons:
+        #### this_start_row_link
+        #### 
+        #set this_start_row_link ${a_href_h}
+        #append this_start_row_link ${base_url} $qm_h $this_start_row_h ${start_row}
+        #append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
+        #### convert this_start_row_link to qf_button
+        append nav_prev_links_html [qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} ]
+        append nav_prev_links_html [qf_append form_id $f_id html $separator]
+        #lappend nav_bar_prev_list $this_start_row_link
+    }
 
     # Current nav 
     set current_bar_list [lindex $bar_list_set 1 ]
@@ -1646,6 +1648,7 @@ ad_proc -public qfo_sp_table_g3 {
         }
     }
     set nav_current_pos_html $page_ref
+    qf_append form_id $f_id html $page_ref
 
     # Next nav links
     set next_bar_list [lindex $bar_list_set 2 ]
@@ -1662,15 +1665,26 @@ ad_proc -public qfo_sp_table_g3 {
                 append page_ref ${page_num}
             }
         }
-        set next_bar_link ${sp}
-        append next_bar_link ${a_href_h}
-        append next_bar_link ${base_url} ${qm_h} ${this_start_row_h} ${start_row}
-        append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
-        lappend nav_bar_next_list $next_bar_link
+        
+        #set next_bar_link ${sp}
+        #append next_bar_link ${a_href_h}
+        #append next_bar_link ${base_url} ${qm_h} ${this_start_row_h} ${start_row}
+        #append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
+        #### convert next_bar_link to qf_buton
+        #lappend nav_bar_next_list $next_bar_link
+        append nav_next_links_html [qf_append form_id $f_id html $separator]
+        append nav_next_links_html [qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} ]
+        
     }
-    set nav_next_links_html [join $nav_bar_next_list $separator ]
+    #### append end form tag to end of nav_next_links_html
+    #### These are done separate from table sort, incase
+    #### a dev doesn't use the navbar...
+    #set nav_next_links_html [join $nav_bar_next_list $separator ]
+    qf_close form_id $f_id
+    append nav_next_links_html "</form>"
+    #set nav_bar_html [qf_read $f_id]
 
-
+    ####  convert page_url_add to a form hidden input tag.
     # add start_row to sort_urls.
     if { $this_start_row ne "1" } {
         set page_url_add ${amp_h}
@@ -1783,17 +1797,24 @@ ad_proc -public qfo_sp_table_g3 {
         }
 
         set sort_link_delim ""
-        # Sort button should be active if an available choice, 
-        # and inactive if already chosen (primary sort case).
+        #### Sort button should be active if an available choice, 
+        #### and inactive if already chosen (primary sort case).
         # Sorted columns should reflect existing sort case, 
         # so if column is sorted descending integer, then '9:1' not '1:9'.
-        # Sorted columnns should be aligned vertically,
+        # Sorted columnns should be indicated somehow.
+        # Make sorted columns show sort order left to right ie A:Z or Z:Z
+        # with sorted option in uppercase
         # to reflect column value orientation.
+        # Unsorted columns show less contrast (lighter foreground) for both choices.
 
         # To indicate inactive choice, inactivate the left most sort link 
         # that was most recently pressed (if it has been).
+
+        #### Add form tag with hidden base_url and s_url_coded hidden inputs 's'
+        #### Buttons indicate sort change only ie name=p value=..
         set title_new ""
 
+        #### Make these buttons...
         if { $primary_sort_col eq "" \
                  || $ignore_p \
                  || ( $primary_sort_col ne "" \
