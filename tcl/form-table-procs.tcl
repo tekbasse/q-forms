@@ -1126,6 +1126,8 @@ ad_proc -public qfo_sp_table_g3 {
     {-nav_current_pos_html_varname "__qfsp_nav_current_pos_html"}
     {-nav_next_links_html_varname "__qfsp_nav_next_links_html"}
     {-nav_prev_links_html_varname "__qfsp_nav_prev_links_html"}
+    {-nav_button_div_attributes_list_varname "__qfsp_nav_div_atts_list"}
+    {-nav_button_attributes_list_varname "__qfsp_nav_button_atts_list"}
     {-p_varname "__qfsp_p"}
     {-page_num_p "0"}
     {-s_varname "__qfsp_s"}
@@ -1277,22 +1279,19 @@ ad_proc -public qfo_sp_table_g3 {
     to now make this index the primary sort index. See code for details.
     <br><br>
     <code>sort_type_list</code>
-    - A list of types of sort to use for each column when using 
-    <code>lsort -index &lt;column&gt; -ascii &lt;list_of_lists&gt;</code> 
+    - A list of types of sort to use for each column when using: <br>
+    '<code>lsort -index &lt;column&gt; -ascii &lt;list_of_lists&gt;</code>' <br>
     to sort a table by a specific column. 
-    The default value for each column is "-ascii", per tcl's default. 
+    The default value for each column is '<code>-ascii</code>', per tcl's default. 
     When specifying sort_type_list, define a type to use for each column. 
-    For example:
-    \[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \] for a table withfive columns.
-    Note: <strong>To indicate that a column is unsortable use "-ignore"</strong>
-    <br><br>
-     <br><br>
-    To sort by timestamp, 
-    use '-dictionary' sort type,
+    For example:<br>
+    <code>\[list "-ascii" "-dictionary" "-ascii" "-ascii" "-real" \]</code> <br>
+    for a table with five columns.
+    Note: <strong>To indicate that a column is unsortable</strong> use
+    '<code>-ignore</code>'.
+    <br><strong>To sort by timestamp,</strong> use '<code>-dictionary</code>' sort type,
     and a consistent length format for the column values, 
     such as ISO-8601 format: "YYYY-MM-DD HH:MM:SS". See: http://wiki.tcl.tk/1277
-    <br><br>
-    <br><br>
     <br><br>
     *_attributes attributes may be passed as a list or string. If a comma or tab character are detected, a string will be split by comma or tab delimiter. Specically, this feature is for the following parameters:<br>
     <ul><li>
@@ -1332,6 +1331,7 @@ ad_proc -public qfo_sp_table_g3 {
     upvar 1 $nav_current_pos_html_varname nav_current_pos_html
     upvar 1 $nav_next_links_html_varname nav_next_links_html
     upvar 1 $nav_prev_links_html_varname nav_prev_links_html
+    upvar 1 $nav_button_div_attributes_list_varname nav_div_atts_list
     upvar 1 $p_varname p
     upvar 1 $s_varname s
     upvar 1 $table_html_varname table_html
@@ -1343,8 +1343,14 @@ ad_proc -public qfo_sp_table_g3 {
     upvar 1 $titles_list_varname titles_list
     upvar 1 $titles_reordered_html_list_varname titles_reordered_html_list
     upvar 1 $titles_reordered_list_varname titles_reordered_list
-    
 
+    if { ![info exists nav_div_atts_list ] } {
+        set nav_div_atts_list
+    }
+    if { ![info exists nav_button_atts_list ] } {
+        set nav_button_atts_list
+    }
+    
     # adapting from:
     # hosting-farm/lib/resource-status-summary-1.tcl
 
