@@ -1072,7 +1072,7 @@ ad_proc -public hf_pagination_by_items {
 ad_proc -public ::qfo::css_blend {
     css_properties
 } {
-    Blends css styles. For example "background: #000; background: #fff; align: right;" becomes "background: #fff; align: right;"
+    Blends css styles. For example "background: #f00; background: #00f; align: right;" becomes "background: #00f; align: right;"
     <br><br>
     This is useful when sets of css are used for multiple parameters,
     and there may be some overlap of properties.
@@ -1123,15 +1123,12 @@ ad_proc -public qfo_sp_table_g3 {
     {-item_count ""}
     {-items_per_page "12" }
     {-list_length_limit ""}
-    {-nav_current_pos_html_varname "__qfsp_nav_current_pos_html"}
-    {-nav_next_links_html_varname "__qfsp_nav_next_links_html"}
-    {-nav_prev_links_html_varname "__qfsp_nav_prev_links_html"}
+    {-nav_buttons_html_varname "__qfsp_nav_buttons_html"}
     {-nav_button_div_attributes_list_varname "__qfsp_nav_div_atts_list"}
     {-nav_button_attributes_list_varname "__qfsp_nav_button_atts_list"}
     {-p_varname "__qfsp_p"}
     {-page_num_p "0"}
     {-s_varname "__qfsp_s"}
-    {-separator "&nbsp;"}
     {-sort_type_list ""}
     {-sorted_first_attributes {style="font-family: monospace; font-size: 60%; font-style: normal; vertical-align: super;"}}
     {-sorted_last_attributes {style="font-family: monospace; font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em;"}}
@@ -1176,12 +1173,9 @@ ad_proc -public qfo_sp_table_g3 {
     <br><br>
     Outputs are:
     <br><br>
-    <ul><li>These three variables hold components of a nav bar:
-    <ul><li><strong>nav_prev_links_html_varname</strong></li>
-    <li><strong>nav_current_pos_html_varname</strong></li>
-    <li><strong>nav_next_links_html_varname</strong></li>
-    </ul></li>
-    <li>
+    <ul><li>
+    <strong>nav_buttons_html_varname</strong>
+    </li><li>
     <code>table_lists_varname</code> is unchanged. 
     It gets sorted into <code>table_sorted_lists_varname</code>.
     Then the columns are re-ordered based on sort significance,
@@ -1255,9 +1249,6 @@ ad_proc -public qfo_sp_table_g3 {
     <br><br>
     <code>base_url</code> - url for building page links
     <br><br>
-    <code>separator</code> 
-    - html used between page numbers in pagination bar, defaults to '&nbsp;'
-    <br><br>
     <code>list_limit</code> - limits the list to this many items.
     <br><br>
     <code>page_num_p</code> 
@@ -1328,10 +1319,9 @@ ad_proc -public qfo_sp_table_g3 {
     </li></ul>
     Note: Unsorted are wrapped by same html for first and last sort links.  Sorted links are wrapped individually.
 } {
-    upvar 1 $nav_current_pos_html_varname nav_current_pos_html
-    upvar 1 $nav_next_links_html_varname nav_next_links_html
-    upvar 1 $nav_prev_links_html_varname nav_prev_links_html
-    upvar 1 $nav_button_div_attributes_list_varname nav_div_atts_list
+    upvar 1 $nav_buttons_html_varname nav_buttons_html
+    upvar 1 $nav_div_atts_list_varname nav_div_atts_list
+    upvar 1 $nav_buton_atts_list_varname nav_button_atts_list
     upvar 1 $p_varname p
     upvar 1 $s_varname s
     upvar 1 $table_html_varname table_html
@@ -1345,15 +1335,12 @@ ad_proc -public qfo_sp_table_g3 {
     upvar 1 $titles_reordered_list_varname titles_reordered_list
 
     if { ![info exists nav_div_atts_list ] } {
-        set nav_div_atts_list
+        set nav_div_atts_list [list ]
     }
     if { ![info exists nav_button_atts_list ] } {
-        set nav_button_atts_list
+        set nav_button_atts_list [list ]
     }
     
-    # adapting from:
-    # hosting-farm/lib/resource-status-summary-1.tcl
-
     # This version requires the entire table to be loaded for processing.
     # TODO: make another version that uses pg's select limit and offset.. 
     # to scale for larger datasets.
@@ -1603,16 +1590,27 @@ ad_proc -public qfo_sp_table_g3 {
         set this_start_row 1
     }
     set bar_list_set [hf_pagination_by_items $item_count $items_per_page $this_start_row ]
+    set bar_list_length [llength [lindex $bar_list_set 0]]
+    incr bar_list_length [llength [lindex $bar_list_set 1]]
+    incr bar_list_length [llength [lindex $bar_list_set 2]]
+    set width_pct [expr { int( 10000. / ( $bar_list_length + 0.) ) / 100. } ]
+    set style_css "width: ${width_pct};"
+    #### upvar'd variables:
+    # nav_buttons_html
+    # nav_div_atts_list
+    # nav_button_atts_list
 
+    set nav_buttons_html "<div width=\"%100\">"
+    set button_div_html "<div "
+    append button_div_html [qf_insert_attributes $nav_div_atts_list]
     #### Add form tag with base_url and hidden s var to start of nav_prev_links_html
     set f_id [qf_form action ${base_url} ]
     
     qf_input form_id $f_id name s value ${s_urlcoded} type hidden
-    qf_append form_id $f_id html $separator
-    #append nav_prev_links_html [join $nav_bar_prev_list $separator ]
-    set nav_prev_links_html [qf_read $f_id]
+
     # Previous nav links
     set prev_bar_list [lindex $bar_list_set 0 ]
+    incr bar_list_length [llength $prev_bar_list ]
     set nav_bar_prev_list [list ]
     foreach {page_num start_row} $prev_bar_list {
         if { $page_num_p } {
@@ -1626,20 +1624,18 @@ ad_proc -public qfo_sp_table_g3 {
                 append page_ref ${page_num}
             }
         }
-        #### Redo these variables from links to buttons:
-        #### this_start_row_link
-        #### 
         #set this_start_row_link ${a_href_h}
         #append this_start_row_link ${base_url} $qm_h $this_start_row_h ${start_row}
         #append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
         #### convert this_start_row_link to qf_button
-        append nav_prev_links_html [qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} ]
-        append nav_prev_links_html [qf_append form_id $f_id html $separator]
-        #lappend nav_bar_prev_list $this_start_row_link
+        qf_append form_id $f_id html $button_div_html
+        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} style ${style_css}
+        qf_append form_id $f_id html "</div>"
     }
-
+    
     # Current nav 
     set current_bar_list [lindex $bar_list_set 1 ]
+
     set page_num [lindex $current_bar_list 0 ]
     set start_row [lindex $current_bar_list 1 ]
     if { $page_num_p } {
@@ -1653,11 +1649,13 @@ ad_proc -public qfo_sp_table_g3 {
             append page_ref ${page_num}
         }
     }
-    set nav_current_pos_html $page_ref
-    qf_append form_id $f_id html $page_ref
-
+    #set nav_current_pos_html $page_ref
+    qf_button form_id $f_id name this_start_row value $page_num content ${page_ref} disabled 1 style ${style_css}
+    
     # Next nav links
     set next_bar_list [lindex $bar_list_set 2 ]
+
+    
     set nav_bar_next_list [list ]
     foreach {page_num start_row} $next_bar_list {
         if { $page_num_p } {
@@ -1676,21 +1674,18 @@ ad_proc -public qfo_sp_table_g3 {
         #append next_bar_link ${a_href_h}
         #append next_bar_link ${base_url} ${qm_h} ${this_start_row_h} ${start_row}
         #append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
-        #### convert next_bar_link to qf_buton
-        #lappend nav_bar_next_list $next_bar_link
-        append nav_next_links_html [qf_append form_id $f_id html $separator]
-        append nav_next_links_html [qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} ]
+
+
+        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} style ${style_css}
         
     }
-    #### append end form tag to end of nav_next_links_html
-    #### These are done separate from table sort, incase
-    #### a dev doesn't use the navbar...
-    #set nav_next_links_html [join $nav_bar_next_list $separator ]
-    qf_close form_id $f_id
-    append nav_next_links_html "</form>"
-    #set nav_bar_html [qf_read $f_id]
 
-    ####  convert page_url_add to a form hidden input tag.
+
+    qf_close form_id $f_id
+    append nav_buttons_html [qf_read $f_id]
+    append nav_buttons_html "</div>"
+    
+    ####  convert page_url_add to a form hidden input tag. (used later)
     # add start_row to sort_urls.
     if { $this_start_row ne "1" } {
         set page_url_add ${amp_h}
