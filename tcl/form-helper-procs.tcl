@@ -1070,6 +1070,7 @@ ad_proc -public qf_abbreviate {
     if { [qfad_is_number_p $max_length] && $max_length > 0 } {
         set phrase_len_limit [expr { $max_length - $suffix_len } ]
         regsub -all -- { / } $phrase {/} phrase
+        regsub -all -- {&nbsp;} $phrase { } phrase
         set phrase [util_expand_entities $phrase ]
         if { [string length $phrase] > $max_length } {
             set cat_end [expr { [string last " " [string range $phrase 0 $max_length] ] - 1 } ]
