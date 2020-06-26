@@ -1320,8 +1320,8 @@ ad_proc -public qfo_sp_table_g3 {
     Note: Unsorted are wrapped by same html for first and last sort links.  Sorted links are wrapped individually.
 } {
     upvar 1 $nav_buttons_html_varname nav_buttons_html
-    upvar 1 $nav_div_atts_list_varname nav_div_atts_list
-    upvar 1 $nav_buton_atts_list_varname nav_button_atts_list
+    upvar 1 $nav_button_div_attributes_list_varname nav_div_atts_list
+    upvar 1 $nav_button_attributes_list_varname nav_button_atts_list
     upvar 1 $p_varname p
     upvar 1 $s_varname s
     upvar 1 $table_html_varname table_html
@@ -1335,10 +1335,10 @@ ad_proc -public qfo_sp_table_g3 {
     upvar 1 $titles_reordered_list_varname titles_reordered_list
 
     if { ![info exists nav_div_atts_list ] } {
-        set nav_div_atts_list [list ]
+        set nav_div_atts_list [list class "grid-flex content-box"]
     }
     if { ![info exists nav_button_atts_list ] } {
-        set nav_button_atts_list [list ]
+        set nav_button_atts_list [list class "btn-big"]
     }
     
     # This version requires the entire table to be loaded for processing.
@@ -1593,24 +1593,27 @@ ad_proc -public qfo_sp_table_g3 {
     set bar_list_length [llength [lindex $bar_list_set 0]]
     incr bar_list_length [llength [lindex $bar_list_set 1]]
     incr bar_list_length [llength [lindex $bar_list_set 2]]
-    set width_pct [expr { int( 10000. / ( $bar_list_length + 0.) ) / 100. } ]
-    set style_css "width: ${width_pct};"
+    ns_log Notice "qf_table_g3.1596 bar_list_length $bar_list_length bar_list_set '$bar_list_set'"
+    set width_pct [expr { int( 20000. / ( $bar_list_length + 0.) ) / 100. } ]
+    set style_css "margin:0;clear:none;float:left;width:${width_pct}%;"
     #### upvar'd variables:
     # nav_buttons_html
     # nav_div_atts_list
     # nav_button_atts_list
-
-    set nav_buttons_html "<div width=\"%100\">"
-    set button_div_html "<div "
-    append button_div_html [qf_insert_attributes $nav_div_atts_list]
-    #### Add form tag with base_url and hidden s var to start of nav_prev_links_html
-    set f_id [qf_form action ${base_url} ]
     
+    #### Add form tag with base_url
+    #### and hidden s var to start of nav_prev_links_html
+    set f_id [qf_form action ${base_url} ]    
     qf_input form_id $f_id name s value ${s_urlcoded} type hidden
+
+    set nav_buttons_html "<div class=\"grid-flex grid-whole\">"
+    set button_div_html "<div"
+    lappend nav_div_atts_list style ${style_css}
+    append button_div_html [qf_insert_attributes $nav_div_atts_list]
+    append button_div_html $gt_h
 
     # Previous nav links
     set prev_bar_list [lindex $bar_list_set 0 ]
-    incr bar_list_length [llength $prev_bar_list ]
     set nav_bar_prev_list [list ]
     foreach {page_num start_row} $prev_bar_list {
         if { $page_num_p } {
@@ -1629,7 +1632,7 @@ ad_proc -public qfo_sp_table_g3 {
         #append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
         #### convert this_start_row_link to qf_button
         qf_append form_id $f_id html $button_div_html
-        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} style ${style_css}
+        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref}
         qf_append form_id $f_id html "</div>"
     }
     
@@ -1650,8 +1653,9 @@ ad_proc -public qfo_sp_table_g3 {
         }
     }
     #set nav_current_pos_html $page_ref
-    qf_button form_id $f_id name this_start_row value $page_num content ${page_ref} disabled 1 style ${style_css}
-    
+    qf_append form_id $f_id html $button_div_html
+    qf_button form_id $f_id name this_start_row value $page_num content ${page_ref} disabled 1
+    qf_append form_id $f_id html "</div>"
     # Next nav links
     set next_bar_list [lindex $bar_list_set 2 ]
 
@@ -1669,17 +1673,11 @@ ad_proc -public qfo_sp_table_g3 {
                 append page_ref ${page_num}
             }
         }
-        
-        #set next_bar_link ${sp}
-        #append next_bar_link ${a_href_h}
-        #append next_bar_link ${base_url} ${qm_h} ${this_start_row_h} ${start_row}
-        #append next_bar_link ${s_url_add} ${dquote_end_h} ${page_ref} ${a_end_h} ${sp}
-
-
-        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref} style ${style_css}
+        qf_append form_id $f_id html $button_div_html
+        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref}
+        qf_append form_id $f_id html "</div>"
         
     }
-
 
     qf_close form_id $f_id
     append nav_buttons_html [qf_read $f_id]
