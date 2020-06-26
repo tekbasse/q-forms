@@ -1603,7 +1603,7 @@ ad_proc -public qfo_sp_table_g3 {
     
     #### Add form tag with base_url
     #### and hidden s var to start of nav_prev_links_html
-    set f_id [qf_form action ${base_url} ]    
+    set f_id [qf_form action ${base_url} class "grid-flex grid-whole" ]
     qf_input form_id $f_id name s value ${s_urlcoded} type hidden
 
     set nav_buttons_html "<div class=\"grid-flex grid-whole\">"
