@@ -1199,11 +1199,11 @@ ad_proc -public qf_read {
         if { $attribute_index > -1 } {
             set attributes_arr(${attribute}) $value
             lappend attributes_list $attribute
-        } elseif { $value eq "" } {
-            # do nothing                  
         } else {
-            ns_log Error "qf_read.928: '${attribute}' is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
-            ad_script_abort
+            if { $attribute ne "" } {
+                ns_log Error "qf_read.928: '${attribute}' is not a valid attribute. invoke with attribute value pairs. Separate each with a space."
+                ad_script_abort
+            }
         }
     }
 
@@ -1217,7 +1217,7 @@ ad_proc -public qf_read {
         unset attributes_arr(form_id)
     }
     # defaults to all form ids
-    set form_id_exists [info exists attributes_arr(id)]
+    set form_id_exists [info exists attributes_arr(id) ]
     if { $form_id_exists == 0 || ( $form_id_exists == 1 && $attributes_arr(id) eq "" ) } { 
         # note, attributes_arr(id) might become a list or a scalar..
         if { [llength $__form_ids_list ] == 1 } {
@@ -1230,13 +1230,14 @@ ad_proc -public qf_read {
     } else {
         set specified_1 1
     }
-
+    ns_log Notice "qf_read.1233.rm form_id_exists '${form_id_exists}' specified_1 '${specified_1}' __form_ids_list '${__form_ids_list}'"
     if { $specified_1 } {
         # a form specified in argument
         if { ![info exists __form_arr($attributes_arr(id)) ] } {
             ns_log Warning "qf_read.960: unknown form_id $attributes_arr(id)"
         } else {
             set form_s $__form_arr($attributes_arr(id))
+            ns_log Notice "qf_read.1240.rm form_s '${form_s}'"
         }
     } else {
         set forms_list [list]
