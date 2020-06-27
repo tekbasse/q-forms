@@ -1311,13 +1311,13 @@ ad_proc -public qfo_sp_table_g3 {
     <br><br>
     Passes html as a string wrapping the links in the title elements that change the sort pattern. The variations permit some indication of sort status for sorted columns separate from unsorted ones. Specifically, refers to the following parameters:<br>
     <ul><li>
-    <code>sorted_first_attributes</code> Html preceding 'first sort' change link for a title that has been sorted.
+    <code>sorted_first_css_class</code> html attributes preceding 'first sort' change link for a title that has been sorted.
     </li><li>
-    <code>sorted_last_attributes</code> Html preceding 'last sort' change link for a title that has been sorted.
+    <code>sorted_last_css_class</code> html attributes preceding 'last sort' change link for a title that has been sorted.
     </li><li>
-    <code>unsorted_attributes</code> Html preceding 'first sort' change link for a title that has not been sorted.
+    <code>unsorted_css_class</code> html attributes preceding 'first sort' change link for a title that has not been sorted.
     </li></ul>
-    Note: Unsorted are wrapped by same html for first and last sort links.  Sorted links are wrapped individually.
+    Note: Unsorted have same html for first and last "sort" links.  Sorted links are wrapped individually.
 } {
     upvar 1 $nav_buttons_html_varname nav_buttons_html
     upvar 1 $nav_button_div_attributes_list_varname nav_div_atts_list
@@ -1593,16 +1593,9 @@ ad_proc -public qfo_sp_table_g3 {
     set bar_list_length [llength [lindex $bar_list_set 0]]
     incr bar_list_length [llength [lindex $bar_list_set 1]]
     incr bar_list_length [llength [lindex $bar_list_set 2]]
-    ns_log Notice "qf_table_g3.1596 bar_list_length $bar_list_length bar_list_set '$bar_list_set'"
     set width_pct [expr { int( 20000. / ( $bar_list_length + 0.) ) / 100. } ]
     set style_css "margin:0;clear:none;float:left;width:${width_pct}%;"
-    #### upvar'd variables:
-    # nav_buttons_html
-    # nav_div_atts_list
-    # nav_button_atts_list
-    
-    #### Add form tag with base_url
-    #### and hidden s var to start of nav_prev_links_html
+
     set f_id [qf_form action ${base_url} class "grid-flex grid-whole" ]
     qf_input form_id $f_id name s value ${s_urlcoded} type hidden
 
@@ -1680,19 +1673,8 @@ ad_proc -public qfo_sp_table_g3 {
     }
 
     qf_close form_id $f_id
-    append nav_buttons_html [qf_read $f_id]
+    append nav_buttons_html [qf_read form_id $f_id]
     append nav_buttons_html "</div>"
-    
-    ####  convert page_url_add to a form hidden input tag. (used later)
-    # add start_row to sort_urls.
-    if { $this_start_row ne "1" } {
-        set page_url_add ${amp_h}
-        append page_url ${this_start_row_h}
-        append page_url_add ${this_start_row}
-    } else {
-        set page_url_add ""
-    }
-
 
     # ================================================
     # 4. Sort UI -- build
@@ -1736,6 +1718,23 @@ ad_proc -public qfo_sp_table_g3 {
         append sp_unsorted_attributes ${unsorted_attributes}
     }
 
+
+    ####  convert page_url_add to a form hidden input tag. (used later)
+    # add start_row to sort_urls.
+    if { $this_start_row ne "1" } {
+        set page_url_add ${amp_h}
+        append page_url ${this_start_row_h}
+        append page_url_add ${this_start_row}
+    } else {
+        set page_url_add ""
+    }
+
+    set f_id2 [qf_form form_id 20200625 action ${base_url} class "grid-flex grid-whole" ]
+    qf_input form_id $f_id2 name s value ${s_urlcoded} type hidden
+    qf_input form_id $f_id2 name this_start_row value $this_start_row type hidden
+    set table_html [qf_read form_id $f_id2]
+    ns_log Notice "qfo_sp_table_g3.1736 qf_read $f_id2 '$table_html'"
+    
     set column_idx 0
     set primary_sort_col [lindex $sort_order_list $column_idx ]
     foreach title $titles_list {
@@ -1822,12 +1821,14 @@ ad_proc -public qfo_sp_table_g3 {
                 if { $decreasing_p } {
 
                     # reverse class styles
-                    set sort_top ${a_href_h}
-                    append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                    append sort_top ${title_att_h} ${title_asc} ${quote_h}
-                    append sort_top ${sp_sorted_last_attributes} ${gt_h}
-                    append sort_top ${abbrev_asc} ${a_end_h}
+                    #set sort_top ${a_href_h}
+                    #append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
+                    #append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
+                    #append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                    #append sort_top ${sp_sorted_last_attributes} ${gt_h}
+                    #append sort_top ${abbrev_asc} ${a_end_h}
+                    set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_last_attributes]
+                    set sort_top [qf_button $sort_top_atts ]
                     set sort_bottom ${a_href_h}
                     append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
@@ -2093,7 +2094,7 @@ ad_proc -public qfo_sp_table_g3 {
     set c_type2 [list $c $e]
     set td_div_outer_attribute_lists [list $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type2]
 
-    set table_html [qss_list_of_lists_to_responsive_table \
+    append table_html [qss_list_of_lists_to_responsive_table \
                         -table_list_of_lists_name table_sorted_reordered_w_titles_lists \
                         -table_div_attribute_list_name table_tag_attribute_list \
                         -td_div_outer_attribute_lists_name td_div_outer_attribute_lists \
@@ -2103,6 +2104,7 @@ ad_proc -public qfo_sp_table_g3 {
                         -tr_div_odd_attribute_list_name tr_odd_attribute_list \
                         -th_div_attribute_list_name tr_header_attribute_list ]
 
+    append table_html "</form>"
+    qf_close form_id $f_id2
     return 1
 }
-
