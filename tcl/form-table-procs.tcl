@@ -1599,7 +1599,8 @@ ad_proc -public qfo_sp_table_g3 {
     set f_id [qf_form action ${base_url} class "grid-flex grid-whole" ]
     qf_input form_id $f_id name s value ${s_urlcoded} type hidden
 
-    set nav_buttons_html "<div class=\"grid-flex grid-whole\">"
+    #set nav_buttons_html "<div class=\"grid-flex grid-whole\">"
+    set nav_buttons_html ""
     set button_div_html "<div"
     lappend nav_div_atts_list style ${style_css}
     append button_div_html [qf_insert_attributes $nav_div_atts_list]
@@ -1674,7 +1675,7 @@ ad_proc -public qfo_sp_table_g3 {
 
     qf_close form_id $f_id
     append nav_buttons_html [qf_read form_id $f_id]
-    append nav_buttons_html "</div>"
+    #append nav_buttons_html "</div>"
 
     # ================================================
     # 4. Sort UI -- build
@@ -1829,46 +1830,64 @@ ad_proc -public qfo_sp_table_g3 {
                     #append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_last_attributes]
                     set sort_top [qf_button $sort_top_atts ]
-                    set sort_bottom ${a_href_h}
-                    append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                    append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
-                    append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
-                    append sort_bottom ${abbrev_desc} ${a_end_h}
+		    #### Convert following html to buttons
+		    
+                    #set sort_bottom ${a_href_h}
+                    #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                    #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
+                    #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                    #append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
+                    #append sort_bottom ${abbrev_desc} ${a_end_h}
+		    set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
+		    set sort_bottom [qf_button $sort_bottom_atts ]
+		    
                 } else {
 
-                    set sort_top ${a_href_h} 
-                    append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                    append sort_top ${title_att_h} ${title_asc} ${quote_h}
-                    append sort_top ${sp_sorted_first_attributes} ${gt_h}
-                    append sort_top ${abbrev_asc} ${a_end_h}
-                    set sort_bottom ${a_href_h} 
-                    append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                    append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                    append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
-                    append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
-                    append sort_bottom ${abbrev_desc} ${a_end_h}
-                }
+                    #set sort_top ${a_href_h} 
+                    #append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
+                    #append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
+                    #append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                    #append sort_top ${sp_sorted_first_attributes} ${gt_h}
+                    #append sort_top ${abbrev_asc} ${a_end_h}
+                    set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_first_attributes]
+                    set sort_top [qf_button $sort_top_atts ]
+
+                    #set sort_bottom ${a_href_h} 
+                    #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                    #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
+                    #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                    #append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
+                    #append sort_bottom ${abbrev_desc} ${a_end_h}
+		    set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_last_attributes]
+		    set sort_bottom [qf_button $sort_bottom_atts ]
+
+
+		}
             } else {
                 # Not sorted, so don't align sort order vertically.. 
                 # Just use normal horizontal alignment.
 
-                set sort_top ${span_h}
-                append sort_top ${sp_unsorted_attributes} ${gt_h}
-                append sort_top ${a_href_h}
-                append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                append sort_top ${title_att_h} ${title_asc} ${quote_h}
-                append sort_top ${gt_h}
-                append sort_top ${abbrev_asc} ${a_end_h}
-                set sort_bottom ${a_href_h} 
-                append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
-                append sort_bottom ${sp_unsorted_attributes} ${gt_h}
-                append sort_bottom ${abbrev_desc} ${a_end_h}
-                append sort_bottom ${span_end_h}
+                #set sort_top ${span_h}
+                #append sort_top ${sp_unsorted_attributes} ${gt_h}
+                #append sort_top ${a_href_h}
+                #append sort_top ${base_url} ${q_s_h} ${s_urlcoded}
+                #append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
+                #append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                #append sort_top ${gt_h}
+                #append sort_top ${abbrev_asc} ${a_end_h}
+		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_unsorted_attributes]
+		set sort_top [qf_button $sort_top_atts ]
+
+                #set sort_bottom ${a_href_h} 
+                #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
+                #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                #append sort_bottom ${sp_unsorted_attributes} ${gt_h}
+                #append sort_bottom ${abbrev_desc} ${a_end_h}
+                #append sort_bottom ${span_end_h}
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_unsorted_attributes]
+		set sort_bottom [qf_button $sort_bottom_atts ]
+
                 set sort_link_delim ${colon}
             }
         } elseif { !$ignore_p } {
@@ -1877,31 +1896,42 @@ ad_proc -public qfo_sp_table_g3 {
 
                 # Decreasing primary sort is chosen last, 
                 # no need to make the link active
-                set sort_top ${a_href_h}
-                append sort_top ${base_url} ${q_s_h} ${s_urlcoded} 
-                append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
-                append sort_top ${title_att_h} ${title_asc} ${quote_h}
-                append sort_top ${sp_sorted_last_attributes} ${gt_h}
-                append sort_top ${abbrev_asc} ${a_end_h}
-                set sort_bottom ${span_h} 
-                append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
-                append sort_bottom ${abbrev_desc} ${span_end_h}
+                #set sort_top ${a_href_h}
+                #append sort_top ${base_url} ${q_s_h} ${s_urlcoded} 
+                #append sort_top ${amp_p_h} ${column_idx} ${page_url_add}
+                #append sort_top ${title_att_h} ${title_asc} ${quote_h}
+                #append sort_top ${sp_sorted_last_attributes} ${gt_h}
+                #append sort_top ${abbrev_asc} ${a_end_h}
+		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_last_attributes]
+		set sort_top [qf_button $sort_top_atts ]
+
+                #set sort_bottom ${span_h} 
+                #append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
+                #append sort_bottom ${abbrev_desc} ${span_end_h}
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} disabled 1 ] $sp_sorted_first_attributes]
+		set sort_bottom [qf_button $sort_bottom_atts ]
 
 
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
 
-                set sort_top ${span_h} 
-                append sort_top ${sp_sorted_first_attributes} ${gt_h}
-                append sort_top ${abbrev_asc}
-                append sort_top ${span_end_h}
-                set sort_bottom ${a_href_h}
-                append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
-                append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
-                append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
-                append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
-                append sort_bottom ${abbrev_desc} ${a_end_h}
+                #set sort_top ${span_h} 
+                #append sort_top ${sp_sorted_first_attributes} ${gt_h}
+                #append sort_top ${abbrev_asc}
+                #append sort_top ${span_end_h}
+		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} disabled 1 ] $sp_sorted_first_attributes]
+		set sort_top [qf_button $sort_top_atts ]
+
+                #set sort_bottom ${a_href_h}
+                #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
+                #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
+                #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
+                #append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
+                #append sort_bottom ${abbrev_desc} ${a_end_h}
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} disabled 1 ] $sp_sorted_last_attributes]
+		set sort_bottom [qf_button $sort_bottom_atts ]
+
             }
         }
         append title_new $title
@@ -1994,6 +2024,11 @@ ad_proc -public qfo_sp_table_g3 {
         lappend col_idx_reordered_list $ui
     }
 
+### add close form here to the last element in titles_reoredered_html_list
+    set last_element [lindex $titles_reordered_html_list end]
+    append last_element "</form>"
+    lreplace $titles_reordered_html_list end end $last_element
+    
     # Repeat for the table rows: 
 
     set table_sorted_reordered_lists [list ]
@@ -2094,6 +2129,13 @@ ad_proc -public qfo_sp_table_g3 {
     set c_type2 [list $c $e]
     set td_div_outer_attribute_lists [list $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type1 $c_type2]
 
+
+    ### Close the heading form before building rest of table.
+    ### OTherwise, embedded buttons/fields in table are
+    ### associated with heading form.
+    ### 
+    append table_html "</form>"
+    
     append table_html [qss_list_of_lists_to_responsive_table \
                         -table_list_of_lists_name table_sorted_reordered_w_titles_lists \
                         -table_div_attribute_list_name table_tag_attribute_list \
@@ -2104,7 +2146,7 @@ ad_proc -public qfo_sp_table_g3 {
                         -tr_div_odd_attribute_list_name tr_odd_attribute_list \
                         -th_div_attribute_list_name tr_header_attribute_list ]
 
-    append table_html "</form>"
+
     qf_close form_id $f_id2
     return 1
 }
