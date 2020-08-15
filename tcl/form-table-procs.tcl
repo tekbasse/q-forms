@@ -1596,7 +1596,7 @@ ad_proc -public qfo_sp_table_g3 {
     set width_pct [expr { int( 20000. / ( $bar_list_length + 0.) ) / 100. } ]
     set style_css "margin:0;clear:none;float:left;width:${width_pct}%;"
 
-    set f_id [qf_form action ${base_url} class "grid-flex grid-whole" ]
+    set f_id [qf_form id 20200814 action ${base_url} class "grid-flex grid-whole" ]
     qf_input form_id $f_id name s value ${s_urlcoded} type hidden
 
     #set nav_buttons_html "<div class=\"grid-flex grid-whole\">"
@@ -1730,7 +1730,7 @@ ad_proc -public qfo_sp_table_g3 {
         set page_url_add ""
     }
 
-    set f_id2 [qf_form form_id 20200625 action ${base_url} class "grid-flex grid-whole" ]
+    set f_id2 [qf_form id 20200625 action ${base_url} class "grid-flex grid-whole" ]
     qf_input form_id $f_id2 name s value ${s_urlcoded} type hidden
     qf_input form_id $f_id2 name this_start_row value $this_start_row type hidden
     set table_html [qf_read form_id $f_id2]
@@ -1838,7 +1838,7 @@ ad_proc -public qfo_sp_table_g3 {
                     #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
                     #append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                     #append sort_bottom ${abbrev_desc} ${a_end_h}
-		    set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
+		    set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		    set sort_bottom [qf_button $sort_bottom_atts ]
 		    
                 } else {
@@ -1858,7 +1858,7 @@ ad_proc -public qfo_sp_table_g3 {
                     #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
                     #append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
                     #append sort_bottom ${abbrev_desc} ${a_end_h}
-		    set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_last_attributes]
+		    set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_sorted_last_attributes]
 		    set sort_bottom [qf_button $sort_bottom_atts ]
 
 
@@ -1885,7 +1885,7 @@ ad_proc -public qfo_sp_table_g3 {
                 #append sort_bottom ${sp_unsorted_attributes} ${gt_h}
                 #append sort_bottom ${abbrev_desc} ${a_end_h}
                 #append sort_bottom ${span_end_h}
-		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_unsorted_attributes]
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_unsorted_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
                 set sort_link_delim ${colon}
@@ -1929,7 +1929,7 @@ ad_proc -public qfo_sp_table_g3 {
                 #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
                 #append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
                 #append sort_bottom ${abbrev_desc} ${a_end_h}
-		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} disabled 1 ] $sp_sorted_last_attributes]
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} disabled 1 ] $sp_sorted_last_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
             }
@@ -2026,7 +2026,7 @@ ad_proc -public qfo_sp_table_g3 {
 
 ### add close form here to the last element in titles_reoredered_html_list
     set last_element [lindex $titles_reordered_html_list end]
-    append last_element "</form>"
+    append last_element "</form><!-- -ref L2029 -->"
     lreplace $titles_reordered_html_list end end $last_element
     
     # Repeat for the table rows: 
@@ -2133,8 +2133,9 @@ ad_proc -public qfo_sp_table_g3 {
     ### Close the heading form before building rest of table.
     ### OTherwise, embedded buttons/fields in table are
     ### associated with heading form.
-    ### 
-    append table_html "</form>"
+    ### But don't close here. The close form tag is embedded in the
+    ### last heading cell.
+    ###append table_html "</form><!-- ref L2137 -->"
     
     append table_html [qss_list_of_lists_to_responsive_table \
                         -table_list_of_lists_name table_sorted_reordered_w_titles_lists \
