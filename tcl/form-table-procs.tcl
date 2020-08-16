@@ -1130,8 +1130,8 @@ ad_proc -public qfo_sp_table_g3 {
     {-page_num_p "0"}
     {-s_varname "__qfsp_s"}
     {-sort_type_list ""}
-    {-sorted_first_attributes {{style} {font-family: monospace; font-size: 60%; font-style: normal;}}}
-    {-sorted_last_attributes {{style} {font-family: monospace; font-size: 46%; font-style: normal;}}}
+    {-sorted_first_attributes {{style} {font-family: monospace; font-size: 60%; font-style: normal; float: left; }}}
+    {-sorted_last_attributes {{style} {font-family: monospace; font-size: 46%; font-style: normal; float: left; }}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
@@ -1153,7 +1153,7 @@ ad_proc -public qfo_sp_table_g3 {
     {-tr_even_attribute_list {{class} {even grid-whole}}}
     {-tr_header_attribute_list {{class} {grid-whole} {style} {display: flex;}}}
     {-tr_odd_attribute_list {{class} {odd grid-whole}}}
-    {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; padding: 0; margin: 0;}}}
+    {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; padding: 0; margin: 0; float: left;}}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -1556,6 +1556,7 @@ ad_proc -public qfo_sp_table_g3 {
     set amp_h "&amp;"
     set amp_p_h "&amp;p="
     set amp_s_h "&amp;s="
+    set br_h "<br>"
     set class_att_h "\" class=\""
     set colon ":"
     set da_h "-"
@@ -1890,7 +1891,7 @@ ad_proc -public qfo_sp_table_g3 {
 		set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_unsorted_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
-                set sort_link_delim ${colon}
+                set sort_link_delim "<div style=\"float: left;\">${colon}</div>"
             }
         } elseif { !$ignore_p } {
             # Must be primary sort column
@@ -1936,7 +1937,7 @@ ad_proc -public qfo_sp_table_g3 {
 
             }
         }
-        append title_new $title
+        append title_new $title $br_h
         if { !$ignore_p } {
             if { $decreasing_p } {
                 append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
