@@ -1130,8 +1130,8 @@ ad_proc -public qfo_sp_table_g3 {
     {-page_num_p "0"}
     {-s_varname "__qfsp_s"}
     {-sort_type_list ""}
-    {-sorted_first_attributes {style="font-family: monospace; font-size: 60%; font-style: normal; vertical-align: super;"}}
-    {-sorted_last_attributes {style="font-family: monospace; font-size: 46%; font-style: normal; vertical-align: sub; margin-left: -0.63em;"}}
+    {-sorted_first_attributes {{style} {font-family: monospace; font-size: 60%; font-style: normal;}}}
+    {-sorted_last_attributes {{style} {font-family: monospace; font-size: 46%; font-style: normal;}}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
@@ -1153,7 +1153,7 @@ ad_proc -public qfo_sp_table_g3 {
     {-tr_even_attribute_list {{class} {even grid-whole}}}
     {-tr_header_attribute_list {{class} {grid-whole} {style} {display: flex;}}}
     {-tr_odd_attribute_list {{class} {odd grid-whole}}}
-    {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; vertical-align: baseline; line-height: 1em; padding: 0; margin: 0;}}}
+    {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; padding: 0; margin: 0;}}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -1838,6 +1838,8 @@ ad_proc -public qfo_sp_table_g3 {
                     #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
                     #append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                     #append sort_bottom ${abbrev_desc} ${a_end_h}
+
+####### stopped here. sp_sorted_first_attributes needs to separate style=... to match list form..
 		    set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		    set sort_bottom [qf_button $sort_bottom_atts ]
 		    
@@ -1902,13 +1904,13 @@ ad_proc -public qfo_sp_table_g3 {
                 #append sort_top ${title_att_h} ${title_asc} ${quote_h}
                 #append sort_top ${sp_sorted_last_attributes} ${gt_h}
                 #append sort_top ${abbrev_asc} ${a_end_h}
-		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_last_attributes]
+		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} disabled 1 ] $sp_sorted_last_attributes]
 		set sort_top [qf_button $sort_top_atts ]
 
                 #set sort_bottom ${span_h} 
                 #append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                 #append sort_bottom ${abbrev_desc} ${span_end_h}
-		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} disabled 1 ] $sp_sorted_first_attributes]
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
 
@@ -1929,7 +1931,7 @@ ad_proc -public qfo_sp_table_g3 {
                 #append sort_bottom ${title_att_h} ${title_desc} ${quote_h}
                 #append sort_bottom ${sp_sorted_last_attributes} ${gt_h}
                 #append sort_bottom ${abbrev_desc} ${a_end_h}
-		set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} disabled 1 ] $sp_sorted_last_attributes]
+		set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_sorted_last_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
             }
