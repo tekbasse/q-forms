@@ -1132,6 +1132,7 @@ ad_proc -public qfo_sp_table_g3 {
     {-sort_type_list ""}
     {-sorted_first_attributes {{style} {font-family: monospace; font-size: 60%; font-style: normal; float: left; }}}
     {-sorted_last_attributes {{style} {font-family: monospace; font-size: 46%; font-style: normal; float: left; }}}
+    {-sorted_delimiter_attributes {{style} {font-family: monospace; font-size: 46%; font-style: normal; float: left; }}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
@@ -1333,7 +1334,8 @@ ad_proc -public qfo_sp_table_g3 {
     upvar 1 $titles_list_varname titles_list
     upvar 1 $titles_reordered_html_list_varname titles_reordered_html_list
     upvar 1 $titles_reordered_list_varname titles_reordered_list
-
+    
+    
     if { ![info exists nav_div_atts_list ] } {
         set nav_div_atts_list [list class "grid-flex content-box"]
     }
@@ -1576,6 +1578,7 @@ ad_proc -public qfo_sp_table_g3 {
     set this_start_row_h "this_start_row="
     set title_att_h "\" title=\""
     set unsorted "unsorted"
+    set vbar_h "|"
 
     # Add the sort links to the titles.
     # urlcode sort_order_list
@@ -1820,6 +1823,7 @@ ad_proc -public qfo_sp_table_g3 {
                  || ( $primary_sort_col ne "" \
                           && $column_idx ne [expr { abs( $primary_sort_col ) } ] ) } {
             if { $column_sorted_p } {
+		set sort_link_delim $vbar_h
                 if { $decreasing_p } {
 
                     # reverse class styles
@@ -1840,7 +1844,7 @@ ad_proc -public qfo_sp_table_g3 {
                     #append sort_bottom ${sp_sorted_first_attributes} ${gt_h}
                     #append sort_bottom ${abbrev_desc} ${a_end_h}
 
-####### stopped here. sp_sorted_first_attributes needs to separate style=... to match list form..
+		    # sp_sorted_first_attributes needs to separate style=... to match list form..
 		    set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		    set sort_bottom [qf_button $sort_bottom_atts ]
 		    
@@ -1891,10 +1895,11 @@ ad_proc -public qfo_sp_table_g3 {
 		set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_unsorted_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
-                set sort_link_delim "<div style=\"float: left;\">${colon}</div>"
+                set sort_link_delim ${colon}
             }
         } elseif { !$ignore_p } {
             # Must be primary sort column
+	    set sort_link_delim $vbar_h
             if { $decreasing_p } {
 
                 # Decreasing primary sort is chosen last, 
@@ -1939,10 +1944,11 @@ ad_proc -public qfo_sp_table_g3 {
         }
         append title_new $title $br_h
         if { !$ignore_p } {
+	    set delim_h [qf_element tag div attribute_nv_list $sorted_delimiter_attributes content $sort_link_delim]
             if { $decreasing_p } {
-                append title_new ${sort_bottom} ${sort_link_delim} ${sort_top}
+                append title_new  ${sort_bottom} ${delim_h} ${sort_top}
             } else {
-                append title_new ${sort_top} ${sort_link_delim} ${sort_bottom}
+                append title_new  ${sort_top} ${delim_h} ${sort_bottom} 
             }
         }
         lappend titles_html_list $title_new
