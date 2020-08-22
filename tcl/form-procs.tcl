@@ -2680,7 +2680,7 @@ ad_proc -public qf_element {
         append element $tag 
         # append attributes. Some Empty tags may have attributes.
         foreach {n v} $attribute_nv_list {
-            append element " \"" $n "\"=\"" $v "\""
+            append element $n "=\"" $v "\""
         }
         if { $__qf_doctype ne "xml" \
                  && [lsearch -nocase -exact $empty_tag_list $tag] > -1 } {
