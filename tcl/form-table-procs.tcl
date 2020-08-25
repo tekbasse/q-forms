@@ -1130,9 +1130,9 @@ ad_proc -public qfo_sp_table_g3 {
     {-page_num_p "0"}
     {-s_varname "__qfsp_s"}
     {-sort_type_list ""}
-    {-sorted_first_attributes {{style} {font-family: monospace; font-size: 60%; font-style: normal; float: left; }}}
-    {-sorted_last_attributes {{style} {font-family: monospace; font-size: 46%; font-style: normal; float: left; }}}
-    {-sorted_delimiter_attributes {{style} {display: inline; font-family: monospace; font-size: 46%; font-style: normal; float: left; }}}
+    {-sorted_first_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; text-decoration: underline; padding: 0; margin: 0; float: left; }}}
+    {-sorted_last_attributes {{style} {display: inline; font-family: monospace; font-size: 46%; font-style: normal; text-decoration: underline; padding: 0; margin: 0; float: left; color: blue; }}}
+    {-sorted_delimiter_attributes {{style} {display: inline; font-family: monospace; font-size: 70%; font-style: normal; float: left; }}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
@@ -1154,7 +1154,7 @@ ad_proc -public qfo_sp_table_g3 {
     {-tr_even_attribute_list {{class} {even grid-whole}}}
     {-tr_header_attribute_list {{class} {grid-whole} {style} {display: flex;}}}
     {-tr_odd_attribute_list {{class} {odd grid-whole}}}
-    {-unsorted_attributes {{style} {font-family: monospace; font-size: 70%; font-style: normal; padding: 0; margin: 0; float: left;}}}
+    {-unsorted_attributes {{style} {font-family: monospace; text-decoration: underline; font-size: 70%; font-style: normal ; padding: 0; margin: 0; float: left; color: blue;}}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -1340,7 +1340,7 @@ ad_proc -public qfo_sp_table_g3 {
         set nav_div_atts_list [list class "grid-flex content-box"]
     }
     if { ![info exists nav_button_atts_list ] } {
-        set nav_button_atts_list [list class "btn-big"]
+        set nav_button_atts_list [list class "btn-big" style "text-decoration: underline; color: blue;"]
     }
     
     # This version requires the entire table to be loaded for processing.
@@ -1630,7 +1630,9 @@ ad_proc -public qfo_sp_table_g3 {
         #append this_start_row_link ${s_url_add} $dquote_end_h ${page_ref} $a_end_h
         #### convert this_start_row_link to qf_button
         qf_append form_id $f_id html $button_div_html
-        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref}
+	set button_atts_list $nav_button_atts_list
+	lappend button_atts_list form_id $f_id name this_start_row value ${start_row} content ${page_ref} 
+        qf_button buttons_att_list
         qf_append form_id $f_id html "</div>"
     }
     
@@ -1652,7 +1654,9 @@ ad_proc -public qfo_sp_table_g3 {
     }
     #set nav_current_pos_html $page_ref
     qf_append form_id $f_id html $button_div_html
-    qf_button form_id $f_id name this_start_row value $page_num content ${page_ref} disabled 1
+    set button_atts_list $nav_button_atts_list
+    lappend button_atts_list form_id $f_id name this_start_row value $page_num content ${page_ref} disabled 1
+    qf_button $button_atts_list
     qf_append form_id $f_id html "</div>"
     # Next nav links
     set next_bar_list [lindex $bar_list_set 2 ]
@@ -1672,7 +1676,9 @@ ad_proc -public qfo_sp_table_g3 {
             }
         }
         qf_append form_id $f_id html $button_div_html
-        qf_button form_id $f_id name this_start_row value ${start_row} content ${page_ref}
+	set button_atts_list $nav_button_atts_list
+	lappend button_atts_list form_id $f_id name this_start_row value ${start_row} content ${page_ref}
+	qf_button $button_atts_list
         qf_append form_id $f_id html "</div>"
         
     }
