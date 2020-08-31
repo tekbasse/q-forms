@@ -1144,8 +1144,8 @@ ad_proc -public qfo_sp_table_g3 {
     {-td_attribute_list {{class} {content-box}}}
     {-td_sorted_attribute_list {}}
     {-td_unsorted_attribute_list {{style} {opacity:0.9;}}}
-    {-th_sorted_attribute_list {{style} {text-align: center; border: 1px solid #999; background-color: #eef;}}}
-    {-th_unsorted_attribute_list {{style} {text-align: center; border: 1px solid #999; line-height: 90%;}}}
+    {-th_sorted_attribute_list {{style} {text-align: center; background-color: #eef;}}}
+    {-th_unsorted_attribute_list {{style} {text-align: center; line-height: 90%;}}}
     {-this_start_row "1"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
@@ -2138,7 +2138,7 @@ ad_proc -public qfo_sp_table_g3 {
     # Build html table
     set table_sorted_reordered_w_titles_lists [linsert $table_sorted_reordered_lists 0 $titles_reordered_html_list ]
     set c "class"
-    set d "grid-flex content-box grid-1 m-grid-4 s-grid-12"
+    set d "grid-flex content-box grid-1 m-grid-4 s-grid-12 extra-table-hd"
     set e "grid-3 m-grid-4 s-grid-12"
     set c_type1 [list $c $d]
     set c_type2 [list $c $e]
