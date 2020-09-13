@@ -1,3 +1,84 @@
+# qf_* css used with qfo_sp_table_g4 (also defined in b-responsive-theme)
+.qf_sorted_first {
+    font-family: monospace;
+    font-size: 70%;
+    font-style: normal;
+    text-decoration: underline;
+    padding: 0;
+    margin: 0;
+    float: left; 
+}
+.qf_sorted_last {
+    display: inline;
+    font-family: monospace;
+    font-size: 46%;
+    font-style: normal;
+    text-decoration: underline;
+    padding: 0;
+    margin: 0;
+    float: left;
+    color: blue;
+}
+.qf_sorted_delimiter {
+    display: inline;
+    font-family: monospace;
+    font-size: 70%;
+    font-style: normal;
+    float: left;
+}
+.qf_unsorted {
+    font-family: monospace;
+    text-decoration: underline;
+    font-size: 70%;
+    font-style: normal ;
+    padding: 0;
+    margin: 0;
+    float: left;
+    color: blue;    
+}
+.qf_table {
+    # from class grid-whole  dfcb.github.com/extra-strength-responsive-grids
+    margin:0;
+    clear:none;
+    float:left;
+    -moz-box-sizing:border-box;
+    -webkit-box-sizing:border-box;
+    box-sizing:border-box;
+}
+.qf_td_number {
+    text-align: left;
+}
+.qf_td_nonnumber {
+    text-align: right;
+}
+.qf_td {
+    # class content-box (add actual css here)
+}
+.qf_td_sorted {
+    # intentionally blank
+}
+.qf_td_unsorted {
+    opacity: 0.9;
+}
+.qf_th_sorted {
+    text-align: center;
+    background-color: #eef;
+}
+.qf_th_unsorted {
+    text-align: center;
+    line-height: 90%;
+}
+.qf_tr_even {
+    # class even grid-whole (add actual css here)
+}
+.qf_tr_odd {
+    # class odd grid-whole (add actual css here)
+}
+.qf_tr_header {
+    # class grid-whole (add actual css here)
+    display: flex;
+}
+
 label {
     display: block;
 }
