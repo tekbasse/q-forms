@@ -2676,7 +2676,7 @@ ad_proc -public qfo_sp_table_g4 {
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val ] 10 ]
             if { [string length $page_ref] < 2 } {
                 set page_ref $page_num_prefix
-                append page_ref "(" ${page_num} ")"
+                append page_ref ${page_num}
             }
         }
         #set this_start_row_link ${a_href_h}
