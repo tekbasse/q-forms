@@ -2674,9 +2674,9 @@ ad_proc -public qfo_sp_table_g4 {
             set item_index [expr { ( $start_row - 1 ) } ]
             set primary_sort_field_val [lindex [lindex $table_sorted_lists $item_index ] $col2sort_wo_sign ]
             set page_ref [qf_abbreviate [lang::util::localize $primary_sort_field_val ] 10 ]
-            if { $page_ref eq "" } {
+            if { [string length $page_ref] < 2 } {
                 set page_ref $page_num_prefix
-                append page_ref ${page_num}
+                append page_ref "(" ${page_num} ")"
             }
         }
         #set this_start_row_link ${a_href_h}
@@ -2686,7 +2686,7 @@ ad_proc -public qfo_sp_table_g4 {
         qf_append form_id $f_id html $button_div_html
 	set button_atts_list $nav_button_atts_list
 	lappend button_atts_list form_id $f_id name this_start_row value ${start_row} content ${page_ref} 
-        qf_button buttons_att_list
+        qf_button $button_atts_list
         qf_append form_id $f_id html "</div>"
     }
     
