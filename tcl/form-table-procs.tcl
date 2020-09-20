@@ -1948,13 +1948,13 @@ ad_proc -public qfo_sp_table_g3 {
 
             }
         }
-        append title_new $title $br_h
+        append title_new $title $br_h 
         if { !$ignore_p } {
 	    set delim_h [qf_element tag span attribute_nv_list $sorted_delimiter_attributes content $sort_link_delim]
             if { $decreasing_p } {
-                append title_new  ${sort_bottom} ${delim_h} ${sort_top}
+                append title_new  "<div>" ${sort_bottom} ${delim_h} ${sort_top} "</div>"
             } else {
-                append title_new  ${sort_top} ${delim_h} ${sort_bottom} 
+                append title_new  "<div>" ${sort_top} ${delim_h} ${sort_bottom} "</div>"
             }
         }
         lappend titles_html_list $title_new
@@ -2185,8 +2185,8 @@ ad_proc -public qfo_sp_table_g4 {
     {-s_varname "__qfsp_s"}
     {-sort_type_list ""}
     {-sorted_first_attributes {{class} {qf_sorted_first}}}
-    {-sorted_last_attributes {{style} {display: inline; font-family: monospace; font-size: 46%; font-style: normal; text-decoration: underline; padding: 0; margin: 0; float: left; color: blue; }}}
-    {-sorted_delimiter_attributes {{style} {display: inline; font-family: monospace; font-size: 70%; font-style: normal; float: left; }}}
+    {-sorted_last_attributes {{class} {qf_sorted_last}}}
+    {-sorted_delimiter_attributes {{class} {qf_sorted_delimiter}}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
@@ -2196,7 +2196,7 @@ ad_proc -public qfo_sp_table_g4 {
     {-td_number_attribute_list {{class} {qf_td_number}}}
     {-td_nonnumber_attribute_list {{class} {td_nonnumber}}}
     {-td_attribute_list {{class} {qf_td}}}
-    {-td_sorted_attribute_list {}}
+    {-td_sorted_attribute_list {{class} {qf_td_sorted}}}
     {-td_unsorted_attribute_list {{class} {qf_td_unsorted}}}
     {-th_sorted_attribute_list {{class} {qf_th_sorted}}}
     {-th_unsorted_attribute_list {{class} {qf_th_unsorted}}}
