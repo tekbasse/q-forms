@@ -1864,7 +1864,7 @@ ad_proc -public qfo_sp_table_g3 {
                     #append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_first_attributes]
                     set sort_top [qf_button $sort_top_atts ]
-
+		    
                     #set sort_bottom ${a_href_h} 
                     #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
@@ -1925,7 +1925,6 @@ ad_proc -public qfo_sp_table_g3 {
 		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
 
-
             } else {
                 # Increasing primary sort is chosen last, 
                 # no need to make the link active
@@ -1936,7 +1935,7 @@ ad_proc -public qfo_sp_table_g3 {
                 #append sort_top ${span_end_h}
 		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} disabled 1 ] $sp_sorted_first_attributes]
 		set sort_top [qf_button $sort_top_atts ]
-
+		
                 #set sort_bottom ${a_href_h}
                 #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
@@ -2184,31 +2183,16 @@ ad_proc -public qfo_sp_table_g4 {
     {-page_num_p "0"}
     {-s_varname "__qfsp_s"}
     {-sort_type_list ""}
-    {-sorted_first_attributes {{class} {qf_sorted_first}}}
-    {-sorted_last_attributes {{class} {qf_sorted_last}}}
-    {-sorted_delimiter_attributes {{class} {qf_sorted_delimiter}}}
     {-table_html_varname "__qfsp_table_html"}
     {-table_lists_varname "__qfsp_table_lists"}
     {-table_sorted_lists_varname "__qfsp_table_sorted_lists"}
     {-table_sorted_paginated_lists_varname "__qfsp_table_sorted_paginated_lists"}
     {-table_sorted_reordered_lists_varname "__qfsp_table_sorted_reordered_lists"}
-    {-table_tag_attribute_list {{class} {qf_table} }}
-    {-td_number_attribute_list {{class} {qf_td_number}}}
-    {-td_nonnumber_attribute_list {{class} {td_nonnumber}}}
-    {-td_attribute_list {{class} {qf_td}}}
-    {-td_sorted_attribute_list {{class} {qf_td_sorted}}}
-    {-td_unsorted_attribute_list {{class} {qf_td_unsorted}}}
-    {-th_sorted_attribute_list {{class} {qf_th_sorted}}}
-    {-th_unsorted_attribute_list {{class} {qf_th_unsorted}}}
     {-this_start_row "1"}
     {-titles_html_list_varname "__qfsp_titles_html_list"}
     {-titles_list_varname "__qfsp_titles_list"}
     {-titles_reordered_html_list_varname "__qfsp_titles_reordered_html"}
     {-titles_reordered_list_varname "__qfsp_reordered_list"}
-    {-tr_even_attribute_list {{class} {qf_tr_even}}}
-    {-tr_header_attribute_list {{class} {qf_tr_header}}}
-    {-tr_odd_attribute_list {{class} {qf_tr_odd}}}
-    {-unsorted_attributes {{class} {qf_unsorted}}}
 } {
     Creates a user customizable sorted table by
     creating a one row header into html and a table into html, 
@@ -2388,7 +2372,23 @@ ad_proc -public qfo_sp_table_g4 {
     upvar 1 $titles_list_varname titles_list
     upvar 1 $titles_reordered_html_list_varname titles_reordered_html_list
     upvar 1 $titles_reordered_list_varname titles_reordered_list
-    
+
+    # Initializations removed from parameters to simplify api
+    set sorted_first_attributes [list class qf_sorted_first]
+    set sorted_last_attributes [list class qf_sorted_last]
+    set sorted_delimiter_attributes [list class qf_sorted_delimiter]
+    set table_tag_attribute_list [list class qf_table]
+    set td_number_attribute_list [list class qf_td_number]
+    set td_nonnumber_attribute_list [list class td_nonnumber]
+    set td_attribute_list [list class qf_td]
+    set td_sorted_attribute_list [list class qf_td_sorted]
+    set td_unsorted_attribute_list [list class qf_td_unsorted]
+    set th_sorted_attribute_list [list class qf_th_sorted]
+    set th_unsorted_attribute_list [list class qf_th_unsorted]
+    set tr_even_attribute_list [list class qf_tr_even]
+    set tr_header_attribute_list [list class qf_tr_header]
+    set tr_odd_attribute_list [list class qf_tr_odd]
+    set unsorted_attributes [list class qf_unsorted]
     
     if { ![info exists nav_div_atts_list ] } {
         set nav_div_atts_list [list class "grid-flex content-box"]
@@ -2907,6 +2907,7 @@ ad_proc -public qfo_sp_table_g4 {
 		    # sp_sorted_first_attributes needs to separate style=... to match list form..
 		    set sort_bottom_atts [concat [list form_id $f_id2 name p value "${da_h}${column_idx}" content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		    set sort_bottom [qf_button $sort_bottom_atts ]
+		    append sort_bottom [qf_element tag span attribute_nv_list $sp_sorted_first_attributes content $abbrev_desc]
 		    
                 } else {
 
@@ -2918,7 +2919,7 @@ ad_proc -public qfo_sp_table_g4 {
                     #append sort_top ${abbrev_asc} ${a_end_h}
                     set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} ] $sp_sorted_first_attributes]
                     set sort_top [qf_button $sort_top_atts ]
-
+		    append sort_top [qf_element tag span attribute_nv_list $sp_sorted_first_attributes content $abbrev_asc]
                     #set sort_bottom ${a_href_h} 
                     #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                     #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
@@ -2978,6 +2979,7 @@ ad_proc -public qfo_sp_table_g4 {
                 #append sort_bottom ${abbrev_desc} ${span_end_h}
 		set sort_bottom_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_desc} title ${title_desc} ] $sp_sorted_first_attributes]
 		set sort_bottom [qf_button $sort_bottom_atts ]
+		append sort_bottom [qf_element tag span attribute_nv_list $sp_sorted_first_attributes content $abbrev_desc]
 
 
             } else {
@@ -2990,7 +2992,8 @@ ad_proc -public qfo_sp_table_g4 {
                 #append sort_top ${span_end_h}
 		set sort_top_atts [concat [list form_id $f_id2 name p value ${column_idx} content ${abbrev_asc} title ${title_asc} disabled 1 ] $sp_sorted_first_attributes]
 		set sort_top [qf_button $sort_top_atts ]
-
+		append sort_top [qf_element tag span attribute_nv_list $sp_sorted_first_attributes content $abbrev_asc]
+		
                 #set sort_bottom ${a_href_h}
                 #append sort_bottom ${base_url} ${q_s_h} ${s_urlcoded}
                 #append sort_bottom ${amp_p_h} ${da_h} ${column_idx} ${page_url_add}
